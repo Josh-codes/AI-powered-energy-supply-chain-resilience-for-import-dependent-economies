@@ -29,6 +29,577 @@ quantifying how current geopolitical conditions shift India's structural import 
 
 ---
 
+## System Architecture
+
+### Overview
+This system has six pipeline layers that run sequentially via LangGraph orchestration.
+The pipeline runs automatically every 6 hours via Celery Beat.
+The frontend never triggers the pipeline — it only reads pre-computed results from PostgreSQL.
+The only real-time computation triggered by the frontend is scenario simulation via NetworkX.
+
+---
+
+### Full Pipeline Flow
+
+[External Sources]
+│
+├── GDELT API ──────────────────────────────────┐
+├── Reuters Energy RSS ──────────────────────────┤
+├── Lloyd's List RSS ────────────────────────────┤──► [Celery Beat - every 6h]
+└── OFAC SDN CSV ───────────────────────────────┘ │
+│
+[Ingest Service]
+feedparser + requests
+URL deduplication
+│
+▼
+[PostgreSQL - RawArticle]
+Temporary staging table
+Deleted after 14 days
+│
+▼
+[LLM Event Extraction]
+OpenAI gpt-4o-mini
+response_format: json_object
+Returns: corridor, actor,
+event_type, severity,
+confidence, is_relevant
+│
+▼
+[PostgreSQL - ExtractedEvent]
+Permanent store
+Never deleted
+Indexed by corridor + timestamp
+│
+┌─────────────────────────────┘
+│
+▼
+[Risk Scoring Service]
+numpy + pandas
+Formula: Σ[severity × confidence × e^(-0.1 × Δt)]
+Computed per corridor
+Normalized to 0-1
+│
+┌───────────────┴────────────────┐
+│ │
+▼ ▼
+[PostgreSQL - RiskScore] [NetworkX Knowledge Graph]
+Permanent store In-memory singleton
+Timestamped Edge weights updated:
+Used for backtest effective_capacity =
+Used for trend charts volume × (1 - risk_score)
+│
+┌─────────────────────────────── ┘
+│ Also fed by:
+│ PPAC/IEA/EIA static data
+│ (loaded once at startup from data/*.json)
+▼
+[Criticality Engine]
+NetworkX algorithms
+├── Weighted betweenness centrality
+├── Max-flow analysis (baseline vs risk-weighted)
+└── Cascading failure simulation (10% increments)
+│
+▼
+[Threshold Trigger]
+condition: criticality_score > 0.65
+AND risk_score > 0.50
+│
+┌─────────┴──────────┐
+[No] │ │ [Yes]
+│ ▼
+│ [Response Layer]
+│ ├── Reroute Optimizer
+│ │ scipy MCDM scoring
+│ │ Score = 0.40×cost + 0.35×transit + 0.25×compat
+│ │ Returns ranked alternatives
+│ │
+│ └── SPR Drawdown Model
+│ PuLP linear program
+│ Minimizes total drawdown
+│ Subject to physical constraints
+│
+└─────────┬──────────┘
+│
+▼
+[PostgreSQL - Results]
+Risk scores, criticality rankings,
+reroute recommendations,
+SPR schedules — all stored
+│
+▼
+[Django REST Framework]
+Reads pre-computed results
+Serializes to JSON
+Serves to frontend via REST API
+│
+▼
+[React Frontend - separate]
+Reads from REST API only
+Never triggers pipeline
+Leaflet.js — corridor map
+Recharts — charts + analytics
+
+
+---
+
+### Component Architecture
+
+┌─────────────────────────────────────────────────────────────┐
+│ FRONTEND │
+│ React + Leaflet.js + Recharts │
+│ http://localhost:3000 │
+│ (teammate builds this — do not modify) │
+└──────────────────────┬──────────────────────────────────────┘
+│ HTTP REST / JSON
+│ GET /api/risk-scores/
+│ GET /api/criticality/
+│ GET /api/cascade/
+│ GET /api/reroute/
+│ GET /api/spr/
+│ GET /api/corridors/geojson/
+│ GET /api/events/live/
+│ POST /api/simulate/
+▼
+┌─────────────────────────────────────────────────────────────┐
+│ API GATEWAY │
+│ Django REST Framework │
+│ http://localhost:8000 │
+│ gunicorn (production) │
+│ django-cors-headers (allow localhost:3000) │
+└──────────────────────┬──────────────────────────────────────┘
+│
+┌────────────┼────────────────────┐
+│ │ │
+▼ ▼ ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐
+│ Read from │ │ Trigger │ │ In-memory graph │
+│ PostgreSQL │ │ NetworkX │ │ singleton │
+│ (pre-comp) │ │ (real-time │ │ graph/state.py │
+│ │ │ scenario) │ │ │
+└──────┬──────┘ └──────┬──────┘ └──────────┬──────────┘
+│ │ │
+└───────────────┴────────────────────┘
+│
+▼
+┌─────────────────────────────────────────────────────────────┐
+│ BACKEND SERVICES │
+│ │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐ │
+│ │ Ingest │ │ Extraction │ │ Risk Scoring │ │
+│ │ Service │ │ Service │ │ Service │ │
+│ │ │ │ │ │ │ │
+│ │ gdelt.py │ │ extractor.py │ │ risk_scorer.py │ │
+│ │ rss.py │ │ prompt.py │ │ numpy/pandas │ │
+│ │ ofac.py │ │ OpenAI API │ │ time-decay │ │
+│ │ feedparser │ │ gpt-4o-mini │ │ formula │ │
+│ └──────────────┘ └──────────────┘ └──────────────────┘ │
+│ │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐ │
+│ │ Graph │ │ Criticality │ │ Response │ │
+│ │ Service │ │ Engine │ │ Service │ │
+│ │ │ │ │ │ │ │
+│ │ builder.py │ │ engine.py │ │ reroute.py │ │
+│ │ algorithms.py│ │ cascade.py │ │ spr.py │ │
+│ │ updater.py │ │ scenarios.py │ │ gap.py │ │
+│ │ state.py │ │ NetworkX │ │ scipy + PuLP │ │
+│ │ NetworkX │ │ algorithms │ │ MCDM + LP │ │
+│ └──────────────┘ └──────────────┘ └──────────────────┘ │
+│ │
+│ ┌────────────────────────────────────────────────────────┐ │
+│ │ LangGraph Orchestrator │ │
+│ │ orchestrator/pipeline.py │ │
+│ │ Manages state across all services │ │
+│ │ Handles conditional threshold trigger │ │
+│ │ Ensures correct execution order │ │
+│ └────────────────────────────────────────────────────────┘ │
+│ │
+│ ┌────────────────────────────────────────────────────────┐ │
+│ │ Celery Beat Scheduler │ │
+│ │ config/celery.py │ │
+│ │ Triggers full pipeline every 6 hours │ │
+│ │ OFAC download weekly │ │
+│ │ Redis as message broker │ │
+│ └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+│
+┌────────────┼───────────────────┐
+▼ ▼ ▼
+┌──────────────┐ ┌──────────┐ ┌──────────────────────────┐
+│ PostgreSQL │ │ PostGIS │ │ NetworkX (in-memory) │
+│ │ │ │ │ │
+│ RawArticle │ │ Corridor │ │ DiGraph G=(V,E) │
+│ Extracted │ │ geometry │ │ Nodes: suppliers, │
+│ Event │ │ LineStr. │ │ corridors, ports, │
+│ RiskScore │ │ Port/ │ │ refineries │
+│ Supplier │ │ Refinery │ │ Edges: volume, │
+│ Corridor │ │ Points │ │ transit, grade, │
+│ Port │ │ │ │ effective_capacity │
+│ Refinery │ │ Served │ │ │
+│ Alternative │ │ as │ │ Rebuilt from DB │
+│ Supplier │ │ GeoJSON │ │ on startup │
+│ │ │ to │ │ Updated each cycle │
+│ │ │ Leaflet │ │ │
+└──────────────┘ └──────────┘ └──────────────────────────┘
+│
+▼
+┌─────────────────────────────────────────────────────────────┐
+│ EXTERNAL SOURCES │
+│ │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐ │
+│ │ GDELT │ │ Reuters │ │ OFAC │ │ OpenAI API │ │
+│ │ API │ │ RSS │ │ SDN │ │ gpt-4o-mini │ │
+│ │ free │ │ free │ │ CSV │ │ paid │ │
+│ │ no key │ │ no key │ │ weekly │ │ ~$4/month │ │
+│ └──────────┘ └──────────┘ └──────────┘ └──────────────┘ │
+│ │
+│ ┌──────────┐ ┌──────────┐ ┌──────────────────────────┐ │
+│ │ EIA API │ │ Lloyd's │ │ PPAC/IEA/EIA reports │ │
+│ │ free │ │ List │ │ Hardcoded JSON │ │
+│ │ backtest│ │ RSS │ │ Static seed data │ │
+│ │ only │ │ free │ │ Loaded once at setup │ │
+│ └──────────┘ └──────────┘ └──────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+
+
+---
+
+### LangGraph Pipeline State Flow
+
+PipelineState (TypedDict)
+{
+raw_articles: List[dict] # set by ingest node
+extracted_events: List[dict] # set by extraction node
+risk_scores: Dict[str, float] # set by scoring node
+graph_updated: bool # set by graph update node
+criticality_ranking: List[dict] # set by criticality node
+capacity_loss_mbd: float # set by criticality node
+threshold_crossed: bool # set by threshold node
+triggered_corridor: str | None # set by threshold node
+reroute_recommendations: List # set by response node
+spr_schedule: dict | None # set by response node
+pipeline_run_at: str # set at pipeline start
+}
+
+Node execution order:
+ingest → extract → score → update_graph → criticality
+→ check_threshold
+├── [threshold_crossed=True] → response → dashboard_update
+└── [threshold_crossed=False] → dashboard_update
+
+
+---
+
+### Knowledge Graph Structure
+
+Node Types:
+┌─────────────────────────────────────────────────────┐
+│ SUPPLIER (e.g. "Saudi Arabia") │
+│ attrs: name, country_code, region, │
+│ avg_export_mbd, sanctioned │
+├─────────────────────────────────────────────────────┤
+│ CORRIDOR (e.g. "Hormuz") │
+│ attrs: name, capacity_mbd, transit_days, │
+│ baseline_risk, live_risk_score │
+├─────────────────────────────────────────────────────┤
+│ PORT (e.g. "Vadinar") │
+│ attrs: name, location (PostGIS Point), │
+│ throughput_mbd │
+├─────────────────────────────────────────────────────┤
+│ REFINERY (e.g. "Reliance Jamnagar") │
+│ attrs: name, company, capacity_mbd, │
+│ min_run_rate (0.70), api_gravity_min/max, │
+│ sulfur_tolerance │
+└─────────────────────────────────────────────────────┘
+
+Edge Types:
+┌─────────────────────────────────────────────────────┐
+│ SUPPLIER → CORRIDOR │
+│ attrs: volume (mb/day), crude_grade │
+├─────────────────────────────────────────────────────┤
+│ CORRIDOR → PORT │
+│ attrs: volume (mb/day), transit_days, │
+│ effective_capacity (dynamic) │
+├─────────────────────────────────────────────────────┤
+│ PORT → REFINERY │
+│ attrs: volume (mb/day), grade_compatible (bool) │
+└─────────────────────────────────────────────────────┘
+
+Special nodes:
+SOURCE — virtual super-source connected to all suppliers
+SINK — virtual super-sink connected from all refineries
+(Used for max-flow computation)
+
+Graph update cycle:
+
+Compute risk_score per corridor (risk_scorer.py)
+effective_capacity = volume × (1 - risk_score)
+Update all corridor edges with new effective_capacity
+Run algorithms on updated graph
+
+---
+
+### REST API Request-Response Cycle
+
+User opens dashboard
+│
+▼
+React component mounts
+│
+▼
+useRiskScores() hook fires
+│
+▼
+axios.get('http://localhost:8000/api/risk-scores/')
+│
+▼
+Django URL router → RiskScoresView
+│
+▼
+RiskScore.objects.filter(
+computed_at__gte=last_hour
+).order_by('-computed_at')
+│
+▼
+RiskScoreSerializer → JSON
+│
+▼
+{"Hormuz": 0.72, "Red Sea": 0.45,
+"Suez": 0.12, "Cape": 0.05}
+│
+▼
+React updates state
+│
+▼
+Leaflet corridor colors update
+Recharts risk timeline updates
+│
+▼
+Repeat every 60 seconds (polling)
+
+
+---
+
+### Scenario Simulation Request-Response Cycle
+(Only real-time computation triggered by frontend)
+
+User sets Hormuz slider to 50%
+│
+▼
+axios.post('/api/simulate/', {
+corridor: "Hormuz",
+degradation: 0.50,
+duration_days: 14
+})
+│
+▼
+Django SimulateView
+│
+▼
+GraphState.get_instance().get_graph()
+(retrieves in-memory NetworkX graph)
+│
+▼
+cascading_failure_simulation(G, "Hormuz", 0.50)
+(runs in < 1 second on small graph)
+│
+▼
+supply_gap = baseline_flow - disrupted_flow
+│
+├──► reroute_optimizer(gap, crisis_level)
+│ returns ranked alternatives
+│
+└──► compute_spr_schedule(gap, duration, transit)
+returns drawdown schedule
+│
+▼
+Combined result serialized to JSON
+│
+▼
+React updates:
+
+Cascade curve chart
+Reroute recommendations panel
+SPR drawdown chart
+Map shows recommended route
+
+---
+
+### Database Schema Overview
+
+PostgreSQL Tables:
+┌─────────────────┬──────────────────────────────────────────┐
+│ Table │ Purpose │
+├─────────────────┼──────────────────────────────────────────┤
+│ core_supplier │ Supplier country nodes │
+│ core_corridor │ Corridor nodes + PostGIS geometry │
+│ core_port │ Port nodes + PostGIS point │
+│ core_refinery │ Refinery nodes + PostGIS point │
+│ core_rawarticle │ Temp staging (deleted after 14 days) │
+│ core_extractedevent│ Permanent event store │
+│ core_riskscore │ Permanent score history (backtest) │
+│ core_alternativesupplier│ Reroute alternatives table │
+└─────────────────┴──────────────────────────────────────────┘
+
+PostGIS geometry columns:
+core_corridor.geometry → LineStringField (maritime route)
+core_port.location → PointField (lat/lon)
+core_refinery.location → PointField (lat/lon)
+core_alternativesupplier.route_geometry → LineStringField
+
+Permanent tables (never delete rows):
+
+core_extractedevent
+core_riskscore
+
+Temporary table (clean up after 14 days):
+
+core_rawarticle (after processed=True)
+
+---
+
+### Threshold Trigger Logic
+
+After criticality engine runs:
+
+for each corridor in criticality_ranking:
+centrality_score = betweenness_centrality[corridor]
+risk_score = latest RiskScore for corridor
+
+if centrality_score > 0.65 AND risk_score > 0.50:
+    threshold_crossed = True
+    triggered_corridor = corridor.name
+    break
+
+if threshold_crossed:
+→ fire reroute optimizer
+→ fire SPR drawdown model
+→ store recommendations in PostgreSQL
+→ dashboard shows alert + recommendations
+
+if not threshold_crossed:
+→ update dashboard with latest scores only
+→ no recommendations generated
+
+
+---
+
+### Backtest Architecture
+
+Historical validation against two events:
+
+2025 US-Iran standoff (Brent +8% in single session)
+2026 Hormuz closure (Brent $69 → $114/barrel)
+
+For each event:
+1. Reconstruct historical GDELT data for event period
+(GDELT archives all data — fully queryable historically)
+
+2. Run extraction pipeline retrospectively
+   (same Claude/OpenAI extraction, historical articles)
+
+3. Run risk scoring formula on historical events
+   (same time-decay formula, historical timestamps)
+
+4. Plot risk score timeline vs Brent price data
+   (EIA API provides historical daily Brent prices)
+
+5. Measure lead time:
+   days between risk_score > 0.6 and observed price spike
+
+Validation criterion:
+risk signal must elevate to > 0.6
+within 48 hours of OR before observed price move
+
+Output:
+{
+"event": "2025_iran_standoff",
+"signal_elevated_at": "2025-XX-XX",
+"price_spiked_at": "2025-XX-XX",
+"lead_time_days": 2,
+"max_risk_score": 0.81,
+"brent_spike_pct": 8.2,
+"validation": "PASSED"
+}
+
+
+---
+
+### Celery Task Dependency Order
+
+Every 6 hours:
+
+poll_gdelt ──────────────────────────────────┐
+poll_rss ───────────────────────────────────┤
+poll_ofac (weekly) ──────────────────────────┘
+│
+▼
+extract_events
+(waits for ingest)
+│
+▼
+score_and_update_graph
+(waits for extraction)
+│
+▼
+run_criticality
+(waits for score update)
+│
+▼
+check_and_run_response
+(conditional on threshold)
+
+
+---
+
+### File Responsibility Map
+
+config/settings.py → all Django + Celery + DB configuration
+config/celery.py → Celery app + beat schedule
+config/urls.py → root URL routing (includes core/urls.py)
+
+core/models.py → ALL database models
+core/serializers.py → ALL DRF serializers
+core/views.py → ALL REST API views
+core/urls.py → ALL API endpoint URL patterns
+
+graph/builder.py → builds NetworkX graph from PostgreSQL
+graph/algorithms.py → centrality, max-flow, cascade functions
+graph/updater.py → updates edge weights from risk scores
+graph/state.py → thread-safe in-memory graph singleton
+
+pipeline/ingest/gdelt.py → GDELT API polling function
+pipeline/ingest/rss.py → RSS feed parsing function
+pipeline/ingest/ofac.py → OFAC SDN download + parse
+pipeline/extract/extractor.py → OpenAI API extraction call
+pipeline/extract/prompt.py → extraction prompt template
+pipeline/score/risk_scorer.py → time-decay formula + normalization
+pipeline/tasks.py → ALL Celery task definitions
+
+criticality/engine.py → main criticality computation
+criticality/cascade.py → cascading failure simulation loop
+criticality/scenarios.py → named scenario definitions + parameters
+
+response/reroute.py → MCDM alternative supplier ranking
+response/spr.py → PuLP SPR linear program
+response/gap.py → supply gap estimation
+
+orchestrator/pipeline.py → LangGraph graph + node + edge definitions
+orchestrator/nodes.py → individual node functions
+orchestrator/state.py → PipelineState TypedDict
+
+backtest/runner.py → backtest execution controller
+backtest/validator.py → signal vs price comparison
+backtest/eia.py → EIA API historical price fetcher
+
+management/commands/seed_db.py → loads data/*.json to DB
+management/commands/build_graph.py → builds + prints graph
+management/commands/run_pipeline.py → manual pipeline trigger
+management/commands/test_extraction.py → test one article extraction
+management/commands/run_backtest.py → run historical validation
+
+---
+
 ## Repository Structure
 
 energy-resilience/
@@ -826,8 +1397,18 @@ Terminal 4: redis-server
 ## Build Phases — Check Off as Completed
 
 - [ ] Phase 1 — Django setup + PostgreSQL + PostGIS + models + seed data + NetworkX graph
+  - [x] Repo skeleton — all backend/ package dirs + __init__.py, requirements.txt, README, .gitignore
+  - [x] Django project — config/ (settings, urls, wsgi, asgi, celery), manage.py at backend root
+  - [x] All 7 apps created (core, graph, pipeline, criticality, response, orchestrator, backtest) + registered in settings.py + migrations/ packages
+  - [x] Celery app wired (config/celery.py, autodiscover, celery_app in config/__init__.py)
+  - [x] .env.example + local .env; base settings (DRF, CORS, logging, Redis/Celery); `manage.py check` + `migrate` pass (SQLite for now)
+  - [ ] Switch DB to PostgreSQL + PostGIS; install GDAL; enable django.contrib.gis
+  - [ ] core/models.py — all 8 models + makemigrations/migrate
+  - [ ] Seed data JSON (data/*.json + geometries/*.geojson) + seed_db command
+  - [ ] NetworkX graph — graph/state.py, graph/builder.py, build_graph command
+  - [ ] tests/test_graph.py
 - [ ] Phase 2 — News ingestion (GDELT + RSS + OFAC) + Celery Beat
-- [ ] Phase 3 — Claude API extraction + risk scoring + graph weight update
+- [ ] Phase 3 — Openai api extraction + risk scoring + graph weight update
 - [ ] Phase 4 — Criticality engine (centrality + max-flow + cascading failure)
 - [ ] Phase 5 — Response layer (reroute optimizer + SPR drawdown LP)
 - [ ] Phase 6 — LangGraph orchestration + all REST API endpoints
