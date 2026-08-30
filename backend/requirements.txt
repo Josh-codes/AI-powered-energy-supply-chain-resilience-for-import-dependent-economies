@@ -12,6 +12,12 @@ pandas
 scipy
 PuLP
 
+# Geospatial native bindings (Windows venv: install the matching wheels from
+# https://github.com/cgohlke/geospatial-wheels/releases — e.g. gdal-3.13.3-cp312-cp312-win_amd64.whl)
+gdal
+pyproj
+shapely
+
 # Pipeline & Scheduling
 celery
 redis

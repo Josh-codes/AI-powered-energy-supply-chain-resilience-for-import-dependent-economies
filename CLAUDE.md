@@ -1401,9 +1401,11 @@ Terminal 4: redis-server
   - [x] Django project — config/ (settings, urls, wsgi, asgi, celery), manage.py at backend root
   - [x] All 7 apps created (core, graph, pipeline, criticality, response, orchestrator, backtest) + registered in settings.py + migrations/ packages
   - [x] Celery app wired (config/celery.py, autodiscover, celery_app in config/__init__.py)
-  - [x] .env.example + local .env; base settings (DRF, CORS, logging, Redis/Celery); `manage.py check` + `migrate` pass (SQLite for now)
-  - [ ] Switch DB to PostgreSQL + PostGIS; install GDAL; enable django.contrib.gis
-  - [ ] core/models.py — all 8 models + makemigrations/migrate
+  - [x] .env.example + local .env; full settings (PostGIS DB from DB_* env, DRF, CORS, logging, Celery beat schedule, OpenAI key/model)
+  - [x] Switch DB to PostgreSQL + PostGIS; install GDAL/GEOS/PROJ (venv wheels: gdal 3.13.3 / pyproj 3.7.2 / shapely 2.1.2, cgohlke); enable django.contrib.gis; GDAL_LIBRARY_PATH/GEOS_LIBRARY_PATH/PROJ_LIB in .env
+  - [x] core/models.py — all 8 models verbatim to spec (indexes + Meta)
+  - [x] Initial migration created + applied — core/migrations/0001_initial.py on PG16 DB `energy_resilience` (PostGIS 3.6.2); 8 core_* tables, 4 SRID-4326 geometry cols + GiST indexes; `makemigrations --check` clean
+  - [x] `manage.py check` → 0 issues; dev server starts clean (/admin/ 302 → login page renders against PostGIS). Django 6.0.8 (not 4.2), Python 3.12
   - [ ] Seed data JSON (data/*.json + geometries/*.geojson) + seed_db command
   - [ ] NetworkX graph — graph/state.py, graph/builder.py, build_graph command
   - [ ] tests/test_graph.py

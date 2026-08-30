@@ -1,9 +1,10 @@
 """
 Django settings for the Energy Supply Chain Resilience System.
 
-All secrets and environment-specific values come from the environment / a
-``.env`` file (see ``.env.example``). Nothing sensitive is hardcoded here.
+Every secret and deployment-specific value is read from the environment
+(or backend/.env via django-environ). Nothing sensitive is hardcoded.
 """
+import os
 from pathlib import Path
 
 import environ
@@ -15,9 +16,10 @@ env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
+    DB_PORT=(int, 5432),
 )
 
-# Load backend/.env if it exists (it is git-ignored).
+# Load backend/.env if present (it is git-ignored).
 _env_file = BASE_DIR / ".env"
 if _env_file.exists():
     env.read_env(str(_env_file))
@@ -39,8 +41,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # GIS: enabled in the models phase once GDAL + PostGIS are installed.
-    # "django.contrib.gis",
+    "django.contrib.gis",
 ]
 
 THIRD_PARTY_APPS = [
@@ -63,6 +64,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # CorsMiddleware must come before CommonMiddleware.
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -93,21 +95,55 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 # ---------------------------------------------------------------------------
-# Database
+# Native geospatial libraries (GDAL / GEOS / PROJ)
 # ---------------------------------------------------------------------------
-# Defaults to SQLite so the project runs before PostgreSQL/PostGIS is set up.
-# For the real stack, set in .env:
-#   DATABASE_URL=postgis://USER:PASSWORD@localhost:5432/energy_resilience
-# and enable "django.contrib.gis" in DJANGO_APPS above.
-DATABASES = {
-    "default": env.db(
-        "DATABASE_URL",
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-    ),
-}
+# On Windows with a venv install (GDAL wheel), point these at the DLLs that
+# ship inside site-packages/osgeo/ — see .env.example. Leave unset on Linux/
+# macOS where the system packages are found automatically.
+_gdal_lib = env("GDAL_LIBRARY_PATH", default="")
+_geos_lib = env("GEOS_LIBRARY_PATH", default="")
+_proj_lib = env("PROJ_LIB", default="")
+
+if _gdal_lib:
+    GDAL_LIBRARY_PATH = _gdal_lib
+if _geos_lib:
+    GEOS_LIBRARY_PATH = _geos_lib
+if _proj_lib:
+    os.environ.setdefault("PROJ_LIB", _proj_lib)
+
+if os.name == "nt":
+    for _lib in (_gdal_lib, _geos_lib):
+        _dir = os.path.dirname(_lib)
+        if _dir and os.path.isdir(_dir):
+            try:
+                os.add_dll_directory(_dir)
+            except OSError:
+                pass
 
 # ---------------------------------------------------------------------------
-# Auth
+# Database — PostgreSQL + PostGIS
+# ---------------------------------------------------------------------------
+# Provide either a full DATABASE_URL (postgis://user:pass@host:port/name)
+# or the discrete DB_* vars below (see .env.example).
+if env("DATABASE_URL", default=""):
+    DATABASES = {"default": env.db("DATABASE_URL")}
+    DATABASES["default"].setdefault(
+        "ENGINE", "django.contrib.gis.db.backends.postgis"
+    )
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.contrib.gis.db.backends.postgis",
+            "NAME": env("DB_NAME", default="energy_resilience"),
+            "USER": env("DB_USER", default="postgres"),
+            "PASSWORD": env("DB_PASSWORD", default=""),
+            "HOST": env("DB_HOST", default="localhost"),
+            "PORT": env.int("DB_PORT", default=5432),
+        }
+    }
+
+# ---------------------------------------------------------------------------
+# Password validation
 # ---------------------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -142,6 +178,9 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
     "DEFAULT_PAGINATION_CLASS": None,
 }
 if DEBUG:
@@ -155,18 +194,47 @@ if DEBUG:
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"]
 )
+CORS_ALLOW_CREDENTIALS = False
 
 # ---------------------------------------------------------------------------
 # Celery / Redis
 # ---------------------------------------------------------------------------
-CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = env("REDIS_URL", default="redis://localhost:6379/0")
+REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-# CELERY_BEAT_SCHEDULE is populated in the pipeline phase.
+
+CELERY_BEAT_SCHEDULE = {
+    "poll-gdelt": {
+        "task": "pipeline.tasks.poll_gdelt",
+        "schedule": 21600,          # every 6 hours
+    },
+    "poll-rss": {
+        "task": "pipeline.tasks.poll_rss",
+        "schedule": 21600,
+    },
+    "extract-events": {
+        "task": "pipeline.tasks.extract_events",
+        "schedule": 21600,
+    },
+    "score-and-update": {
+        "task": "pipeline.tasks.score_and_update_graph",
+        "schedule": 21600,
+    },
+    "run-criticality": {
+        "task": "pipeline.tasks.run_criticality",
+        "schedule": 21600,
+    },
+    "download-ofac": {
+        "task": "pipeline.tasks.download_ofac",
+        "schedule": 604800,         # weekly
+    },
+}
 
 # ---------------------------------------------------------------------------
 # Logging  (project rule: use logging, never print, for errors)
@@ -189,6 +257,7 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": "INFO"},
     "loggers": {
         "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "celery": {"handlers": ["console"], "level": "INFO", "propagate": False},
         "pipeline": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
         "graph": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
         "criticality": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
@@ -199,7 +268,9 @@ LOGGING = {
 }
 
 # ---------------------------------------------------------------------------
-# External API keys (read where needed, never hardcode)
+# External API keys / model config (read where needed, never hardcode)
 # ---------------------------------------------------------------------------
 OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
+OPENAI_MODEL = env("OPENAI_MODEL", default="gpt-4o-mini")
+OPENAI_MAX_TOKENS = env.int("OPENAI_MAX_TOKENS", default=500)
 EIA_API_KEY = env("EIA_API_KEY", default="")
