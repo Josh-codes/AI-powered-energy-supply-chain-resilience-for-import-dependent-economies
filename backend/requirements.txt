@@ -1,0 +1,29 @@
+# Backend
+Django
+djangorestframework
+django-cors-headers
+django-environ
+psycopg2-binary
+
+# Data & Graph
+networkx
+numpy
+pandas
+scipy
+PuLP
+
+# Pipeline & Scheduling
+celery
+redis
+django-celery-beat
+feedparser
+requests
+
+# AI
+openai
+langgraph
+langchain
+
+# Utilities
+python-dotenv
+Pillow
