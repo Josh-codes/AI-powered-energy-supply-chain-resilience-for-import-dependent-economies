@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Vadinar",
+    "state": "Gujarat",
+    "lat": 22.46,
+    "lon": 69.37,
+    "throughput_mbd": 1.40,
+    "primary_user": "Reliance Industries"
+  },
+  {
+    "name": "Mundra",
+    "state": "Gujarat",
+    "lat": 22.84,
+    "lon": 69.72,
+    "throughput_mbd": 0.60,
+    "primary_user": "IOC/HPCL/BPCL"
+  },
+  {
+    "name": "Sikka",
+    "state": "Gujarat",
+    "lat": 22.43,
+    "lon": 69.35,
+    "throughput_mbd": 0.30,
+    "primary_user": "HPCL/ONGC"
+  },
+  {
+    "name": "Mumbai JNPT",
+    "state": "Maharashtra",
+    "lat": 18.95,
+    "lon": 72.95,
+    "throughput_mbd": 0.45,
+    "primary_user": "BPCL/HPCL"
+  },
+  {
+    "name": "Mangaluru",
+    "state": "Karnataka",
+    "lat": 12.87,
+    "lon": 74.84,
+    "throughput_mbd": 0.20,
+    "primary_user": "MRPL"
+  },
+  {
+    "name": "Kochi",
+    "state": "Kerala",
+    "lat": 9.96,
+    "lon": 76.27,
+    "throughput_mbd": 0.18,
+    "primary_user": "BPCL Kochi"
+  },
+  {
+    "name": "Chennai",
+    "state": "Tamil Nadu",
+    "lat": 13.08,
+    "lon": 80.30,
+    "throughput_mbd": 0.25,
+    "primary_user": "CPCL/IOC"
+  },
+  {
+    "name": "Paradip",
+    "state": "Odisha",
+    "lat": 20.32,
+    "lon": 86.67,
+    "throughput_mbd": 0.35,
+    "primary_user": "IOC"
+  },
+  {
+    "name": "Vizag",
+    "state": "Andhra Pradesh",
+    "lat": 17.68,
+    "lon": 83.28,
+    "throughput_mbd": 0.20,
+    "primary_user": "HPCL"
+  },
+  {
+    "name": "Haldia",
+    "state": "West Bengal",
+    "lat": 22.03,
+    "lon": 88.07,
+    "throughput_mbd": 0.20,
+    "primary_user": "IOC"
+  }
+]
