@@ -33,3 +33,4 @@ langchain
 # Utilities
 python-dotenv
 Pillow
+matplotlib  # manage.py visualize_graph

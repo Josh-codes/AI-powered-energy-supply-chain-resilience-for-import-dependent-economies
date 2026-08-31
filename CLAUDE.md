@@ -33,7 +33,12 @@ quantifying how current geopolitical conditions shift India's structural import 
 
 ### Overview
 This system has six pipeline layers that run sequentially via LangGraph orchestration.
-The pipeline runs automatically every 6 hours via Celery Beat.
+The pipeline is designed to run automatically every 6 hours via Celery Beat in a
+production deployment. **Celery Beat / Celery worker / Redis are NOT being implemented
+for this thesis build** — there is no always-on host to run them, and the project is
+demonstrated by manually triggering the pipeline (`python manage.py run_pipeline`).
+The `CELERY_BEAT_SCHEDULE` config below is retained as documentation of the intended
+production cadence only. See the note in the Celery Configuration section.
 The frontend never triggers the pipeline — it only reads pre-computed results from PostgreSQL.
 The only real-time computation triggered by the frontend is scenario simulation via NetworkX.
 
@@ -1177,6 +1182,17 @@ Article:
 
 ## Celery Configuration (config/celery.py + config/settings.py)
 
+> **STATUS: NOT IMPLEMENTED for this build.** Celery Beat, the Celery worker, and Redis
+> are deferred to a future production deployment (they require an always-on host, and
+> Beat does not backfill missed runs so it is useless on an intermittently-on laptop).
+> For the thesis demo the pipeline is invoked manually via `python manage.py run_pipeline`,
+> which calls the LangGraph orchestrator directly in a single synchronous process — no
+> broker, no worker, no scheduler. The config below is kept verbatim as the spec for the
+> intended 6-hourly production cadence. To enable it later: `pip install` the Celery
+> stack (already in requirements.txt), add `@shared_task` to the `pipeline/tasks.py`
+> entry functions, paste this schedule into settings, and run Redis + worker + beat on
+> an always-on host.
+
 ```python
 # config/settings.py
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
@@ -1263,12 +1279,13 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 
 ## Named Corridors and Baseline Data
 
+3-corridor model (Suez folded into Red Sea). Capacity = global chokepoint throughput (all nations); India flow = FY 2025-26 modelled inflow, reconciled against supplier_to_corridor totals (Σ = 4.926 mb/d).
+
 | Corridor | Capacity (mb/day) | India flow (mb/day) | Baseline risk |
 |----------|-------------------|---------------------|---------------|
-| Hormuz | 17.0 | 6.8 | 0.20 |
-| Red Sea | 5.8 | 1.2 | 0.15 |
-| Suez | 5.5 | 0.8 | 0.10 |
-| Cape | unlimited | 0.4 | 0.05 |
+| Hormuz | 17.0 | 2.316 | 0.20 |
+| Red Sea (incl. Suez + Bab-el-Mandeb) | 5.8 | 0.355 | 0.15 |
+| Cape | unlimited (999.0 sentinel) | 2.255 | 0.05 |
 
 ---
 
@@ -1396,7 +1413,7 @@ Terminal 4: redis-server
 
 ## Build Phases — Check Off as Completed
 
-- [ ] Phase 1 — Django setup + PostgreSQL + PostGIS + models + seed data + NetworkX graph
+- [x] Phase 1 — Django setup + PostgreSQL + PostGIS + models + seed data + NetworkX graph  ✅ COMPLETE
   - [x] Repo skeleton — all backend/ package dirs + __init__.py, requirements.txt, README, .gitignore
   - [x] Django project — config/ (settings, urls, wsgi, asgi, celery), manage.py at backend root
   - [x] All 7 apps created (core, graph, pipeline, criticality, response, orchestrator, backtest) + registered in settings.py + migrations/ packages
@@ -1406,10 +1423,15 @@ Terminal 4: redis-server
   - [x] core/models.py — all 8 models verbatim to spec (indexes + Meta)
   - [x] Initial migration created + applied — core/migrations/0001_initial.py on PG16 DB `energy_resilience` (PostGIS 3.6.2); 8 core_* tables, 4 SRID-4326 geometry cols + GiST indexes; `makemigrations --check` clean
   - [x] `manage.py check` → 0 issues; dev server starts clean (/admin/ 302 → login page renders against PostGIS). Django 6.0.8 (not 4.2), Python 3.12
-  - [ ] Seed data JSON (data/*.json + geometries/*.geojson) + seed_db command
-  - [ ] NetworkX graph — graph/state.py, graph/builder.py, build_graph command
-  - [ ] tests/test_graph.py
-- [ ] Phase 2 — News ingestion (GDELT + RSS + OFAC) + Celery Beat
+  - [x] Seed data JSON (data/*.json + geometries/*.geojson) + seed_db command — 58 node rows (12 suppliers, 3 corridors w/ LineString 4326, 10 ports, 23 refineries all port-linked, 10 alternatives); idempotent via update_or_create + `--flush`; NOTE: management commands live in core/management/commands/ (Django per-app discovery), not top-level management/
+  - [x] edges.json cleaned: 5 refinery-name mismatches fixed; **Suez dropped as standalone corridor** — merged into "Red Sea" (Suez Canal + Bab-el-Mandeb are serial chokepoints on the same Med/Black-Sea route); Libya/Kazakhstan moved to Red Sea, Russia split Cape/Red Sea
+  - [x] Data reconciliation (FY 2025-26 baseline, sources in each JSON's `source`/`validation` fields): all supplier→corridor volumes tie to suppliers.json `avg_export_mbd` (Σ = 4.926 mb/d modelled, `share_pct` sums to 100.00); **corridor inflows: Hormuz 2.316, Red Sea 0.355, Cape 2.255 mb/d**. port_to_refinery volumes rescaled off refinery nameplate so no port's outflow exceeds its corridor-delivered inflow → TWO ceilings, kept distinct in edges.json `validation`: `corridor_throughput_mbd` 4.927 (crude reaching ports) vs `refinery_deliverable_mbd` 4.228 (hard downstream cap after refinery offtake). The 0.699 gap is crude stranded at oversupplied ports {Chennai .272, Mumbai JNPT .168, Paradip .157, Sikka .053, Vizag .049}; Vizag's is partly real (ISPR/SPR site). Use **4.228 as baseline max-flow** for criticality/reroute; score per-port criticality on *residual refinery need* after removing one corridor, not the full corridor→port edge value
+  - [x] ports.json `throughput_mbd` set to sourced crude-terminal capacities (SBM/SPM + pipeline egress, cited per-port); metadata only — builder.py never uses it as an edge capacity. Mundra 0.90 / Chennai 0.25 / Mumbai JNPT 0.45 still below modelled routing (notional corridor→port split; real inland refineries also draw via Vadinar's Salaya–Mathura pipeline)
+  - [x] NetworkX graph — graph/state.py (GraphState thread-safe singleton), graph/builder.py (build_graph_from_db: SOURCE→supplier→corridor→port→refinery→SINK, 50 nodes/93 edges; every edge has volume+capacity+effective_capacity; only corridor→port edges tagged `corridor`; refinery→SINK capped at nameplate = over-allocation guard), core/management/commands/build_graph.py
+  - [x] tests/test_graph.py — 12 tests pass. **Baseline max-flow 4.228 mb/d = refinery-deliverable ceiling** (85.8% of 4.926 modelled supply; 0.698 unroutable by design — see two-ceiling note above). Corridor cut test (flow lost, redundancy-aware — multi-corridor ports backfill): Hormuz −1.784, Cape −1.609, Red Sea −0.202. Betweenness ranks Hormuz > Cape > Red Sea. `test_baseline_maxflow_matches_refinery_deliverable` asserts flow == Σ(port→refinery volumes), not the old ">90% of raw supply"
+  - [ ] RIPPLE (do in later phases): pipeline/extract/prompt.py must map LLM "Suez" → Red Sea corridor; `/api/risk-scores/` example in this doc + ExtractedEvent.CORRIDOR_CHOICES still list Suez (CORRIDOR_CHOICES is vestigial — field is FK to Corridor, no migration needed). [DONE: CLAUDE.md's Named Corridors table updated to 3-corridor reconciled model]
+- [ ] Phase 2 — News ingestion (GDELT + RSS + OFAC)
+  - NOTE: Celery Beat / Celery worker / Redis are OUT OF SCOPE for this build (no always-on host; demo triggers the pipeline manually). Write `pipeline/tasks.py` as plain functions with NO Celery imports and NO `.delay()`/`.apply_async()` calls — the orchestrator calls them directly and synchronously. Adding `@shared_task` wrappers + Beat later is then a bolt-on, not a refactor.
 - [ ] Phase 3 — Openai api extraction + risk scoring + graph weight update
 - [ ] Phase 4 — Criticality engine (centrality + max-flow + cascading failure)
 - [ ] Phase 5 — Response layer (reroute optimizer + SPR drawdown LP)

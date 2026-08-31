@@ -5,15 +5,17 @@
     "lat": 22.46,
     "lon": 69.37,
     "throughput_mbd": 1.40,
-    "primary_user": "Reliance Industries"
+    "primary_user": "Reliance Industries",
+    "source": "Nayara Energy Vadinar terminal (20 MMTPA refinery intake) plus Reliance Sikka/Jamnagar SPM complex; ~1.4 mb/d combined crude discharge. EIA/PPAC terminal data 2025-26"
   },
   {
     "name": "Mundra",
     "state": "Gujarat",
     "lat": 22.84,
     "lon": 69.72,
-    "throughput_mbd": 0.60,
-    "primary_user": "IOC/HPCL/BPCL"
+    "throughput_mbd": 0.90,
+    "primary_user": "IOC/HPCL/BPCL",
+    "source": "APSEZ SBM 9 MMTPA + sanctioned 10 MMTPA expansion feeding the 17.5 MMTPA Mundra-Panipat crude pipeline (IOCL Board, Dec 2021) + HMEL dedicated SBM ~11.3 MMTPA for Bathinda. ~0.9 mb/d built-out. NOTE: model routes 1.155 mb/d here - excess reflects the notional 3-corridor->port split; inland cluster refineries (Panipat, Mathura) also draw crude from Vadinar via the Salaya-Mathura pipeline in reality"
   },
   {
     "name": "Sikka",
@@ -21,7 +23,8 @@
     "lat": 22.43,
     "lon": 69.35,
     "throughput_mbd": 0.30,
-    "primary_user": "HPCL/ONGC"
+    "primary_user": "HPCL/ONGC",
+    "source": "Sikka marine terminal, Gujarat - part of the Jamnagar SPM complex; modelled as IOC Koyali alternate receiving point"
   },
   {
     "name": "Mumbai JNPT",
@@ -29,23 +32,26 @@
     "lat": 18.95,
     "lon": 72.95,
     "throughput_mbd": 0.45,
-    "primary_user": "BPCL/HPCL"
+    "primary_user": "BPCL/HPCL",
+    "source": "BPCL Uran + HPCL Mumbai offshore moorings; combined Mumbai refinery intake 21.5 MMTPA (~0.43 mb/d). NOTE: model routes 0.60 mb/d here - excess is notional corridor->port allocation, not physical capacity"
   },
   {
     "name": "Mangaluru",
     "state": "Karnataka",
     "lat": 12.87,
     "lon": 74.84,
-    "throughput_mbd": 0.20,
-    "primary_user": "MRPL"
+    "throughput_mbd": 0.30,
+    "primary_user": "MRPL",
+    "source": "MRPL VLCC SPM at New Mangalore Port; refinery intake 15 MMTPA (~0.30 mb/d)"
   },
   {
     "name": "Kochi",
     "state": "Kerala",
     "lat": 9.96,
     "lon": 76.27,
-    "throughput_mbd": 0.18,
-    "primary_user": "BPCL Kochi"
+    "throughput_mbd": 0.32,
+    "primary_user": "BPCL Kochi",
+    "source": "BPCL Kochi SPM; refinery intake 15.5 MMTPA (~0.31 mb/d)"
   },
   {
     "name": "Chennai",
@@ -53,23 +59,26 @@
     "lat": 13.08,
     "lon": 80.30,
     "throughput_mbd": 0.25,
-    "primary_user": "CPCL/IOC"
+    "primary_user": "CPCL/IOC",
+    "source": "CPCL Manali crude via Chennai/Kamarajar (Ennore) port; refinery intake 10.5 MMTPA (~0.21 mb/d). NOTE: model routes 0.483 mb/d here - excess is notional corridor->port allocation"
   },
   {
     "name": "Paradip",
     "state": "Odisha",
     "lat": 20.32,
     "lon": 86.67,
-    "throughput_mbd": 0.35,
-    "primary_user": "IOC"
+    "throughput_mbd": 0.50,
+    "primary_user": "IOC",
+    "source": "IOCL Paradip 3x VLCC SPM (~25 km offshore) + 1.1 MMT tank farm; feeds Paradip refinery (15 MMTPA) plus onward flow to Haldia/Barauni via PHBPL pipeline"
   },
   {
     "name": "Vizag",
     "state": "Andhra Pradesh",
     "lat": 17.68,
     "lon": 83.28,
-    "throughput_mbd": 0.20,
-    "primary_user": "HPCL"
+    "throughput_mbd": 0.40,
+    "primary_user": "HPCL",
+    "source": "HPCL Visakhapatnam VLCC SPM; refinery intake 15 MMTPA (~0.30 mb/d) plus ISPR strategic petroleum reserve fills (1.33 MMT cavern at Visakhapatnam)"
   },
   {
     "name": "Haldia",
@@ -77,6 +86,7 @@
     "lat": 22.03,
     "lon": 88.07,
     "throughput_mbd": 0.20,
-    "primary_user": "IOC"
+    "primary_user": "IOC",
+    "source": "IOCL Haldia dock (draft-limited on the Hooghly, no SPM); IOC Haldia refinery 8 MMTPA plus pipeline redistribution to Barauni and the NE refineries, also fed onward by PHBPL from Paradip"
   }
 ]

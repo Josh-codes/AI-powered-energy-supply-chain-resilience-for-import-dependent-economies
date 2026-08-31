@@ -1,71 +1,488 @@
 {
   "supplier_to_corridor": [
-    {"supplier": "Saudi Arabia", "corridor": "Hormuz", "volume_mbd": 0.85, "api_gravity": 32.0, "sulfur_pct": 1.8},
-    {"supplier": "Iraq", "corridor": "Hormuz", "volume_mbd": 1.10, "api_gravity": 30.0, "sulfur_pct": 2.5},
-    {"supplier": "UAE", "corridor": "Hormuz", "volume_mbd": 0.35, "api_gravity": 38.0, "sulfur_pct": 0.7},
-    {"supplier": "UAE", "corridor": "Cape", "volume_mbd": 0.10, "api_gravity": 38.0, "sulfur_pct": 0.7},
-    {"supplier": "Kuwait", "corridor": "Hormuz", "volume_mbd": 0.20, "api_gravity": 31.0, "sulfur_pct": 2.5},
-    {"supplier": "Oman", "corridor": "Hormuz", "volume_mbd": 0.12, "api_gravity": 32.0, "sulfur_pct": 1.0},
-    {"supplier": "Russia", "corridor": "Cape", "volume_mbd": 0.70, "api_gravity": 31.0, "sulfur_pct": 1.5},
-    {"supplier": "Russia", "corridor": "Suez", "volume_mbd": 0.25, "api_gravity": 31.0, "sulfur_pct": 1.5},
-    {"supplier": "USA", "corridor": "Cape", "volume_mbd": 0.20, "api_gravity": 39.0, "sulfur_pct": 0.3},
-    {"supplier": "Nigeria", "corridor": "Cape", "volume_mbd": 0.10, "api_gravity": 34.0, "sulfur_pct": 0.1},
-    {"supplier": "Angola", "corridor": "Cape", "volume_mbd": 0.08, "api_gravity": 31.0, "sulfur_pct": 0.2},
-    {"supplier": "Mexico", "corridor": "Cape", "volume_mbd": 0.07, "api_gravity": 22.0, "sulfur_pct": 3.3},
-    {"supplier": "Libya", "corridor": "Suez", "volume_mbd": 0.05, "api_gravity": 36.0, "sulfur_pct": 0.4},
-    {"supplier": "Kazakhstan", "corridor": "Suez", "volume_mbd": 0.08, "api_gravity": 44.0, "sulfur_pct": 0.5}
+    {
+      "supplier": "Russia",
+      "corridor": "Cape",
+      "volume_mbd": 1.445,
+      "api_gravity": 31.0,
+      "sulfur_pct": 1.5,
+      "crude_grade": "Urals / ESPO",
+      "source": "GTAIC/Kpler Nov 2024-Oct 2025 volume share 34.19% \u2014 FY 2025-26 proxy. 85% routed via Cape post-2022 sanctions shift"
+    },
+    {
+      "supplier": "Russia",
+      "corridor": "Red Sea",
+      "volume_mbd": 0.255,
+      "api_gravity": 31.0,
+      "sulfur_pct": 1.5,
+      "crude_grade": "Urals",
+      "source": "GTAIC/Kpler Nov 2024-Oct 2025 \u2014 15% of Russia volume via Baltic/Suez/Bab-el-Mandeb route"
+    },
+    {
+      "supplier": "Iraq",
+      "corridor": "Hormuz",
+      "volume_mbd": 0.994,
+      "api_gravity": 30.0,
+      "sulfur_pct": 2.5,
+      "crude_grade": "Basra Light / Basra Heavy",
+      "source": "OPEC/TradeInt FY 2025-26 \u2014 consistent ~20% share of 4.97 mb/day"
+    },
+    {
+      "supplier": "Saudi Arabia",
+      "corridor": "Hormuz",
+      "volume_mbd": 0.696,
+      "api_gravity": 32.0,
+      "sulfur_pct": 1.8,
+      "crude_grade": "Arab Light / Arab Heavy",
+      "source": "FY 2025-26 mid-teens share \u2014 14.0% of 4.97 mb/day"
+    },
+    {
+      "supplier": "UAE",
+      "corridor": "Hormuz",
+      "volume_mbd": 0.378,
+      "api_gravity": 38.0,
+      "sulfur_pct": 0.7,
+      "crude_grade": "Murban / Upper Zakum",
+      "source": "GTAIC Nov 2024-Oct 2025 \u2014 9.5% total. 80% via Hormuz = 0.378 mb/day"
+    },
+    {
+      "supplier": "UAE",
+      "corridor": "Cape",
+      "volume_mbd": 0.094,
+      "api_gravity": 38.0,
+      "sulfur_pct": 0.7,
+      "crude_grade": "Murban",
+      "source": "GTAIC Nov 2024-Oct 2025 \u2014 20% of UAE volume via Fujairah direct Cape route"
+    },
+    {
+      "supplier": "USA",
+      "corridor": "Cape",
+      "volume_mbd": 0.403,
+      "api_gravity": 39.0,
+      "sulfur_pct": 0.3,
+      "crude_grade": "WTI / Mars",
+      "source": "Economic Survey FY26 April-December 2025 \u2014 8.1% of 4.97 mb/day"
+    },
+    {
+      "supplier": "Nigeria",
+      "corridor": "Cape",
+      "volume_mbd": 0.164,
+      "api_gravity": 34.0,
+      "sulfur_pct": 0.1,
+      "crude_grade": "Bonny Light",
+      "source": "Economic Survey FY26 \u2014 3.3% of 4.97 mb/day"
+    },
+    {
+      "supplier": "Kuwait",
+      "corridor": "Hormuz",
+      "volume_mbd": 0.149,
+      "api_gravity": 31.0,
+      "sulfur_pct": 2.5,
+      "crude_grade": "Kuwait Export Crude",
+      "source": "FY 2025-26 consistent estimate \u2014 3.0% of 4.97 mb/day"
+    },
+    {
+      "supplier": "Angola",
+      "corridor": "Cape",
+      "volume_mbd": 0.099,
+      "api_gravity": 31.0,
+      "sulfur_pct": 0.2,
+      "crude_grade": "Girassol",
+      "source": "FY 2025-26 estimate \u2014 2.0% of 4.97 mb/day"
+    },
+    {
+      "supplier": "Oman",
+      "corridor": "Hormuz",
+      "volume_mbd": 0.099,
+      "api_gravity": 32.0,
+      "sulfur_pct": 1.0,
+      "crude_grade": "Oman Blend",
+      "source": "FY 2025-26 estimate \u2014 2.0% of 4.97 mb/day"
+    },
+    {
+      "supplier": "Kazakhstan",
+      "corridor": "Red Sea",
+      "volume_mbd": 0.075,
+      "api_gravity": 44.0,
+      "sulfur_pct": 0.5,
+      "crude_grade": "CPC Blend",
+      "source": "FY 2025-26 estimate \u2014 1.5% of 4.97 mb/day. CPC pipeline via Black Sea then Suez/Bab-el-Mandeb"
+    },
+    {
+      "supplier": "Mexico",
+      "corridor": "Cape",
+      "volume_mbd": 0.05,
+      "api_gravity": 22.0,
+      "sulfur_pct": 3.3,
+      "crude_grade": "Maya",
+      "source": "FY 2025-26 estimate \u2014 1.0% of 4.97 mb/day"
+    },
+    {
+      "supplier": "Libya",
+      "corridor": "Red Sea",
+      "volume_mbd": 0.025,
+      "api_gravity": 36.0,
+      "sulfur_pct": 0.4,
+      "crude_grade": "Es Sider",
+      "source": "Economic Survey FY26 \u2014 0.5% of 4.97 mb/day. Routes via Mediterranean then Suez/Bab-el-Mandeb"
+    }
   ],
-
   "corridor_to_port": [
-    {"corridor": "Hormuz", "port": "Vadinar", "volume_mbd": 1.40, "transit_days": 3},
-    {"corridor": "Hormuz", "port": "Mundra", "volume_mbd": 0.60, "transit_days": 3},
-    {"corridor": "Hormuz", "port": "Sikka", "volume_mbd": 0.30, "transit_days": 3},
-    {"corridor": "Hormuz", "port": "Mumbai JNPT", "volume_mbd": 0.40, "transit_days": 5},
-    {"corridor": "Hormuz", "port": "Mangaluru", "volume_mbd": 0.18, "transit_days": 4},
-    {"corridor": "Hormuz", "port": "Kochi", "volume_mbd": 0.15, "transit_days": 4},
-    {"corridor": "Hormuz", "port": "Chennai", "volume_mbd": 0.20, "transit_days": 6},
-    {"corridor": "Hormuz", "port": "Paradip", "volume_mbd": 0.25, "transit_days": 7},
-    {"corridor": "Hormuz", "port": "Vizag", "volume_mbd": 0.15, "transit_days": 6},
-    {"corridor": "Hormuz", "port": "Haldia", "volume_mbd": 0.15, "transit_days": 8},
-    {"corridor": "Red Sea", "port": "Mundra", "volume_mbd": 0.30, "transit_days": 8},
-    {"corridor": "Red Sea", "port": "Chennai", "volume_mbd": 0.20, "transit_days": 6},
-    {"corridor": "Red Sea", "port": "Paradip", "volume_mbd": 0.15, "transit_days": 7},
-    {"corridor": "Red Sea", "port": "Vizag", "volume_mbd": 0.15, "transit_days": 6},
-    {"corridor": "Red Sea", "port": "Haldia", "volume_mbd": 0.10, "transit_days": 8},
-    {"corridor": "Suez", "port": "Mundra", "volume_mbd": 0.25, "transit_days": 12},
-    {"corridor": "Suez", "port": "Chennai", "volume_mbd": 0.15, "transit_days": 10},
-    {"corridor": "Suez", "port": "Paradip", "volume_mbd": 0.10, "transit_days": 11},
-    {"corridor": "Suez", "port": "Haldia", "volume_mbd": 0.10, "transit_days": 12},
-    {"corridor": "Cape", "port": "Vadinar", "volume_mbd": 0.15, "transit_days": 28},
-    {"corridor": "Cape", "port": "Mundra", "volume_mbd": 0.20, "transit_days": 28},
-    {"corridor": "Cape", "port": "Mumbai JNPT", "volume_mbd": 0.10, "transit_days": 25},
-    {"corridor": "Cape", "port": "Chennai", "volume_mbd": 0.08, "transit_days": 22},
-    {"corridor": "Cape", "port": "Paradip", "volume_mbd": 0.05, "transit_days": 20},
-    {"corridor": "Cape", "port": "Vizag", "volume_mbd": 0.05, "transit_days": 21}
+    {
+      "corridor": "Hormuz",
+      "port": "Vadinar",
+      "volume_mbd": 0.855,
+      "transit_days": 3,
+      "note": "Primary terminal for Reliance and Nayara Energy \u2014 largest crude receiving terminal in India"
+    },
+    {
+      "corridor": "Hormuz",
+      "port": "Mundra",
+      "volume_mbd": 0.367,
+      "transit_days": 3,
+      "note": "IOC, HPCL Bathinda, BPCL Bina inland refineries receive via Mundra"
+    },
+    {
+      "corridor": "Hormuz",
+      "port": "Sikka",
+      "volume_mbd": 0.153,
+      "transit_days": 3,
+      "note": "HPCL and ONGC terminal in Gujarat"
+    },
+    {
+      "corridor": "Hormuz",
+      "port": "Mumbai JNPT",
+      "volume_mbd": 0.245,
+      "transit_days": 5,
+      "note": "BPCL and HPCL Mumbai refineries"
+    },
+    {
+      "corridor": "Hormuz",
+      "port": "Mangaluru",
+      "volume_mbd": 0.122,
+      "transit_days": 4,
+      "note": "MRPL dedicated terminal"
+    },
+    {
+      "corridor": "Hormuz",
+      "port": "Kochi",
+      "volume_mbd": 0.11,
+      "transit_days": 4,
+      "note": "BPCL Kochi refinery terminal"
+    },
+    {
+      "corridor": "Hormuz",
+      "port": "Chennai",
+      "volume_mbd": 0.11,
+      "transit_days": 6,
+      "note": "CPCL Manali refinery terminal"
+    },
+    {
+      "corridor": "Hormuz",
+      "port": "Paradip",
+      "volume_mbd": 0.153,
+      "transit_days": 7,
+      "note": "IOC Paradip refinery terminal"
+    },
+    {
+      "corridor": "Hormuz",
+      "port": "Vizag",
+      "volume_mbd": 0.11,
+      "transit_days": 6,
+      "note": "HPCL Vizag refinery terminal \u2014 also SPR site"
+    },
+    {
+      "corridor": "Hormuz",
+      "port": "Haldia",
+      "volume_mbd": 0.092,
+      "transit_days": 8,
+      "note": "IOC Haldia and northeast refineries via pipeline"
+    },
+    {
+      "corridor": "Red Sea",
+      "port": "Mundra",
+      "volume_mbd": 0.151,
+      "transit_days": 12,
+      "note": "Russia Urals (Baltic route), Kazakhstan CPC Blend and Libya via Suez then Bab-el-Mandeb"
+    },
+    {
+      "corridor": "Red Sea",
+      "port": "Chennai",
+      "volume_mbd": 0.089,
+      "transit_days": 10,
+      "note": "Mediterranean and Black Sea crude for CPCL"
+    },
+    {
+      "corridor": "Red Sea",
+      "port": "Paradip",
+      "volume_mbd": 0.064,
+      "transit_days": 11,
+      "note": "East coast port receiving Red Sea routed crude"
+    },
+    {
+      "corridor": "Red Sea",
+      "port": "Haldia",
+      "volume_mbd": 0.051,
+      "transit_days": 12,
+      "note": "East coast port receiving Red Sea routed crude"
+    },
+    {
+      "corridor": "Cape",
+      "port": "Vadinar",
+      "volume_mbd": 0.497,
+      "transit_days": 28,
+      "note": "Reliance Jamnagar can receive Cape-routed crude \u2014 largest refinery handles any grade"
+    },
+    {
+      "corridor": "Cape",
+      "port": "Mundra",
+      "volume_mbd": 0.637,
+      "transit_days": 28,
+      "note": "Russia Urals (majority Cape route), USA WTI and West Africa crude primarily routed here"
+    },
+    {
+      "corridor": "Cape",
+      "port": "Mumbai JNPT",
+      "volume_mbd": 0.355,
+      "transit_days": 25,
+      "note": "West Africa crude for BPCL Mumbai"
+    },
+    {
+      "corridor": "Cape",
+      "port": "Chennai",
+      "volume_mbd": 0.284,
+      "transit_days": 22,
+      "note": "West Africa crude for CPCL"
+    },
+    {
+      "corridor": "Cape",
+      "port": "Paradip",
+      "volume_mbd": 0.241,
+      "transit_days": 20,
+      "note": "East coast Cape-routed crude"
+    },
+    {
+      "corridor": "Cape",
+      "port": "Vizag",
+      "volume_mbd": 0.241,
+      "transit_days": 21,
+      "note": "East coast Cape-routed crude"
+    }
   ],
-
   "port_to_refinery": [
-    {"port": "Vadinar", "refinery": "Reliance Jamnagar DTA", "volume_mbd": 0.66},
-    {"port": "Vadinar", "refinery": "Reliance Jamnagar SEZ", "volume_mbd": 0.58},
-    {"port": "Mundra", "refinery": "IOC Koyali", "volume_mbd": 0.27},
-    {"port": "Mundra", "refinery": "IOC Panipat", "volume_mbd": 0.30},
-    {"port": "Mundra", "refinery": "IOC Mathura", "volume_mbd": 0.16},
-    {"port": "Mundra", "refinery": "HPCL Bathinda", "volume_mbd": 0.18},
-    {"port": "Mundra", "refinery": "BPCL Bina", "volume_mbd": 0.15},
-    {"port": "Sikka", "refinery": "IOC Koyali", "volume_mbd": 0.10},
-    {"port": "Mumbai JNPT", "refinery": "BPCL Mumbai", "volume_mbd": 0.24},
-    {"port": "Mumbai JNPT", "refinery": "HPCL Mumbai", "volume_mbd": 0.17},
-    {"port": "Mangaluru", "refinery": "MRPL Mangaluru", "volume_mbd": 0.18},
-    {"port": "Kochi", "refinery": "BPCL Kochi", "volume_mbd": 0.15},
-    {"port": "Chennai", "refinery": "CPCL Chennai", "volume_mbd": 0.21},
-    {"port": "Chennai", "refinery": "CPCL Nagapattinam", "volume_mbd": 0.01},
-    {"port": "Paradip", "refinery": "IOC Paradip", "volume_mbd": 0.30},
-    {"port": "Vizag", "refinery": "HPCL Vizag", "volume_mbd": 0.17},
-    {"port": "Vizag", "refinery": "ONGC Tatipaka", "volume_mbd": 0.01},
-    {"port": "Haldia", "refinery": "IOC Haldia", "volume_mbd": 0.15},
-    {"port": "Haldia", "refinery": "IOC Barauni", "volume_mbd": 0.12},
-    {"port": "Haldia", "refinery": "IOC Guwahati", "volume_mbd": 0.03},
-    {"port": "Haldia", "refinery": "IOC Digboi", "volume_mbd": 0.01},
-    {"port": "Haldia", "refinery": "NRL Numaligarh", "volume_mbd": 0.06}
-  ]
+    {
+      "port": "Vadinar",
+      "refinery": "RIL Jamnagar DTA",
+      "volume_mbd": 0.506,
+      "capacity_mbd": 0.663,
+      "source": "PPAC April 2026 \u2014 33,000 thousand MT/yr",
+      "note": " | Rescaled to conserve flow: Vadinar corridor inflow (1.352 mbd) is below combined nameplate capacity (1.772 mbd); refineries run at ~76% utilization under baseline flows."
+    },
+    {
+      "port": "Vadinar",
+      "refinery": "RPL Jamnagar SEZ",
+      "volume_mbd": 0.539,
+      "capacity_mbd": 0.707,
+      "source": "PPAC April 2026 \u2014 35,200 thousand MT/yr",
+      "note": " | Rescaled to conserve flow: Vadinar corridor inflow (1.352 mbd) is below combined nameplate capacity (1.772 mbd); refineries run at ~76% utilization under baseline flows."
+    },
+    {
+      "port": "Vadinar",
+      "refinery": "NEL Vadinar (Nayara Energy)",
+      "volume_mbd": 0.307,
+      "capacity_mbd": 0.402,
+      "source": "PPAC April 2026 \u2014 20,000 thousand MT/yr",
+      "note": " | Rescaled to conserve flow: Vadinar corridor inflow (1.352 mbd) is below combined nameplate capacity (1.772 mbd); refineries run at ~76% utilization under baseline flows."
+    },
+    {
+      "port": "Mundra",
+      "refinery": "IOC Koyali",
+      "volume_mbd": 0.175,
+      "capacity_mbd": 0.275,
+      "source": "PPAC April 2026 \u2014 13,700 thousand MT/yr",
+      "note": " | Corrected: was double-counted with Sikka->Koyali edge, pushing Koyali 36% over its 0.275 mbd capacity. Koyali capacity now split 0.175 Mundra + 0.100 Sikka = 0.275 (at capacity)."
+    },
+    {
+      "port": "Mundra",
+      "refinery": "IOC Panipat",
+      "volume_mbd": 0.287,
+      "capacity_mbd": 0.301,
+      "source": "PPAC April 2026 \u2014 15,000 thousand MT/yr",
+      "note": " | Rescaled proportionally so Mundra port outflow matches corridor inflow (1.155 mbd)."
+    },
+    {
+      "port": "Mundra",
+      "refinery": "IOC Mathura",
+      "volume_mbd": 0.154,
+      "capacity_mbd": 0.161,
+      "source": "PPAC April 2026 \u2014 8,000 thousand MT/yr",
+      "note": " | Rescaled proportionally so Mundra port outflow matches corridor inflow (1.155 mbd)."
+    },
+    {
+      "port": "Mundra",
+      "refinery": "HMEL Bathinda",
+      "volume_mbd": 0.217,
+      "capacity_mbd": 0.227,
+      "source": "PPAC April 2026 \u2014 11,300 thousand MT/yr",
+      "note": " | Rescaled proportionally so Mundra port outflow matches corridor inflow (1.155 mbd)."
+    },
+    {
+      "port": "Mundra",
+      "refinery": "BPCL Bina",
+      "volume_mbd": 0.15,
+      "capacity_mbd": 0.157,
+      "source": "PPAC April 2026 \u2014 7,800 thousand MT/yr",
+      "note": " | Rescaled proportionally so Mundra port outflow matches corridor inflow (1.155 mbd)."
+    },
+    {
+      "port": "Mundra",
+      "refinery": "HRRL Pachpadra",
+      "volume_mbd": 0.172,
+      "capacity_mbd": 0.181,
+      "source": "PPAC April 2026 \u2014 9,000 thousand MT/yr \u2014 new refinery",
+      "note": " | Rescaled proportionally so Mundra port outflow matches corridor inflow (1.155 mbd)."
+    },
+    {
+      "port": "Sikka",
+      "refinery": "IOC Koyali",
+      "volume_mbd": 0.1,
+      "capacity_mbd": 0.275,
+      "note": "Sikka is alternate receiving port for Koyali \u2014 partial volume | Unchanged; confirmed consistent with Sikka's own corridor inflow (0.153 mbd) and Koyali's capacity ceiling."
+    },
+    {
+      "port": "Mumbai JNPT",
+      "refinery": "BPCL Mumbai",
+      "volume_mbd": 0.241,
+      "capacity_mbd": 0.241,
+      "source": "PPAC April 2026 \u2014 12,000 thousand MT/yr"
+    },
+    {
+      "port": "Mumbai JNPT",
+      "refinery": "HPCL Mumbai",
+      "volume_mbd": 0.191,
+      "capacity_mbd": 0.191,
+      "source": "PPAC April 2026 \u2014 9,500 thousand MT/yr"
+    },
+    {
+      "port": "Mangaluru",
+      "refinery": "MRPL Mangaluru",
+      "volume_mbd": 0.122,
+      "capacity_mbd": 0.301,
+      "source": "PPAC April 2026 \u2014 15,000 thousand MT/yr",
+      "note": " | Rescaled to match Mangaluru corridor inflow (0.122 mbd vs 0.301 mbd nameplate capacity) \u2014 implies ~40% utilization under baseline single-corridor (Hormuz-only) supply; flagged as a resilience-relevant finding (Mangaluru has no Red Sea/Cape alternate feed in this model)."
+    },
+    {
+      "port": "Kochi",
+      "refinery": "BPCL Kochi",
+      "volume_mbd": 0.11,
+      "capacity_mbd": 0.311,
+      "source": "PPAC April 2026 \u2014 15,500 thousand MT/yr",
+      "note": " | Rescaled to match Kochi corridor inflow (0.11 mbd vs 0.311 mbd nameplate capacity) \u2014 implies ~35% utilization under baseline single-corridor (Hormuz-only) supply; flagged as a resilience-relevant finding."
+    },
+    {
+      "port": "Chennai",
+      "refinery": "CPCL Manali",
+      "volume_mbd": 0.211,
+      "capacity_mbd": 0.211,
+      "source": "PPAC April 2026 \u2014 10,500 thousand MT/yr"
+    },
+    {
+      "port": "Paradip",
+      "refinery": "IOC Paradip",
+      "volume_mbd": 0.301,
+      "capacity_mbd": 0.301,
+      "source": "PPAC April 2026 \u2014 15,000 thousand MT/yr"
+    },
+    {
+      "port": "Vizag",
+      "refinery": "HPCL Vizag",
+      "volume_mbd": 0.301,
+      "capacity_mbd": 0.301,
+      "source": "PPAC April 2026 \u2014 15,000 thousand MT/yr"
+    },
+    {
+      "port": "Vizag",
+      "refinery": "ONGC Tatipaka",
+      "volume_mbd": 0.001,
+      "capacity_mbd": 0.001,
+      "source": "PPAC April 2026 \u2014 66 thousand MT/yr \u2014 micro refinery on local crude"
+    },
+    {
+      "port": "Haldia",
+      "refinery": "IOC Haldia",
+      "volume_mbd": 0.053,
+      "capacity_mbd": 0.161,
+      "source": "PPAC April 2026 \u2014 8,000 thousand MT/yr",
+      "note": " | Rescaled to conserve flow with Haldia corridor inflow (0.143 mbd vs 0.432 mbd combined nameplate capacity) \u2014 implies ~33% utilization; NE refineries (Digboi, Guwahati, Bongaigaon, Numaligarh) historically also run partly on local Assam crude not captured in this import-corridor model, which likely explains most of the gap."
+    },
+    {
+      "port": "Haldia",
+      "refinery": "IOC Barauni",
+      "volume_mbd": 0.04,
+      "capacity_mbd": 0.12,
+      "source": "PPAC April 2026 \u2014 6,000 thousand MT/yr \u2014 receives via pipeline from Haldia",
+      "note": " | Rescaled to conserve flow with Haldia corridor inflow (0.143 mbd vs 0.432 mbd combined nameplate capacity) \u2014 implies ~33% utilization; NE refineries (Digboi, Guwahati, Bongaigaon, Numaligarh) historically also run partly on local Assam crude not captured in this import-corridor model, which likely explains most of the gap."
+    },
+    {
+      "port": "Haldia",
+      "refinery": "IOC Guwahati",
+      "volume_mbd": 0.008,
+      "capacity_mbd": 0.024,
+      "source": "PPAC April 2026 \u2014 1,200 thousand MT/yr \u2014 receives via pipeline from Haldia",
+      "note": " | Rescaled to conserve flow with Haldia corridor inflow (0.143 mbd vs 0.432 mbd combined nameplate capacity) \u2014 implies ~33% utilization; NE refineries (Digboi, Guwahati, Bongaigaon, Numaligarh) historically also run partly on local Assam crude not captured in this import-corridor model, which likely explains most of the gap."
+    },
+    {
+      "port": "Haldia",
+      "refinery": "IOC Bongaigaon",
+      "volume_mbd": 0.018,
+      "capacity_mbd": 0.054,
+      "source": "PPAC April 2026 \u2014 2,700 thousand MT/yr \u2014 receives via pipeline from Haldia",
+      "note": " | Rescaled to conserve flow with Haldia corridor inflow (0.143 mbd vs 0.432 mbd combined nameplate capacity) \u2014 implies ~33% utilization; NE refineries (Digboi, Guwahati, Bongaigaon, Numaligarh) historically also run partly on local Assam crude not captured in this import-corridor model, which likely explains most of the gap."
+    },
+    {
+      "port": "Haldia",
+      "refinery": "IOC Digboi",
+      "volume_mbd": 0.004,
+      "capacity_mbd": 0.013,
+      "source": "PPAC April 2026 \u2014 650 thousand MT/yr \u2014 oldest refinery in India, runs on local crude",
+      "note": " | Rescaled to conserve flow with Haldia corridor inflow (0.143 mbd vs 0.432 mbd combined nameplate capacity) \u2014 implies ~33% utilization; NE refineries (Digboi, Guwahati, Bongaigaon, Numaligarh) historically also run partly on local Assam crude not captured in this import-corridor model, which likely explains most of the gap."
+    },
+    {
+      "port": "Haldia",
+      "refinery": "NRL Numaligarh",
+      "volume_mbd": 0.02,
+      "capacity_mbd": 0.06,
+      "source": "PPAC April 2026 \u2014 3,000 thousand MT/yr \u2014 receives via pipeline from Haldia",
+      "note": " | Rescaled to conserve flow with Haldia corridor inflow (0.143 mbd vs 0.432 mbd combined nameplate capacity) \u2014 implies ~33% utilization; NE refineries (Digboi, Guwahati, Bongaigaon, Numaligarh) historically also run partly on local Assam crude not captured in this import-corridor model, which likely explains most of the gap."
+    }
+  ],
+  "validation": {
+    "baseline_period": "FY 2025-26 (April 2025 to March 2026) \u2014 pre-crisis normal conditions",
+    "corridor_model": "3 corridors \u2014 Hormuz, Red Sea (incl. Suez Canal + Bab-el-Mandeb), Cape. Suez and Bab-el-Mandeb are serial chokepoints on the same Mediterranean/Black Sea route and are collapsed onto the binding constraint.",
+    "modelled_supplier_inflow_mbd": 4.926,
+    "corridor_inflow_mbd": {
+      "Hormuz": 2.316,
+      "Red Sea": 0.355,
+      "Cape": 2.255
+    },
+    "corridor_outflow_mbd": {
+      "Hormuz": 2.317,
+      "Red Sea": 0.355,
+      "Cape": 2.255
+    },
+    "total_india_imports_mbd": 4.97,
+    "source_imports": "Reuters April 2026 \u2014 FY 2025-26 average 4.97 mb/day",
+    "total_refinery_capacity_mbd": 5.364,
+    "source_capacity": "PPAC Refining Capacity April 2026 \u2014 267,116 thousand MT/yr",
+    "hormuz_captive_mbd": 1.938,
+    "hormuz_captive_note": "Iraq + Saudi Arabia + Kuwait + Oman \u2014 suppliers with no viable Hormuz bypass",
+    "hormuz_total_mbd": 2.316,
+    "hormuz_total_note": "Includes UAE 0.378 which has partial Fujairah bypass",
+    "russia_share_pct": 34.51,
+    "russia_source": "GTAIC/Kpler Nov 2024-Oct 2025 volume share; recomputed to 34.51% after reconciling edges.json with supplier_to_corridor totals (was previously cited as 34.19%/34.2%, a pre-reconciliation figure)",
+    "top_suppliers_note": "Russia dominates at 34.51% via Cape (reconciled figure) \u2014 this is the pre-crisis normal state. Crisis scenario sees Russia surge further as Hormuz-dependent suppliers are cut off.",
+    "port_refinery_reconciliation_note": "This model has TWO distinct capacity ceilings, not one, and they should not be conflated in max-flow/criticality analysis: (1) corridor_throughput_mbd (4.927) = sourced import volume reaching Indian ports \u2014 use this to measure how much crude a corridor disruption denies entry to India. (2) refinery_deliverable_mbd (4.228) = the hard downstream cap after refinery capacity constraints \u2014 use THIS as the baseline max-flow for reroute/criticality scenarios, since crude stranded at a port with no refinery capacity to absorb it does not produce fuel regardless of which corridor delivered it. Using 4.927 as baseline max-flow understates criticality at ports with single/limited refinery offtake (Kochi, Mangaluru, Haldia cluster \u2014 already flagged above) and OVERSTATES criticality at oversupplied ports, since a corridor cut into an oversupplied port can register as removing its full edge volume when the refinery there was never absorbing that much. Gap = 0.699 mbd, concentrated at 5 ports with no matching refinery edge to absorb full corridor delivery: {'Sikka': 0.053, 'Mumbai JNPT': 0.168, 'Chennai': 0.272, 'Paradip': 0.157, 'Vizag': 0.049}. Of these, Vizag's stranded volume is PARTIALLY explained: its Hormuz corridor_to_port edge is explicitly annotated 'also SPR site' (Strategic Petroleum Reserve) \u2014 some inflow there is intentionally routed to storage, not a refinery, so it is not a modeling gap. Chennai, Mumbai JNPT, and Paradip have no such annotation in the source data; their surplus (0.597 mbd combined) is genuinely unexplained \u2014 plausible real-world causes (coastal redistribution to other ports, commercial inventory build, unmodeled secondary offtake) are not captured in this 3-layer graph and should be flagged as a limitation rather than silently resolved. Recommendation: for redundancy-aware criticality scoring at a given port, compute residual refinery need after removing one corridor at a time, rather than treating the full corridor_to_port edge value as always load-bearing.",
+    "corridor_throughput_mbd": 4.927,
+    "refinery_deliverable_mbd": 4.228
+  }
 }

@@ -3,36 +3,30 @@
     "name": "Hormuz",
     "display_name": "Strait of Hormuz",
     "capacity_mbd": 17.0,
-    "india_flow_mbd": 6.8,
+    "india_flow_mbd": 2.316,
     "transit_days": 2,
-    "baseline_risk": 0.20,
-    "description": "Strait between Iran and Oman. Critical chokepoint for Middle East exports."
+    "baseline_risk": 0.2,
+    "description": "Strait between Iran and Oman. Critical chokepoint for all Middle East Gulf exports to India.",
+    "source": "IEA Chokepoints 2023, EIA World Oil Transit Chokepoints"
   },
   {
     "name": "Red Sea",
-    "display_name": "Red Sea / Bab-el-Mandeb",
+    "display_name": "Red Sea / Bab-el-Mandeb / Suez Canal",
     "capacity_mbd": 5.8,
-    "india_flow_mbd": 1.2,
-    "transit_days": 4,
+    "india_flow_mbd": 0.355,
+    "transit_days": 8,
     "baseline_risk": 0.15,
-    "description": "Strait between Yemen and Djibouti. Entry point to Suez Canal from south."
-  },
-  {
-    "name": "Suez",
-    "display_name": "Suez Canal",
-    "capacity_mbd": 5.5,
-    "india_flow_mbd": 0.8,
-    "transit_days": 1,
-    "baseline_risk": 0.10,
-    "description": "Canal connecting Red Sea to Mediterranean. Managed by Egypt."
+    "description": "Combined route via Suez Canal and Bab-el-Mandeb strait. Used by Mediterranean and European suppliers to India. Active Houthi threat zone since 2024.",
+    "source": "IEA Red Sea Assessment 2024, EIA Chokepoints"
   },
   {
     "name": "Cape",
     "display_name": "Cape of Good Hope",
     "capacity_mbd": 999.0,
-    "india_flow_mbd": 0.4,
-    "transit_days": 30,
+    "india_flow_mbd": 2.255,
+    "transit_days": 28,
     "baseline_risk": 0.05,
-    "description": "Alternative route around Africa. No chokepoint but significantly longer transit."
+    "description": "Alternative route around Africa. No chokepoint but significantly longer transit. Primary route for Russian, American, and West African crude to India.",
+    "source": "IEA, EIA"
   }
 ]

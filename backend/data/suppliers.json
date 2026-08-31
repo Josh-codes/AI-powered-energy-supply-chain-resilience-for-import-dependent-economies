@@ -3,132 +3,161 @@
     "name": "Iraq",
     "country_code": "IRQ",
     "region": "Middle East",
-    "share_pct": 19.89,
-    "avg_export_mbd": 0.988,
+    "share_pct": 20.18,
+    "avg_export_mbd": 0.994,
     "sanctioned": false,
     "primary_corridor": "Hormuz",
-    "crude_grades": ["Basra Light", "Basra Heavy"],
+    "crude_grades": [
+      "Basra Light",
+      "Basra Heavy"
+    ],
     "source": "TradeInt India Import Data Q1 2026"
   },
   {
     "name": "Russia",
     "country_code": "RUS",
     "region": "Europe/Asia",
-    "share_pct": 17.92,
-    "avg_export_mbd": 0.891,
+    "share_pct": 34.51,
+    "avg_export_mbd": 1.7,
     "sanctioned": false,
     "primary_corridor": "Cape",
-    "crude_grades": ["Urals", "ESPO"],
+    "crude_grades": [
+      "Urals",
+      "ESPO"
+    ],
     "source": "TradeInt India Import Data Q1 2026"
   },
   {
     "name": "Saudi Arabia",
     "country_code": "SAU",
     "region": "Middle East",
-    "share_pct": 16.03,
-    "avg_export_mbd": 0.797,
+    "share_pct": 14.13,
+    "avg_export_mbd": 0.696,
     "sanctioned": false,
     "primary_corridor": "Hormuz",
-    "crude_grades": ["Arab Light", "Arab Heavy"],
+    "crude_grades": [
+      "Arab Light",
+      "Arab Heavy"
+    ],
     "source": "TradeInt India Import Data Q1 2026"
   },
   {
     "name": "UAE",
     "country_code": "ARE",
     "region": "Middle East",
-    "share_pct": 11.00,
-    "avg_export_mbd": 0.547,
+    "share_pct": 9.58,
+    "avg_export_mbd": 0.472,
     "sanctioned": false,
     "primary_corridor": "Hormuz",
-    "crude_grades": ["Murban", "Upper Zakum"],
+    "crude_grades": [
+      "Murban",
+      "Upper Zakum"
+    ],
     "source": "TradeInt India Import Data Q1 2026 / Economic Survey FY26"
   },
   {
     "name": "USA",
     "country_code": "USA",
     "region": "Americas",
-    "share_pct": 8.10,
+    "share_pct": 8.18,
     "avg_export_mbd": 0.403,
     "sanctioned": false,
     "primary_corridor": "Cape",
-    "crude_grades": ["WTI", "Mars"],
+    "crude_grades": [
+      "WTI",
+      "Mars"
+    ],
     "source": "Economic Survey FY26 April-December data"
   },
   {
     "name": "Nigeria",
     "country_code": "NGA",
     "region": "West Africa",
-    "share_pct": 3.30,
+    "share_pct": 3.33,
     "avg_export_mbd": 0.164,
     "sanctioned": false,
     "primary_corridor": "Cape",
-    "crude_grades": ["Bonny Light"],
+    "crude_grades": [
+      "Bonny Light"
+    ],
     "source": "Economic Survey FY26"
   },
   {
     "name": "Kuwait",
     "country_code": "KWT",
     "region": "Middle East",
-    "share_pct": 3.00,
+    "share_pct": 3.02,
     "avg_export_mbd": 0.149,
     "sanctioned": false,
     "primary_corridor": "Hormuz",
-    "crude_grades": ["Kuwait Export"],
+    "crude_grades": [
+      "Kuwait Export"
+    ],
     "source": "OPEC data August 2025"
   },
   {
     "name": "Angola",
     "country_code": "AGO",
     "region": "West Africa",
-    "share_pct": 2.50,
-    "avg_export_mbd": 0.124,
+    "share_pct": 2.01,
+    "avg_export_mbd": 0.099,
     "sanctioned": false,
     "primary_corridor": "Cape",
-    "crude_grades": ["Girassol"],
+    "crude_grades": [
+      "Girassol"
+    ],
     "source": "PPAC country-wise estimates"
   },
   {
     "name": "Mexico",
     "country_code": "MEX",
     "region": "Americas",
-    "share_pct": 1.50,
-    "avg_export_mbd": 0.075,
+    "share_pct": 1.02,
+    "avg_export_mbd": 0.05,
     "sanctioned": false,
     "primary_corridor": "Cape",
-    "crude_grades": ["Maya"],
+    "crude_grades": [
+      "Maya"
+    ],
     "source": "PPAC country-wise estimates"
   },
   {
     "name": "Libya",
     "country_code": "LBY",
     "region": "North Africa",
-    "share_pct": 0.50,
+    "share_pct": 0.51,
     "avg_export_mbd": 0.025,
     "sanctioned": false,
-    "primary_corridor": "Suez",
-    "crude_grades": ["Es Sider"],
+    "primary_corridor": "Red Sea",
+    "crude_grades": [
+      "Es Sider"
+    ],
     "source": "Economic Survey FY26"
   },
   {
     "name": "Kazakhstan",
     "country_code": "KAZ",
     "region": "Central Asia",
-    "share_pct": 1.50,
+    "share_pct": 1.52,
     "avg_export_mbd": 0.075,
     "sanctioned": false,
-    "primary_corridor": "Suez",
-    "crude_grades": ["CPC Blend"],
+    "primary_corridor": "Red Sea",
+    "crude_grades": [
+      "CPC Blend"
+    ],
     "source": "PPAC country-wise estimates"
   },
   {
     "name": "Oman",
     "country_code": "OMN",
     "region": "Middle East",
-    "share_pct": 2.00,
+    "share_pct": 2.01,
     "avg_export_mbd": 0.099,
     "sanctioned": false,
     "primary_corridor": "Hormuz",
-    "crude_grades": ["Oman Blend"],
+    "crude_grades": [
+      "Oman Blend"
+    ],
     "source": "PPAC country-wise estimates"
   }
 ]
