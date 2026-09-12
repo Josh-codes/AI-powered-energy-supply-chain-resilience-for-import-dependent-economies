@@ -274,3 +274,7 @@ OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
 OPENAI_MODEL = env("OPENAI_MODEL", default="gpt-4o-mini")
 OPENAI_MAX_TOKENS = env.int("OPENAI_MAX_TOKENS", default=500)
 EIA_API_KEY = env("EIA_API_KEY", default="")
+
+# Ingestion source URLs and the GDELT query are not secrets and do not vary by
+# environment — they live as constants in pipeline/ingest/*.py so the data-
+# collection parameters behind a run stay in version control.
