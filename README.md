@@ -10,17 +10,6 @@ outputs are served over a REST API consumed by a React dashboard.
 risk-weighted criticality rankings — quantifying how current geopolitical conditions shift
 India's structural import vulnerability.
 
----
-
-## Project Info
-
-| | |
-|---|---|
-| Type | B.E. Major Thesis Project |
-| Institution | Fr. Conceicao Rodrigues College of Engineering (FR. CRCE) |
-| Department | Artificial Intelligence & Data Science |
-| Academic Year | 2026–2027 |
-| Developer | Joshua (solo backend developer) |
 
 ---
 
