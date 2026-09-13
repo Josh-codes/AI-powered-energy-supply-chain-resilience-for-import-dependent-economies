@@ -270,9 +270,21 @@ LOGGING = {
 # ---------------------------------------------------------------------------
 # External API keys / model config (read where needed, never hardcode)
 # ---------------------------------------------------------------------------
-OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
-OPENAI_MODEL = env("OPENAI_MODEL", default="gpt-4o-mini")
-OPENAI_MAX_TOKENS = env.int("OPENAI_MAX_TOKENS", default=500)
+# Extraction goes through OpenRouter, which speaks the OpenAI wire protocol — so
+# the openai SDK is still the client, just pointed at a different base_url. The
+# names are provider-agnostic because the model is expected to change (the
+# original spec named gpt-4o-mini; swapping back is a .env edit, not a code one).
+LLM_API_KEY = env("OPENROUTER_API_KEY", default="")
+LLM_BASE_URL = env("LLM_BASE_URL", default="https://openrouter.ai/api/v1")
+LLM_MODEL = env("LLM_MODEL", default="deepseek/deepseek-v4-flash-0731")
+LLM_MAX_TOKENS = env.int("LLM_MAX_TOKENS", default=500)
+
+# Reasoning is off for extraction on purpose: reasoning tokens are billed as
+# output and share the LLM_MAX_TOKENS budget, so a long think can truncate the
+# JSON before it is emitted. Extraction is a classification task, not one that
+# needs a scratchpad.
+LLM_REASONING = env.bool("LLM_REASONING", default=False)
+
 EIA_API_KEY = env("EIA_API_KEY", default="")
 
 # Ingestion source URLs and the GDELT query are not secrets and do not vary by

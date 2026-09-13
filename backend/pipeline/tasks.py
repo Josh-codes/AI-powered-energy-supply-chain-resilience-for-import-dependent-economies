@@ -10,9 +10,17 @@ can never abort a pipeline run.
 """
 import logging
 
-from pipeline.ingest.gdelt import CORRIDOR_QUERIES, fetch_by_corridor, store_gdelt_articles
+from graph.updater import refresh_graph_risk
+from pipeline.extract.extractor import extract_pending_events
+from pipeline.ingest.gdelt import (
+    CORRIDOR_QUERIES,
+    FETCH_ERROR,
+    fetch_by_corridor,
+    store_gdelt_articles,
+)
 from pipeline.ingest.ofac import download_ofac_sdn
 from pipeline.ingest.rss import fetch_energy_news, fetch_shipping_news, store_rss_articles
+from pipeline.score.risk_scorer import compute_all_risk_scores
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +28,17 @@ logger = logging.getLogger(__name__)
 def poll_gdelt_by_corridor():
     """Fetch and store GDELT articles, reporting per corridor.
 
-    Returns {corridor: {"fetched": int, "stored": int}}. The two numbers mean
-    different things and shouldn't be collapsed: fetched=0 means the query was
-    throttled or matched nothing (the case worth flagging), while stored=0 with
-    fetched>0 just means every hit was already in the database.
+    Returns {corridor: {"fetched": int, "stored": int, "status": str,
+    "sampled": bool}}. These must not be collapsed into one number:
+    ``sampled=False`` means the query never got an answer, so that corridor's
+    absence from the corpus is an artefact and its risk score is NOT comparable
+    with the others. ``fetched=0`` with ``sampled=True`` is the opposite — real
+    evidence the corridor is quiet.
     """
-    empty_report = {c: {"fetched": 0, "stored": 0} for c in CORRIDOR_QUERIES}
+    empty_report = {
+        c: {"fetched": 0, "stored": 0, "status": FETCH_ERROR, "sampled": False}
+        for c in CORRIDOR_QUERIES
+    }
     try:
         by_corridor = fetch_by_corridor()
     except Exception:
@@ -34,10 +47,10 @@ def poll_gdelt_by_corridor():
 
     report = {}
     seen_urls = set()
-    for corridor, articles in by_corridor.items():
+    for corridor, result in by_corridor.items():
         # An article matching two corridors is stored once, against the first.
         fresh = []
-        for article in articles:
+        for article in result.articles:
             if article["url"] in seen_urls:
                 continue
             seen_urls.add(article["url"])
@@ -47,11 +60,13 @@ def poll_gdelt_by_corridor():
         except Exception:
             logger.exception("storing GDELT articles failed for %s", corridor)
             stored = 0
-        report[corridor] = {"fetched": len(articles), "stored": stored}
+        report[corridor] = {
+            "fetched": len(result.articles),
+            "stored": stored,
+            "status": result.status,
+            "sampled": result.sampled,
+        }
 
-    starved = [c for c, counts in report.items() if not counts["fetched"]]
-    if starved:
-        logger.warning("GDELT returned no articles for: %s", ", ".join(starved))
     return report
 
 
@@ -79,3 +94,34 @@ def download_ofac():
     except Exception:
         logger.exception("download_ofac failed")
         return 0
+
+
+def extract_events(limit=None):
+    """Turn unprocessed RawArticles into ExtractedEvents. Returns the counts
+    dict from extract_pending_events."""
+    try:
+        return extract_pending_events(limit=limit)
+    except Exception:
+        logger.exception("extract_events failed")
+        return {"articles": 0, "events": 0, "irrelevant": 0, "unparseable": 0, "call_failed": 0}
+
+
+def score_and_update_graph():
+    """Recompute every corridor's risk score and push it onto the graph.
+
+    Returns {corridor: normalized_score}. The graph update is attempted even
+    though scoring already persisted its results, so a graph failure still
+    leaves the RiskScore history intact.
+    """
+    try:
+        scores = compute_all_risk_scores()
+    except Exception:
+        logger.exception("risk scoring failed")
+        return {}
+
+    try:
+        refresh_graph_risk(scores)
+    except Exception:
+        logger.exception("graph weight update failed")
+
+    return scores

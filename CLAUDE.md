@@ -752,7 +752,10 @@ energy-resilience/
 - requests 2.31 (HTTP calls to GDELT, EIA, OFAC)
 
 ### AI
-- openai 1.x
+- openai 3.6.0 SDK — pointed at **OpenRouter** (`https://openrouter.ai/api/v1`),
+  which speaks the OpenAI wire protocol. Active model: `deepseek/deepseek-v4-flash-0731`
+  (~$0.04/M input, $0.08/M output — roughly 20x cheaper than gpt-4o-mini).
+  Switching provider/model is a `.env` edit (`LLM_BASE_URL` / `LLM_MODEL`), not a code change.
 - langgraph 0.1 (pipeline orchestration)
 - langchain 0.1 (LangGraph dependency)
 
@@ -1143,9 +1146,15 @@ class PipelineState(TypedDict):
 
 ---
 
-## Claude API Extraction Prompt
+## LLM Extraction Prompt
 
-Stored in pipeline/extract/prompt.py:
+Stored in pipeline/extract/prompt.py.
+
+> **The block below is the original spec, kept for reference — the live prompt differs.**
+> As built in Phase 3 it drops `"Suez"` from the corridor enum (3-corridor model; the
+> model is told explicitly never to answer it), adds a 1-5 severity rubric, and tells the
+> model that GDELT's `matched_corridor_query:` line is a weak hint only. Read the file,
+> not this block.
 
 ```python
 EXTRACTION_PROMPT = """
@@ -1252,7 +1261,12 @@ REDIS_URL=redis://localhost:6379/0
 
 External APIs
 
-OPENAI_API_KEY=sk-ant-your-key-here
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+# Optional — all have working defaults in settings.py:
+# LLM_BASE_URL=https://openrouter.ai/api/v1
+# LLM_MODEL=deepseek/deepseek-v4-flash-0731
+# LLM_MAX_TOKENS=500
+# LLM_REASONING=False
 EIA_API_KEY=your-eia-key-here
 
 CORS (frontend origin)
@@ -1273,7 +1287,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 | OilPrice.com RSS | General energy news — **replaces Reuters** (public RSS retired 2020) | feedparser, no key needed | Every 6 hours |
 | gCaptain RSS | Shipping/tanker news — **replaces Lloyd's List** (subscription-only, no public feed) | feedparser, no key needed | Every 6 hours |
 | OFAC SDN | Sanctions registry (19,388 entities as of first live pull) | CSV download from sanctions.ofac.treas.gov, cached to `data/ofac_sdn_cache.json` (gitignored) | Weekly |
-| Claude API | LLM extraction | anthropic SDK, paid per token | Every 6 hours |
+| OpenRouter | LLM extraction — `deepseek/deepseek-v4-flash-0731` (**replaces** direct OpenAI gpt-4o-mini) | openai SDK with `base_url` swapped; paid per token, ~$0.00003/article | Every 6 hours |
 
 ---
 
@@ -1429,7 +1443,7 @@ Terminal 4: redis-server
   - [x] ports.json `throughput_mbd` set to sourced crude-terminal capacities (SBM/SPM + pipeline egress, cited per-port); metadata only — builder.py never uses it as an edge capacity. Mundra 0.90 / Chennai 0.25 / Mumbai JNPT 0.45 still below modelled routing (notional corridor→port split; real inland refineries also draw via Vadinar's Salaya–Mathura pipeline)
   - [x] NetworkX graph — graph/state.py (GraphState thread-safe singleton), graph/builder.py (build_graph_from_db: SOURCE→supplier→corridor→port→refinery→SINK, 50 nodes/93 edges; every edge has volume+capacity+effective_capacity; only corridor→port edges tagged `corridor`; refinery→SINK capped at nameplate = over-allocation guard), core/management/commands/build_graph.py
   - [x] tests/test_graph.py — 12 tests pass. **Baseline max-flow 4.228 mb/d = refinery-deliverable ceiling** (85.8% of 4.926 modelled supply; 0.698 unroutable by design — see two-ceiling note above). Corridor cut test (flow lost, redundancy-aware — multi-corridor ports backfill): Hormuz −1.784, Cape −1.609, Red Sea −0.202. Betweenness ranks Hormuz > Cape > Red Sea. `test_baseline_maxflow_matches_refinery_deliverable` asserts flow == Σ(port→refinery volumes), not the old ">90% of raw supply"
-  - [ ] RIPPLE (do in later phases): pipeline/extract/prompt.py must map LLM "Suez" → Red Sea corridor; `/api/risk-scores/` example in this doc + ExtractedEvent.CORRIDOR_CHOICES still list Suez (CORRIDOR_CHOICES is vestigial — field is FK to Corridor, no migration needed). [DONE: CLAUDE.md's Named Corridors table updated to 3-corridor reconciled model]
+  - [x] RIPPLE: ~~pipeline/extract/prompt.py must map LLM "Suez" → Red Sea corridor~~ [DONE in Phase 3 — prompt forbids "Suez" in its enum, `extractor.CORRIDOR_ALIASES` remaps it anyway]; `/api/risk-scores/` example in this doc + ExtractedEvent.CORRIDOR_CHOICES still list Suez (CORRIDOR_CHOICES is vestigial — field is FK to Corridor, no migration needed). [DONE: CLAUDE.md's Named Corridors table updated to 3-corridor reconciled model]
   
 - [x] Phase 2 — News ingestion (GDELT + RSS + OFAC)  ✅ COMPLETE
   - NOTE: Celery Beat / Celery worker / Redis are OUT OF SCOPE for this build (no always-on host; demo triggers the pipeline manually). `pipeline/tasks.py` is plain functions with NO Celery imports and NO `.delay()`/`.apply_async()` calls — enforced by an executable guard test, not just a comment.
@@ -1442,8 +1456,54 @@ Terminal 4: redis-server
   - [x] `core/management/commands/poll_sources.py` — `python manage.py poll_sources [--source gdelt|rss|ofac|all]`; GDELT output shows the per-corridor breakdown so a starved corridor (real, observed under heavy testing volume) is visible instead of hiding inside a smaller total.
   - [x] `tests/test_ingestion.py` — 51 tests, no network access (unittest.mock.patch at the requests.get / feedparser.parse import sites — this is the first mocking convention introduced in the repo; documented in the module docstring for Phase 3+ to reuse). Includes a guard test asserting `pipeline/tasks.py` contains no `celery`/`shared_task`/`.delay(`/`apply_async` outside its docstring.
   - [x] Live-verified end to end: `manage.py poll_sources` run against real endpoints — 106 RawArticle rows stored (79 gdelt / 15 oilprice / 12 gcaptain at last count), re-run confirmed dedup (0 new on repeat), unicode/encoding checked clean in the DB.
-  - [ ] RIPPLE (do in later phases): Phase 3's extraction prompt can read the `matched_corridor_query:` line stitched into GDELT articles' `raw_text` (pipeline/ingest/gdelt.py `_build_raw_text`) as a cheap corridor hint — it's a hint from which query matched, not a stored/authoritative field, so the LLM still makes the real corridor call. `RawArticle.processed` cleanup (14-day deletion) is not implemented — no rows have been marked `processed=True` yet since extraction (Phase 3) doesn't exist.
-- [ ] Phase 3 — Openai api extraction + risk scoring + graph weight update
+  - [x] RIPPLE: ~~Phase 3's extraction prompt can read the `matched_corridor_query:` line~~ [DONE — prompt.py names the line and instructs the model to treat it as a weak hint only, judging corridor from article content]. `RawArticle.processed` cleanup (14-day deletion) still NOT implemented, and is now actionable: extraction marks rows `processed=True`, so the staging table will start accumulating deletable rows.
+
+- [x] Phase 3 — OpenAI extraction + risk scoring + graph weight update  ✅ COMPLETE
+  - [x] `pipeline/extract/prompt.py` — `EXTRACTION_PROMPT` per CLAUDE.md, with the corridor enum corrected to the 3-corridor model (`Hormuz | Red Sea | Cape | None`) and an explicit "never answer Suez" instruction (Suez folded into Red Sea in Phase 1). Added severity guidance (1-5 rubric) so severity is calibrated rather than vibes, and a line telling the model the GDELT `matched_corridor_query:` hint is weak evidence only. `build_prompt()` uses `str.replace`, NOT `str.format` — the template contains the literal JSON braces of the required-fields block, which `.format()` would raise on.
+  - [x] `pipeline/extract/extractor.py` — `parse_extraction()` (JSON parse → regex `\{.*\}` fallback for fenced/prose-wrapped output → enum validation → clamping), `extract_event()` (one article, used by the test command), `extract_pending_events(limit=None)`. **The two failure modes are deliberately NOT collapsed**: a failed *call* (network/rate-limit/auth) leaves `processed=False` so the next cycle retries it, while an *unparseable answer* marks the article processed — re-asking would buy the same garbage twice. Counts returned as `{"articles", "events", "irrelevant", "unparseable", "call_failed"}`. `CORRIDOR_ALIASES` remaps Suez/Bab-el-Mandeb/Persian Gulf/etc. onto real Corridor rows.
+  - [x] **`ExtractedEvent.timestamp` = `RawArticle.ingested_at`** — no source gives a reliable publication date (GDELT's `seendate` only lives inside `raw_text`, RSS entries vary), so ingest time is the only timestamp available for every source. At a 6-hourly poll cadence it is within hours of the real event, which is well inside the resolution of a 0.1/day decay.
+  - [x] Only `is_relevant=True` results are stored. A corridor-less relevant event is still stored with a NULL corridor FK (it feeds `/api/events/live/`, contributes to no corridor score).
+  - [x] `pipeline/score/risk_scorer.py` — `compute_risk_score()` is CLAUDE.md's decay sum verbatim (`Σ severity × confidence × e^(-0.1Δt)`, Δt in fractional days, clamped ≥0 against clock skew). **`normalize_score()` DEVIATES from CLAUDE.md's "normalize across corridors"**: min-max normalization is *relative*, so the noisiest of the 3 corridors would read 1.0 and the quietest 0.0 in any week however calm — which would fire the `risk_score > 0.50` threshold trigger on ordinary news volume — and is undefined at cold start when all three are 0. Replaced with a saturating, absolute transform: `score = baseline_risk + (1 - baseline_risk) × (1 - e^(-raw/K))`. Monotonic in raw, sits exactly at the corridor's own `baseline_risk` when no events exist (finally giving that seeded field a consumer), saturates at 1.0 = closed corridor.
+  - [x] **`SATURATION_K = 25.0` is an UNCALIBRATED guess** and the one number in Phase 3 that needs fitting against real event volume — do it in Phase 7's backtest. `RiskScore.raw_score` persists the untransformed sum precisely so recalibrating K never means paying for extraction again.
+  - [x] `graph/updater.py` — `update_edge_weights(G, risk_scores)` per CLAUDE.md, scaling only the 20 `corridor→port` edges that carry a `corridor` tag (builder.py's single dynamic layer) so a corridor's risk applies exactly once. Risk clamped to [0,1] because a negative `effective_capacity` makes `nx.maximum_flow` raise rather than model a closed corridor. `volume` is never mutated — it stays the static baseline the criticality engine measures against, which also makes repeated updates idempotent. `refresh_graph_risk()` builds the singleton graph first if the process hasn't loaded one.
+  - [x] `pipeline/tasks.py` — added `extract_events(limit=None)` and `score_and_update_graph()` (names match `CELERY_BEAT_SCHEDULE`'s documented task paths). Still plain functions, no Celery imports — the Phase 2 guard test still passes. Scoring persists before the graph update is attempted, so a graph failure can't lose the RiskScore history.
+  - [x] Management commands (`core/management/commands/`): `test_extraction.py --url` (looks up an already-stored RawArticle — GDELT gives metadata only, there is no page to fetch; makes exactly ONE paid call and writes nothing), `extract_events.py --limit`, `score_risk.py` (free, no API).
+  - [x] `tests/test_extraction.py` + `tests/test_scoring.py` — 58 tests, no network, no API spend. Mocking seam differs from Phase 2's convention and the docstring says why: the OpenAI client is built lazily inside `extractor._get_client()`, so that function (and `extractor._call_llm`) are the patch points, not a module-level import. **Full suite: 109 tests, all passing.** Includes explicit min-max regression guards (`test_quiet_corridor_is_not_zeroed_by_a_noisy_one`) and a seeded real-graph integration test to catch tagging drift between builder and updater.
+  - [x] Verified against the real dev DB with zero events: all 3 corridors correctly sit at baseline (Hormuz 0.200 / Red Sea 0.150 / Cape 0.050) and all 20 corridor edges degrade accordingly. Extraction's no-key path verified to degrade gracefully (logs + reports, never crashes).
+  - [x] **Provider switched to OpenRouter** (decided after the code was written): key is `OPENROUTER_API_KEY`, model `deepseek/deepseek-v4-flash-0731`. OpenRouter implements the OpenAI wire protocol, so this was a `base_url` swap on the existing openai SDK — **not** a rewrite to raw `requests`, which would have thrown away the retry/parse/error handling and all 58 tests. Verified against OpenRouter's `/api/v1/models`: the slug exists and advertises `response_format`, `structured_outputs`, `max_tokens`, `temperature`, `seed`, `reasoning`. Settings renamed to provider-agnostic `LLM_*` (`LLM_BASE_URL` / `LLM_MODEL` / `LLM_MAX_TOKENS` / `LLM_REASONING`) so going back to gpt-4o-mini is a `.env` edit; the key keeps its `OPENROUTER_API_KEY` name because it genuinely is one (`sk-or-…`).
+  - [x] **`LLM_REASONING` defaults to False.** The model supports reasoning, but reasoning tokens are billed as output AND share the `max_tokens=500` budget, so a long think can truncate the JSON before it is emitted. Extraction is classification, not a task needing a scratchpad. Passed via `extra_body={"reasoning": {"enabled": ...}}` (OpenRouter-specific, not a named SDK arg).
+  - [x] **LIVE-VERIFIED end to end 2026-09-13.** `test_extraction` → HTTP 200, valid JSON first try. `extract_events --limit 10` → **7 events / 10 articles, 3 irrelevant, 0 unparseable, 0 call failures** (the regex-repair fallback has not yet been needed against this model, but stays as insurance). Extraction quality is sane: corridor-shut article → `Hormuz / military / sev 5 / conf 0.95`; Houthi article → `Red Sea / military / sev 4 / conf 0.90`; two general oil-market pieces correctly got NULL corridor. `score_risk` on that corpus → **Hormuz raw 11.329 → 0.492, Red Sea raw 3.250 → 0.254, Cape 0 → 0.050 (baseline)**.
+  - [x] **Full corpus extracted: 106 articles → 57 events** (49 irrelevant, **0 unparseable, 0 call failures** across the whole run — the model never once returned malformed JSON).
+  - [x] **SYNDICATION BUG FOUND AND FIXED — the risk score was measuring press coverage, not risk.** One wire story is republished by many outlets under different URLs, so Phase 2's URL dedup never sees them and each becomes its own ExtractedEvent. Observed: Red Sea's 37 events were only **16 distinct stories** (one headline counted 10x, another 8x) while Hormuz's 14 events were 10 stories. The inflation was **uneven — 2.4x vs 1.3x** — so it could NOT be absorbed into `SATURATION_K`; it was enough to inflate Red Sea's lead over Hormuz from a true +0.124 to a reported +0.181. Corridor classification itself was verified correct; the bug was purely double-counting.
+  - [x] **Fix: `ExtractedEvent.title` added (migration `0002_extractedevent_title`, with a RunPython backfill for the 57 pre-existing rows).** The field is required because `RawArticle` — the only other place the headline lives — is deleted at 14 days, so without it the permanent event store could not detect its own duplicates at backtest time. Bonus: `/api/events/live/` can now show headlines.
+  - [x] **Dedup happens at SCORING time, not extraction time** — all 57 events are kept as evidence (the "37 articles → 16 stories" ratio is itself a citable finding) and clustered only when computing the score, so the rule stays re-tunable without re-extracting. `compute_risk_score(..., deduplicate=False)` reproduces the old inflated sum for comparison.
+  - [x] Clustering rule: same corridor, headlines within `STORY_WINDOW_DAYS = 3`, `difflib.SequenceMatcher` ratio ≥ `STORY_SIMILARITY = 0.60`, each cluster contributing only its strongest member. **Threshold chosen empirically, not arbitrarily**: swept 0.40→0.80 against the real corpus and found 0.55–0.60 is a stable plateau (16/10 clusters), while **at 0.40 the corridor ranking FLIPS** (Hormuz 0.705 > Red Sea 0.671) because it over-merges distinct stories. Under-merging leaves some inflation; over-merging destroys real signal — so the threshold deliberately errs high.
+  - [x] **Known limitation (tested and documented, not fixed):** lexical similarity cannot tell that "Houthis seize strategic Perim Island" and "Houthis reach strategic island at mouth of vital shipping lane" are the same event. Catching that needs semantic matching; the thresholds low enough to catch it lexically are the same ones that flip the ranking. `test_known_limitation_semantic_duplicates_are_not_caught` pins the behaviour.
+  - [x] Added `DECAY_LOOKBACK_DAYS = 180` — events past it contribute e^(-18) ≈ 1.5e-8 (nothing) and excluding them bounds the O(n²) clustering against a permanently-growing event table.
+  - [x] **Post-fix scores on the real corpus: Red Sea 46.021 → 0.865, Hormuz 28.167 → 0.741, Cape 0 → 0.050.** 120 tests passing.
+  - [ ] **K STILL UNCALIBRATED — and deliberately left at 25.0.** Post-dedup the scores are high (0.865 / 0.741) but arguably correct: the corpus describes Houthis seizing Perim Island and Mocha port, Saudi shutting a pipeline after a drone strike, Hormuz "effectively shut since March", Brent $104. That may genuinely be a 0.87 week. **The blocker is that every article ingested so far comes from this one crisis — there is no calm-period sample to calibrate against, and fitting K to a single crisis point would be worse than leaving it.** Phase 7's backtest supplies both crisis and calm on one scale; fit it there. Note the dedup sweep showed the corridor *ranking* is controlled by the similarity threshold, while K controls only the absolute *level* — two separable knobs.
+  - [ ] RIPPLE (do in later phases): severity/confidence rubric compliance is still only eyeballed (57 events, no inter-rater check). `RawArticle` 14-day cleanup is now genuinely overdue — all 106 rows are `processed=True`.
+
+- [x] Phase 2.5 — GDELT sampling-bias fix (unplanned; forced by a Phase 3 finding)  ✅ COMPLETE
+  - [x] **THE BUG: the corpus was one-sided and nothing said so.** Of 79 stored GDELT articles, the per-corridor queries had matched **Red Sea 29, Hormuz 0, Cape 0** — and a live probe confirmed all three queries were returning **HTTP 429**. `fetch_gdelt_articles` returned `[]` for *both* "throttled, never answered" and "answered, nothing matched", so a corridor missing because of rate-limiting was indistinguishable from a genuinely quiet one. Event provenance made the damage concrete: **Red Sea got 23 of its 37 events from the corridor-targeted GDELT path, Hormuz got 1 of 14.** The Red Sea > Hormuz risk ranking — the thesis's headline output — largely reflected *which query survived throttling*, not which corridor was at risk.
+  - [x] **Core fix: `CorridorFetch(corridor, articles, status)` with explicit `FETCH_OK / FETCH_EMPTY / FETCH_THROTTLED / FETCH_ERROR`** and a `.sampled` property. `FETCH_EMPTY` (answered, no matches) is real evidence a corridor is quiet; `FETCH_THROTTLED`/`FETCH_ERROR` mean it was never sampled and its score is not comparable. `fetch_gdelt_result()` is the honest API; `fetch_gdelt_articles()` stays as the list-returning wrapper that discards status.
+  - [x] **Fairness measures**, because throttling systematically kills whichever query runs last — which is exactly how Cape ended up with zero: corridor query order is now **shuffled every run**, and any corridor throttled on the first pass gets a **second attempt after a 30s cooldown**.
+  - [x] Retry hardening: attempts 3 → 5, fixed 6s backoff → **exponential with jitter** (5s base, 60s cap), and `Retry-After` honoured when GDELT sends it. Jitter matters because all three corridor queries otherwise back off in lockstep and retry into the same rate-limit window. Inter-query delay 5s → 10s.
+  - [x] **Starvation is now loud, not a debug line.** `fetch_by_corridor` logs at ERROR naming the unsampled corridors and stating scores are not comparable; `poll_gdelt_by_corridor` returns `{"fetched", "stored", "status", "sampled"}`; `manage.py poll_sources` prints `NOT SAMPLED` per corridor plus a **`CORPUS IS BIASED`** block telling the operator to re-run.
+  - [x] 46 ingestion tests (up from 39), **127 total, all passing.** New coverage pins the exact bug: `test_throttled_query_is_not_reported_as_empty`, `test_answered_but_unmatched_query_counts_as_sampled`, `test_network_failure_is_error_not_throttled`, `test_retry_after_header_is_honoured`, `test_backoff_grows_between_attempts`, `test_throttled_corridor_gets_a_second_pass`, `test_corridor_query_order_is_not_fixed`.
+  - [x] **RE-POLLED AND RE-EXTRACTED on a balanced corpus (2026-09-13, same day as the fix).** Live proof the fix works: on this run Hormuz was throttled 5/5 first-pass attempts, correctly marked `throttled` (not `empty`), and the **second pass recovered it in full** — all three corridors ended at 50 fetched. GDELT article counts (by corridor-query tag): Red Sea 79, Hormuz 16 (+34 pre-existing untagged legacy rows), Cape 50. Extracted the resulting 116 new articles: **93 events created, 23 irrelevant, 0 unparseable, 0 call failures.** Corpus is now 150 total events (up from 57).
+  - [x] **RESULT — the sampling fix worked exactly as intended, closing the gap it was supposed to close:**
+
+    | | biased corpus (37 vs 14 events) | balanced corpus (88 vs 55 events) |
+    |---|---|---|
+    | Red Sea | 0.865 | **0.981** |
+    | Hormuz | 0.741 | **0.970** |
+    | gap | 0.124 | **0.011** |
+
+    Hormuz's score jumped from 0.741 to 0.970 once it received its fair share of articles instead of being GDELT-throttled out of the corpus. This is the sampling bug's fingerprint disappearing exactly as predicted.
+  - [x] **Cape genuinely 0 events again — and this time it IS correct, verified by inspection, not assumed.** The Cape GDELT query fetched 50 articles fine (no throttling this run). Checked what the LLM did with all 50: **28 → Red Sea, 7 → Hormuz, 14 → irrelevant, 0 → Cape.** Titles are unambiguous ("Bab El-Mandeb," "Houthis Seize," articles about ships rerouting VIA Cape to avoid the Red Sea crisis) — GDELT's keyword search matched the word "Cape" but the LLM correctly read the actual content and reassigned the real corridor. This is `matched_corridor_query` behaving exactly as documented ("a hint, not a claim — the LLM still makes the real call") and is direct evidence the extraction step is doing real work, not rubber-stamping the query hint.
+  - [x] **NEW, MORE URGENT PROBLEM SURFACED BY THE FIX ITSELF: both corridors are now saturated and the ranking has become NOISE.** A 0.011 gap between Red Sea (0.981) and Hormuz (0.970) is not a finding — the K=25 saturating transform has run out of room to discriminate once both corridors are reporting a genuinely severe, roughly comparable crisis. **The pipeline currently cannot support a claim like "Corridor X is more critical than Corridor Y."** This is not a new bug — it is the same K limitation flagged after the very first extraction, now unmasked because the sampling artifact that was previously (wrongly) creating an apparent gap is gone. Do not tune K from this single-crisis corpus; the Phase 7 backtest still needs calm-period data alongside crisis data to fit it properly (see [[project-risk-scoring-calibration]] memory).
+  - [ ] RIPPLE: GDELT throttling is per-IP and was refusing every query during testing — a single laptop polling 3 queries every 6h may simply be near its ceiling. If starvation persists, consider lowering `DEFAULT_MAX_RECORDS`, spacing corridors across separate runs, or accepting RSS as a corridor-agnostic supplement (RSS alone has NEVER produced a single Cape event across 27 articles — it cannot substitute for GDELT's per-corridor queries, only complement them).
 - [ ] Phase 4 — Criticality engine (centrality + max-flow + cascading failure)
 - [ ] Phase 5 — Response layer (reroute optimizer + SPR drawdown LP)
 - [ ] Phase 6 — LangGraph orchestration + all REST API endpoints
@@ -1494,5 +1554,7 @@ Fix: Start Redis server — `redis-server` in a separate terminal
 - All REST responses must include CORS headers (django-cors-headers handles this)
 - Serve corridor geometries as GeoJSON — Leaflet expects this format
 - Test every component with management commands before wiring into Celery
-- LLM model to be used: gpt-4o-mini
+- LLM provider: **OpenRouter** (OpenAI-compatible; use the openai SDK with `base_url`, never hand-rolled `requests`)
+- LLM model in use: `deepseek/deepseek-v4-flash-0731` (gpt-4o-mini remains a drop-in fallback via `.env`)
 - Max tokens for extraction: 500 (JSON output is small)
+- Reasoning stays OFF for extraction — reasoning tokens are billed as output and share the 500-token budget, so a long think truncates the JSON

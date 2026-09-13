@@ -51,13 +51,26 @@ class Command(BaseCommand):
         self.stdout.write(style(f"{'GDELT':12}: {total} new articles"))
 
         for corridor, counts in report.items():
-            if not counts["fetched"]:
+            if not counts["sampled"]:
                 self.stdout.write(
-                    self.style.WARNING(
-                        f"  {corridor:10}: no articles returned (throttled or no match)"
+                    self.style.ERROR(
+                        f"  {corridor:10}: NOT SAMPLED ({counts['status']}) — no answer from GDELT"
                     )
+                )
+            elif not counts["fetched"]:
+                self.stdout.write(
+                    f"  {corridor:10}: 0 articles (query answered, nothing matched)"
                 )
             else:
                 self.stdout.write(
                     f"  {corridor:10}: {counts['fetched']} fetched, {counts['stored']} new"
                 )
+
+        starved = [c for c, counts in report.items() if not counts["sampled"]]
+        if starved:
+            self.stdout.write(self.style.ERROR(
+                f"\n  CORPUS IS BIASED: {', '.join(starved)} contributed nothing because the\n"
+                "  query was never answered, not because those corridors are quiet.\n"
+                "  Corridor risk scores are NOT comparable until every corridor is sampled.\n"
+                "  Re-run `manage.py poll_sources --source gdelt` in a few minutes."
+            ))

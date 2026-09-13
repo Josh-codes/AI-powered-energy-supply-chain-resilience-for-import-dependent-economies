@@ -48,6 +48,20 @@ def _mock_response(payload):
     return response
 
 
+def _fetch_ok(corridor, articles):
+    status = gdelt.FETCH_OK if articles else gdelt.FETCH_EMPTY
+    return gdelt.CorridorFetch(corridor, articles, status)
+
+
+def _fetch_empty(query, corridor_hint=None, **kwargs):
+    """A query that was answered and matched nothing — NOT a throttled one."""
+    return gdelt.CorridorFetch(corridor_hint, [], gdelt.FETCH_EMPTY)
+
+
+def _fetch_throttled(query, corridor_hint=None, **kwargs):
+    return gdelt.CorridorFetch(corridor_hint, [], gdelt.FETCH_THROTTLED)
+
+
 def _mock_feed(entries, bozo=0):
     feed = Mock()
     feed.bozo = bozo
@@ -108,18 +122,17 @@ class GdeltIngestTests(TestCase):
         self.assertEqual(gdelt.fetch_gdelt_articles("oil"), [])
 
     @patch("pipeline.ingest.gdelt.time.sleep")
-    @patch("pipeline.ingest.gdelt.fetch_gdelt_articles")
+    @patch("pipeline.ingest.gdelt.fetch_gdelt_result")
     def test_fetch_all_corridors_merges_and_dedupes(self, mock_fetch, mock_sleep):
         shared_url = "https://example.com/red-sea-and-cape"
 
         def fake_fetch(query, corridor_hint=None, **kwargs):
-            if corridor_hint == "Hormuz":
-                return [{"url": "https://example.com/hormuz-only", "source": "gdelt", "title": "H", "raw_text": "h"}]
-            if corridor_hint == "Red Sea":
-                return [{"url": shared_url, "source": "gdelt", "title": "R", "raw_text": "r"}]
-            if corridor_hint == "Cape":
-                return [{"url": shared_url, "source": "gdelt", "title": "C", "raw_text": "c"}]
-            return []
+            per_corridor = {
+                "Hormuz": [{"url": "https://example.com/hormuz-only", "source": "gdelt", "title": "H", "raw_text": "h"}],
+                "Red Sea": [{"url": shared_url, "source": "gdelt", "title": "R", "raw_text": "r"}],
+                "Cape": [{"url": shared_url, "source": "gdelt", "title": "C", "raw_text": "c"}],
+            }
+            return _fetch_ok(corridor_hint, per_corridor.get(corridor_hint, []))
 
         mock_fetch.side_effect = fake_fetch
 
@@ -130,7 +143,7 @@ class GdeltIngestTests(TestCase):
         self.assertEqual(len(articles), 2)  # shared_url counted once despite matching two corridors
 
     @patch("pipeline.ingest.gdelt.time.sleep")
-    @patch("pipeline.ingest.gdelt.fetch_gdelt_articles", return_value=[])
+    @patch("pipeline.ingest.gdelt.fetch_gdelt_result", side_effect=_fetch_empty)
     def test_fetch_all_corridors_queries_every_named_corridor(self, mock_fetch, mock_sleep):
         gdelt.fetch_all_corridors()
 
@@ -138,12 +151,106 @@ class GdeltIngestTests(TestCase):
         self.assertEqual(queried_corridors, {"Hormuz", "Red Sea", "Cape"})
 
     @patch("pipeline.ingest.gdelt.time.sleep")
-    @patch("pipeline.ingest.gdelt.fetch_gdelt_articles", return_value=[])
+    @patch("pipeline.ingest.gdelt.fetch_gdelt_result", side_effect=_fetch_empty)
     def test_fetch_all_corridors_sleeps_between_queries(self, mock_fetch, mock_sleep):
         gdelt.fetch_all_corridors()
 
         # 3 corridors -> 2 gaps between them, not before the first or after the last
         self.assertEqual(mock_sleep.call_count, 2)
+
+    # ---- throttling vs emptiness (the 2026-09-13 sampling-bias bug) ---------
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_throttled_query_is_not_reported_as_empty(self, mock_get, mock_sleep):
+        """The bug that skewed the first corpus: a 429 and a genuine no-match
+        both produced [], so a corridor missing for API reasons looked quiet."""
+        error = requests.HTTPError("429 Too Many Requests")
+        error.response = Mock(status_code=429, headers={})
+        mock_get.side_effect = error
+
+        result = gdelt.fetch_gdelt_result("oil", corridor_hint="Cape")
+
+        self.assertEqual(result.articles, [])
+        self.assertEqual(result.status, gdelt.FETCH_THROTTLED)
+        self.assertFalse(result.sampled)
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_answered_but_unmatched_query_counts_as_sampled(self, mock_get):
+        mock_get.return_value = _mock_response({"articles": []})
+
+        result = gdelt.fetch_gdelt_result("oil", corridor_hint="Cape")
+
+        self.assertEqual(result.status, gdelt.FETCH_EMPTY)
+        self.assertTrue(result.sampled)  # real evidence Cape is quiet
+
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_network_failure_is_error_not_throttled(self, mock_get, mock_sleep):
+        mock_get.side_effect = requests.ConnectionError("boom")
+
+        result = gdelt.fetch_gdelt_result("oil", corridor_hint="Cape")
+
+        self.assertEqual(result.status, gdelt.FETCH_ERROR)
+        self.assertFalse(result.sampled)
+
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_retry_after_header_is_honoured(self, mock_get, mock_sleep):
+        error = requests.HTTPError("429")
+        error.response = Mock(status_code=429, headers={"Retry-After": "12"})
+        mock_get.side_effect = [error, _mock_response(GDELT_PAYLOAD)]
+
+        gdelt.fetch_gdelt_result("oil")
+
+        mock_sleep.assert_called_once_with(12.0)
+
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_backoff_grows_between_attempts(self, mock_get, mock_sleep):
+        mock_get.side_effect = requests.ConnectionError("boom")
+
+        gdelt.fetch_gdelt_result("oil")
+
+        delays = [call.args[0] for call in mock_sleep.call_args_list]
+        self.assertEqual(len(delays), gdelt._RETRY_ATTEMPTS - 1)
+        self.assertEqual(delays, sorted(delays))          # monotonically increasing
+        self.assertLessEqual(max(delays), gdelt._RETRY_MAX_SECONDS * 1.25)
+
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.fetch_gdelt_result")
+    def test_throttled_corridor_gets_a_second_pass(self, mock_fetch, mock_sleep):
+        """Throttling tends to hit whichever query runs last, so a starved
+        corridor is retried rather than written off for the whole cycle."""
+        calls = {"Cape": 0}
+
+        def fake(query, corridor_hint=None, **kwargs):
+            if corridor_hint != "Cape":
+                return _fetch_ok(corridor_hint, [{"url": f"https://example.com/{corridor_hint}"}])
+            calls["Cape"] += 1
+            if calls["Cape"] == 1:
+                return gdelt.CorridorFetch("Cape", [], gdelt.FETCH_THROTTLED)
+            return _fetch_ok("Cape", [{"url": "https://example.com/cape"}])
+
+        mock_fetch.side_effect = fake
+
+        results = gdelt.fetch_by_corridor()
+
+        self.assertEqual(calls["Cape"], 2)
+        self.assertTrue(results["Cape"].sampled)
+        self.assertEqual(len(results["Cape"].articles), 1)
+
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.fetch_gdelt_result", side_effect=_fetch_empty)
+    def test_corridor_query_order_is_not_fixed(self, mock_fetch, mock_sleep):
+        """Always querying in the same order starves the last corridor whenever
+        GDELT throttles mid-run — which is how Cape ended up with zero events."""
+        orders = set()
+        for _ in range(25):
+            mock_fetch.reset_mock()
+            gdelt.fetch_by_corridor()
+            orders.add(tuple(c.kwargs["corridor_hint"] for c in mock_fetch.call_args_list))
+
+        self.assertGreater(len(orders), 1)
 
     def test_store_dedupes_by_url(self):
         articles = [
@@ -329,9 +436,9 @@ class TasksTests(TestCase):
     @patch("pipeline.tasks.fetch_by_corridor")
     def test_poll_gdelt_returns_stored_count(self, mock_fetch, mock_store):
         mock_fetch.return_value = {
-            "Hormuz": [{"url": "https://example.com/a"}, {"url": "https://example.com/b"}],
-            "Red Sea": [],
-            "Cape": [],
+            "Hormuz": _fetch_ok("Hormuz", [{"url": "https://example.com/a"}, {"url": "https://example.com/b"}]),
+            "Red Sea": _fetch_ok("Red Sea", []),
+            "Cape": _fetch_ok("Cape", []),
         }
 
         self.assertEqual(tasks.poll_gdelt(), 6)  # store mocked at 2 per corridor call
@@ -346,40 +453,54 @@ class TasksTests(TestCase):
 
         self.assertEqual(set(report), set(gdelt.CORRIDOR_QUERIES))
         self.assertTrue(all(c["fetched"] == 0 and c["stored"] == 0 for c in report.values()))
+        # A total failure means nothing was sampled — never mistake it for quiet corridors.
+        self.assertTrue(all(c["sampled"] is False for c in report.values()))
 
     @patch("pipeline.tasks.store_gdelt_articles", return_value=0)
     @patch("pipeline.tasks.fetch_by_corridor")
     def test_poll_gdelt_by_corridor_distinguishes_throttled_from_nothing_new(
         self, mock_fetch, mock_store
     ):
-        """fetched=0 means the query failed; stored=0 alone just means no new URLs."""
+        """stored=0 alone just means no new URLs; sampled=False means no answer."""
         mock_fetch.return_value = {
-            "Hormuz": [{"url": "https://example.com/a"}],  # fetched but already known
-            "Red Sea": [],                                  # throttled / no match
-            "Cape": [],
+            "Hormuz": _fetch_ok("Hormuz", [{"url": "https://example.com/a"}]),  # already known
+            "Red Sea": gdelt.CorridorFetch("Red Sea", [], gdelt.FETCH_EMPTY),   # answered, quiet
+            "Cape": gdelt.CorridorFetch("Cape", [], gdelt.FETCH_THROTTLED),     # never answered
         }
 
         report = tasks.poll_gdelt_by_corridor()
 
-        self.assertEqual(report["Hormuz"], {"fetched": 1, "stored": 0})
-        self.assertEqual(report["Red Sea"], {"fetched": 0, "stored": 0})
+        self.assertEqual(report["Hormuz"]["fetched"], 1)
+        self.assertEqual(report["Hormuz"]["stored"], 0)
+        self.assertTrue(report["Hormuz"]["sampled"])
 
-    @patch("pipeline.tasks.store_gdelt_articles", return_value=0)
-    @patch("pipeline.tasks.fetch_by_corridor")
-    def test_poll_gdelt_by_corridor_warns_about_starved_corridors(self, mock_fetch, mock_store):
-        mock_fetch.return_value = {"Hormuz": [{"url": "u"}], "Red Sea": [], "Cape": []}
+        # Quiet and throttled both fetch 0 articles, but mean opposite things.
+        self.assertTrue(report["Red Sea"]["sampled"])
+        self.assertFalse(report["Cape"]["sampled"])
+        self.assertEqual(report["Cape"]["status"], gdelt.FETCH_THROTTLED)
 
-        with self.assertLogs("pipeline.tasks", level="WARNING") as logs:
-            tasks.poll_gdelt_by_corridor()
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.fetch_gdelt_result", side_effect=_fetch_throttled)
+    def test_starved_corridors_are_logged_as_an_error(self, mock_fetch, mock_sleep):
+        """A corpus missing a corridor is a correctness problem, not a warning:
+        risk scores from it are not comparable across corridors."""
+        with self.assertLogs("pipeline.ingest.gdelt", level="ERROR") as logs:
+            gdelt.fetch_by_corridor()
 
-        self.assertIn("Red Sea", logs.output[0])
-        self.assertIn("Cape", logs.output[0])
+        joined = " ".join(logs.output)
+        for corridor in gdelt.CORRIDOR_QUERIES:
+            self.assertIn(corridor, joined)
+        self.assertIn("NOT comparable", joined)
 
     @patch("pipeline.tasks.store_gdelt_articles", return_value=1)
     @patch("pipeline.tasks.fetch_by_corridor")
     def test_poll_gdelt_stores_a_shared_article_only_once(self, mock_fetch, mock_store):
         shared = {"url": "https://example.com/shared"}
-        mock_fetch.return_value = {"Hormuz": [shared], "Red Sea": [shared], "Cape": []}
+        mock_fetch.return_value = {
+            "Hormuz": _fetch_ok("Hormuz", [shared]),
+            "Red Sea": _fetch_ok("Red Sea", [shared]),
+            "Cape": _fetch_ok("Cape", []),
+        }
 
         tasks.poll_gdelt_by_corridor()
 
@@ -422,12 +543,14 @@ class PollSourcesCommandTests(TestCase):
     @patch("pipeline.tasks.fetch_shipping_news", return_value=[])
     @patch("pipeline.tasks.fetch_energy_news", return_value=[])
     @patch("pipeline.tasks.store_gdelt_articles", return_value=1)
-    @patch("pipeline.tasks.fetch_by_corridor", return_value={"Hormuz": [{"url": "u"}]})
+    @patch("pipeline.tasks.fetch_by_corridor",
+           return_value={"Hormuz": gdelt.CorridorFetch("Hormuz", [{"url": "u"}], gdelt.FETCH_OK)})
     def test_command_runs_all_sources(self, *mocks):
         call_command("poll_sources", stdout=StringIO())
 
     @patch("pipeline.tasks.store_gdelt_articles", return_value=1)
-    @patch("pipeline.tasks.fetch_by_corridor", return_value={"Hormuz": [{"url": "u"}]})
+    @patch("pipeline.tasks.fetch_by_corridor",
+           return_value={"Hormuz": gdelt.CorridorFetch("Hormuz", [{"url": "u"}], gdelt.FETCH_OK)})
     def test_command_runs_single_source(self, mock_fetch, mock_store):
         out = StringIO()
 
@@ -439,12 +562,22 @@ class PollSourcesCommandTests(TestCase):
     @patch("pipeline.tasks.store_gdelt_articles", return_value=0)
     @patch("pipeline.tasks.fetch_by_corridor")
     def test_command_flags_a_starved_corridor(self, mock_fetch, mock_store):
-        mock_fetch.return_value = {"Hormuz": [{"url": "u"}], "Red Sea": [], "Cape": []}
+        """A throttled corridor must be reported as a biased corpus, not as a
+        quiet corridor — the two look identical in the article counts alone."""
+        mock_fetch.return_value = {
+            "Hormuz": gdelt.CorridorFetch("Hormuz", [{"url": "u"}], gdelt.FETCH_OK),
+            "Red Sea": gdelt.CorridorFetch("Red Sea", [], gdelt.FETCH_EMPTY),
+            "Cape": gdelt.CorridorFetch("Cape", [], gdelt.FETCH_THROTTLED),
+        }
         out = StringIO()
 
         call_command("poll_sources", source="gdelt", stdout=out)
         output = out.getvalue()
 
-        self.assertIn("Hormuz", output)
         self.assertIn("1 fetched", output)
-        self.assertIn("no articles returned", output)
+        # Answered-but-quiet is reported plainly...
+        self.assertIn("nothing matched", output)
+        # ...while never-sampled escalates to an explicit bias warning.
+        self.assertIn("NOT SAMPLED", output)
+        self.assertIn("CORPUS IS BIASED", output)
+        self.assertIn("Cape", output)

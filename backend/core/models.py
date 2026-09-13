@@ -87,6 +87,10 @@ class ExtractedEvent(models.Model):
     confidence = models.FloatField()             # 0.0-1.0
     timestamp = models.DateTimeField()
     article_url = models.URLField(max_length=500)
+    # Copied from the source RawArticle, which is deleted after 14 days. Without
+    # it this permanent store could not detect that one syndicated wire story
+    # produced a dozen events — see pipeline/score/risk_scorer.py clustering.
+    title = models.CharField(max_length=500, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
