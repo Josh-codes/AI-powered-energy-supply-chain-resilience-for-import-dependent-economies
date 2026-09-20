@@ -36,7 +36,18 @@ This system has six pipeline layers that run sequentially via LangGraph orchestr
 The pipeline is designed to run automatically every 6 hours via Celery Beat in a
 production deployment. **Celery Beat / Celery worker / Redis are NOT being implemented
 for this thesis build** — there is no always-on host to run them, and the project is
-demonstrated by manually triggering the pipeline (`python manage.py run_pipeline`).
+demonstrated by triggering each stage manually.
+
+**`manage.py run_pipeline` DOES NOT EXIST YET** — the file is an empty stub, as is
+`orchestrator/pipeline.py`; the LangGraph orchestrator that would chain the stages
+is Phase 6. Until then the pipeline is run as four commands in order:
+
+```bash
+python manage.py poll_sources --corridor Hormuz   # repeat per corridor, minutes apart
+python manage.py extract_events                   # the only step that costs money
+python manage.py score_risk
+python manage.py run_criticality --port-view
+```
 The `CELERY_BEAT_SCHEDULE` config below is retained as documentation of the intended
 production cadence only. See the note in the Celery Configuration section.
 The frontend never triggers the pipeline — it only reads pre-computed results from PostgreSQL.
@@ -48,23 +59,25 @@ The only real-time computation triggered by the frontend is scenario simulation 
 
 [External Sources]
 │
-├── GDELT API ──────────────────────────────────┐
-├── Reuters Energy RSS ──────────────────────────┤
-├── Lloyd's List RSS ────────────────────────────┤──► [Celery Beat - every 6h]
-└── OFAC SDN CSV ───────────────────────────────┘ │
+├── GDELT API (one query/corridor) ─────────────┐
+├── OilPrice.com RSS ───────────────────────────┤   [MANUAL trigger — Celery
+├── gCaptain RSS ───────────────────────────────┤──► Beat not implemented;
+└── OFAC SDN CSV ───────────────────────────────┘    6h cadence is aspirational]
 │
 [Ingest Service]
 feedparser + requests
 URL deduplication
+GDELT window: lastminutes:1440
 │
 ▼
 [PostgreSQL - RawArticle]
 Temporary staging table
-Deleted after 14 days
+Deleted after 14 days  ← NOT IMPLEMENTED YET
 │
 ▼
 [LLM Event Extraction]
-OpenAI gpt-4o-mini
+OpenRouter (OpenAI-compatible)
+deepseek/deepseek-v4-flash-0731
 response_format: json_object
 Returns: corridor, actor,
 event_type, severity,
@@ -75,6 +88,8 @@ confidence, is_relevant
 Permanent store
 Never deleted
 Indexed by corridor + timestamp
+timestamp = GDELT seendate
+(NOT ingest time — see Phase 3)
 │
 ┌─────────────────────────────┘
 │
@@ -101,14 +116,19 @@ Used for trend charts volume × (1 - risk_score)
 ▼
 [Criticality Engine]
 NetworkX algorithms
-├── Weighted betweenness centrality
+├── structural_betweenness (unweighted)
+├── capacity_weighted_betweenness (1/capacity
+│   distance — NOT weight='effective_capacity')
 ├── Max-flow analysis (baseline vs risk-weighted)
+├── Residual/redundancy-aware port criticality
 └── Cascading failure simulation (10% increments)
 │
 ▼
 [Threshold Trigger]
 condition: criticality_score > 0.65
 AND risk_score > 0.50
+← 0.65 IS UNREACHABLE, see Threshold
+  Trigger Logic section before using
 │
 ┌─────────┴──────────┐
 [No] │ │ [Yes]
@@ -196,8 +216,8 @@ Recharts — charts + analytics
 │ │ │ │ │ │ │ │
 │ │ gdelt.py │ │ extractor.py │ │ risk_scorer.py │ │
 │ │ rss.py │ │ prompt.py │ │ numpy/pandas │ │
-│ │ ofac.py │ │ OpenAI API │ │ time-decay │ │
-│ │ feedparser │ │ gpt-4o-mini │ │ formula │ │
+│ │ ofac.py │ │ OpenRouter │ │ time-decay + │ │
+│ │ feedparser │ │ deepseek-v4 │ │ story dedup │ │
 │ └──────────────┘ └──────────────┘ └──────────────────┘ │
 │ │
 │ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐ │
@@ -220,11 +240,11 @@ Recharts — charts + analytics
 │ └────────────────────────────────────────────────────────┘ │
 │ │
 │ ┌────────────────────────────────────────────────────────┐ │
-│ │ Celery Beat Scheduler │ │
-│ │ config/celery.py │ │
-│ │ Triggers full pipeline every 6 hours │ │
-│ │ OFAC download weekly │ │
+│ │ Celery Beat Scheduler — NOT IMPLEMENTED │ │
+│ │ config/celery.py (app wired, no tasks registered) │ │
+│ │ Intended: full pipeline every 6h, OFAC weekly │ │
 │ │ Redis as message broker │ │
+│ │ Today: run the manage.py commands by hand │ │
 │ └────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 │
@@ -252,18 +272,21 @@ Recharts — charts + analytics
 │ EXTERNAL SOURCES │
 │ │
 │ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐ │
-│ │ GDELT │ │ Reuters │ │ OFAC │ │ OpenAI API │ │
-│ │ API │ │ RSS │ │ SDN │ │ gpt-4o-mini │ │
-│ │ free │ │ free │ │ CSV │ │ paid │ │
-│ │ no key │ │ no key │ │ weekly │ │ ~$4/month │ │
+│ │ GDELT │ │ OilPrice │ │ OFAC │ │ OpenRouter   │ │
+│ │ DOC 2.0  │ │ .com RSS │ │ SDN │ │ deepseek-v4  │ │
+│ │ free │ │ free │ │ CSV │ │ paid, tiny   │ │
+│ │ no key │ │ no key │ │ weekly │ │ ~$0.00003/art│ │
+│ │ THROTTLES│ │ │ │ │ │              │ │
 │ └──────────┘ └──────────┘ └──────────┘ └──────────────┘ │
 │ │
 │ ┌──────────┐ ┌──────────┐ ┌──────────────────────────┐ │
-│ │ EIA API │ │ Lloyd's │ │ PPAC/IEA/EIA reports │ │
-│ │ free │ │ List │ │ Hardcoded JSON │ │
-│ │ backtest│ │ RSS │ │ Static seed data │ │
-│ │ only │ │ free │ │ Loaded once at setup │ │
+│ │ EIA API │ │ gCaptain │ │ PPAC/IEA/EIA reports │ │
+│ │ free │ │ RSS │ │ Hardcoded JSON │ │
+│ │ backtest│ │ free │ │ Static seed data │ │
+│ │ only │ │ │ │ Loaded once at setup │ │
 │ └──────────┘ └──────────┘ └──────────────────────────┘ │
+│ (Reuters + Lloyd's List from the original spec are gone:  │
+│  Reuters retired public RSS in 2020, Lloyd's is paywalled)│
 └─────────────────────────────────────────────────────────────┘
 
 
@@ -369,8 +392,8 @@ computed_at__gte=last_hour
 RiskScoreSerializer → JSON
 │
 ▼
-{"Hormuz": 0.72, "Red Sea": 0.45,
-"Suez": 0.12, "Cape": 0.05}
+{"Hormuz": 0.84, "Red Sea": 0.86, "Cape": 0.05}
+(3 corridors — no Suez, folded into Red Sea)
 │
 ▼
 React updates state
@@ -405,7 +428,10 @@ GraphState.get_instance().get_graph()
 (retrieves in-memory NetworkX graph)
 │
 ▼
-cascading_failure_simulation(G, "Hormuz", 0.50)
+cascading_failure_simulation("Hormuz", G=G)
+(actual Phase 4 signature: corridor first, G keyword-only
+ and defaulting to GraphState's copy; returns all 10 steps,
+ so the view picks the step matching the requested slider %)
 (runs in < 1 second on small graph)
 │
 ▼
@@ -440,7 +466,7 @@ PostgreSQL Tables:
 │ core_corridor │ Corridor nodes + PostGIS geometry │
 │ core_port │ Port nodes + PostGIS point │
 │ core_refinery │ Refinery nodes + PostGIS point │
-│ core_rawarticle │ Temp staging (deleted after 14 days) │
+│ core_rawarticle │ Temp staging (14-day delete NOT BUILT) │
 │ core_extractedevent│ Permanent event store │
 │ core_riskscore │ Permanent score history (backtest) │
 │ core_alternativesupplier│ Reroute alternatives table │
@@ -464,6 +490,19 @@ core_rawarticle (after processed=True)
 ---
 
 ### Threshold Trigger Logic
+
+> **⚠ BLOCKER FOR PHASE 5/6 — `centrality_score > 0.65` CAN NEVER FIRE.**
+> Betweenness centrality is normalized to [0,1], but on a graph of this shape
+> (50 nodes, one dominant SOURCE→…→SINK spine) the corridor values are tiny.
+> Measured on the real graph: **Hormuz 0.0756, Cape 0.0532, Red Sea 0.0238**
+> — the maximum possible is roughly an order of magnitude below the 0.65
+> threshold, so the condition is unreachable and the response layer would
+> never trigger. The spec below is kept for reference but MUST be re-specified
+> before Phase 5 wires up the reroute/SPR trigger. Options: threshold on a
+> normalized *rank* (e.g. the top-ranked corridor), on `capacity_loss_mbd`
+> (a physical unit, which is what `criticality/engine.py` already ranks by),
+> or on centrality rescaled relative to the observed max. Do NOT simply lower
+> 0.65 to 0.07 — that hardcodes a value specific to today's graph shape.
 
 After criticality engine runs:
 
@@ -501,7 +540,7 @@ For each event:
 (GDELT archives all data — fully queryable historically)
 
 2. Run extraction pipeline retrospectively
-   (same Claude/OpenAI extraction, historical articles)
+   (same OpenRouter/deepseek extraction, historical articles)
 
 3. Run risk scoring formula on historical events
    (same time-decay formula, historical timestamps)
@@ -573,7 +612,8 @@ graph/algorithms.py → centrality, max-flow, cascade functions
 graph/updater.py → updates edge weights from risk scores
 graph/state.py → thread-safe in-memory graph singleton
 
-pipeline/ingest/gdelt.py → GDELT API polling function
+pipeline/ingest/gdelt.py → GDELT DOC API polling (rate-limited)
+pipeline/ingest/gdelt_gkg.py → GDELT GKG 15-min bulk files (un-throttled)
 pipeline/ingest/rss.py → RSS feed parsing function
 pipeline/ingest/ofac.py → OFAC SDN download + parse
 pipeline/extract/extractor.py → OpenAI API extraction call
@@ -597,11 +637,21 @@ backtest/runner.py → backtest execution controller
 backtest/validator.py → signal vs price comparison
 backtest/eia.py → EIA API historical price fetcher
 
-management/commands/seed_db.py → loads data/*.json to DB
-management/commands/build_graph.py → builds + prints graph
-management/commands/run_pipeline.py → manual pipeline trigger
-management/commands/test_extraction.py → test one article extraction
-management/commands/run_backtest.py → run historical validation
+NOTE: commands live in core/management/commands/ — Django discovers them
+per-app, so the top-level management/ shown in the original spec does not exist.
+
+core/management/commands/seed_db.py → loads data/*.json to DB
+core/management/commands/build_graph.py → builds + prints graph
+core/management/commands/visualize_graph.py → graph rendering
+core/management/commands/poll_sources.py → GDELT/RSS/OFAC ingest (--corridor,
+                                            --last-minutes, --max-records)
+core/management/commands/extract_events.py → LLM extraction (PAID)
+core/management/commands/test_extraction.py → one article, exactly one paid call
+core/management/commands/score_risk.py → recompute risk + update graph (free)
+core/management/commands/run_criticality.py → Phase 4 static vs risk-weighted
+core/management/commands/backfill_event_timestamps.py → seendate repair (one-off)
+core/management/commands/run_pipeline.py → EMPTY STUB, Phase 6
+core/management/commands/run_backtest.py → EMPTY STUB, Phase 7
 
 ---
 
@@ -609,7 +659,7 @@ management/commands/run_backtest.py → run historical validation
 
 energy-resilience/
 ├── CLAUDE.md ← you are here
-├── API_DOCS.md ← REST API documentation for frontend teammate
+├── API_DOCS.md ← DOES NOT EXIST YET (write it in Phase 7)
 ├── README.md
 ├── .gitignore
 │
@@ -641,6 +691,7 @@ energy-resilience/
 │ ├── pipeline/ ← Data pipeline
 │ │ ├── ingest/
 │ │ │ ├── gdelt.py
+│ │ │ ├── gdelt_gkg.py
 │ │ │ ├── rss.py
 │ │ │ └── ofac.py
 │ │ ├── extract/
@@ -679,17 +730,15 @@ energy-resilience/
 │ │ ├── alternatives.json
 │ │ └── geometries/
 │ │ ├── hormuz.geojson
-│ │ ├── red_sea.geojson
-│ │ ├── suez.geojson
+│ │ ├── red_sea.geojson   (Suez folded in — no suez.geojson)
 │ │ └── cape.geojson
 │ │
-│ ├── management/
-│ │ └── commands/
-│ │ ├── seed_db.py
-│ │ ├── build_graph.py
-│ │ ├── run_pipeline.py
-│ │ ├── run_backtest.py
-│ │ └── test_extraction.py
+│ ├── core/management/commands/  ← NOT top-level management/
+│ │ ├── seed_db.py, build_graph.py, visualize_graph.py
+│ │ ├── poll_sources.py, extract_events.py, test_extraction.py
+│ │ ├── score_risk.py, run_criticality.py
+│ │ ├── backfill_event_timestamps.py
+│ │ └── run_pipeline.py, run_backtest.py  (empty stubs)
 │ │
 │ └── tests/
 │ ├── test_graph.py
@@ -874,6 +923,10 @@ class RawArticle(models.Model):
         indexes = [models.Index(fields=['processed', 'ingested_at'])]
 
 class ExtractedEvent(models.Model):
+    # VESTIGIAL — `corridor` below is a FK to Corridor, so these choices are
+    # never enforced and 'Suez' is not a real corridor (folded into Red Sea in
+    # Phase 1; extractor.CORRIDOR_ALIASES remaps it). Kept only because removing
+    # it would be a no-op migration. Do not treat this list as the corridor set.
     CORRIDOR_CHOICES = [
         ('Hormuz', 'Strait of Hormuz'),
         ('Red Sea', 'Red Sea / Bab-el-Mandeb'),
@@ -934,7 +987,7 @@ class AlternativeSupplier(models.Model):
 
 GET /api/risk-scores/
 Returns latest risk score per corridor
-Response: {"Hormuz": 0.72, "Red Sea": 0.45, "Suez": 0.12, "Cape": 0.05}
+Response: {"Hormuz": 0.84, "Red Sea": 0.86, "Cape": 0.05}   (3 corridors, no Suez)
 
 GET /api/criticality/
 Returns current criticality ranking (both static and risk-weighted)
@@ -1291,7 +1344,8 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 | PPAC | Refinery capacities, import volumes, SPR | Hardcoded JSON from PDF reports | Once at setup |
 | IEA | Corridor volumes, elasticities | Hardcoded JSON from PDF reports | Once at setup |
 | EIA API | Historical Brent prices | api.eia.gov REST API (free key) | Once for backtest |
-| GDELT | Live geopolitical events, one query per corridor (Hormuz/Red Sea/Cape) | REST API, no key needed | Every 6 hours |
+| GDELT DOC 2.0 | Live geopolitical events, one query per corridor (Hormuz/Red Sea/Cape) | REST API, no key needed — **rate-limited per IP, the project's most common failure** | Every 6 hours |
+| GDELT GKG 2.0 | Same corpus via static 15-min bulk CSVs — the un-throttled fallback, and Phase 7's historical path | Plain file GETs, no key, **no limiter**; corridors filtered locally; ~280 MB/24h | On demand (`--source gkg`) |
 | OilPrice.com RSS | General energy news — **replaces Reuters** (public RSS retired 2020) | feedparser, no key needed | Every 6 hours |
 | gCaptain RSS | Shipping/tanker news — **replaces Lloyd's List** (subscription-only, no public feed) | feedparser, no key needed | Every 6 hours |
 | OFAC SDN | Sanctions registry (19,388 entities as of first live pull) | CSV download from sanctions.ofac.treas.gov, cached to `data/ofac_sdn_cache.json` (gitignored) | Weekly |
@@ -1392,49 +1446,66 @@ SCENARIOS = {
 ## Development Commands
 
 ```bash
-# Navigate to backend first
-cd backend
+cd backend          # all commands run from here; venv is ../venv
 
-# Django server
 python manage.py runserver
+python manage.py seed_db                  # load data/*.json into the DB
+python manage.py build_graph              # build graph + print cut summary
+python manage.py test                     # full suite (248 tests)
 
-# Load seed data into database
-python manage.py seed_db
+# ---- the pipeline, in order (no orchestrator yet — Phase 6) ----
 
-# Build NetworkX graph and print summary
-python manage.py build_graph
+# 1. INGEST. Poll ONE corridor at a time, minutes apart: GDELT rate-limits
+#    per IP and a full 3-corridor sweep reliably trips it. A blocked corridor
+#    stores nothing, so the corpus stays balanced.
+python manage.py poll_sources --corridor Hormuz
+python manage.py poll_sources --corridor "Red Sea"     # quote: has a space
+python manage.py poll_sources --corridor Cape
+#    --last-minutes N  widen the window after a gap (default 1440 = 24h)
+#    --max-records N   articles per corridor (default 50, GDELT caps at 250)
+python manage.py poll_sources --source rss             # or ofac / all
+#    If GDELT 429s even one corridor at a time, bypass the DOC API entirely:
+python manage.py poll_sources --source gkg             # ~280 MB, cannot be throttled
+python manage.py poll_sources --source gkg --last-minutes 240
+#    Reads GDELT's static 15-min bulk files; all 3 corridors filtered locally
+#    from one identical corpus, so no corridor can be starved. NOT in --source all.
+#    --last-minutes must exceed 90 (GDELT's publication lag).
 
-# Trigger full pipeline manually (no need to wait for Celery)
-python manage.py run_pipeline
+# 2. EXTRACT. THE ONLY STEP THAT COSTS MONEY (OpenRouter).
+#    Do NOT run until all three corridors are sampled, or the corpus skews.
+python manage.py extract_events [--limit N]
+python manage.py test_extraction --url "<url already in RawArticle>"  # 1 call
 
-# Test Claude extraction on one article URL
-python manage.py test_extraction --url "https://reuters.com/article-url"
+# 3. SCORE. Free, no API calls, safe to re-run.
+python manage.py score_risk
 
-# Run historical backtest
-python manage.py run_backtest --event "2025_iran_standoff"
-python manage.py run_backtest --event "2026_hormuz_closure"
+# 4. CRITICALITY — the Phase 4 deliverable.
+python manage.py run_criticality --port-view
+python manage.py run_criticality --corridor Hormuz --cascade
+python manage.py run_criticality --scenario hormuz_full
+python manage.py run_criticality --rank-by centrality   # alt ranking key
 
-# Run all tests
-python manage.py test
+# ---- one-offs ----
+python manage.py backfill_event_timestamps --dry-run   # seendate repair
 
-# Celery worker (separate terminal)
-celery -A config worker --loglevel=info
-
-# Celery Beat scheduler (separate terminal)
-celery -A config beat --loglevel=info
-
-# Redis (separate terminal if not running as service)
-redis-server
+# ---- NOT IMPLEMENTED (empty stubs) ----
+# python manage.py run_pipeline                  # Phase 6 (LangGraph)
+# python manage.py run_backtest --event "..."    # Phase 7
+# celery -A config worker / beat, redis-server   # out of scope, see above
 ```
 
 ---
 
-## How to Run Locally (4 terminals)
+## How to Run Locally (1 terminal)
 
-Terminal 1: cd backend && python manage.py runserver
-Terminal 2: cd backend && celery -A config worker --loglevel=info
-Terminal 3: cd backend && celery -A config beat --loglevel=info
-Terminal 4: redis-server
+```bash
+cd backend && python manage.py runserver
+```
+
+That is all that is needed. The original spec called for 4 terminals (server +
+Celery worker + Celery Beat + Redis); **none of the Celery stack is implemented
+or required** — see the Celery Configuration section. Pipeline stages are
+triggered by hand with the commands above.
 
 
 ---
@@ -1495,7 +1566,7 @@ Terminal 4: redis-server
   - [x] **Known limitation (tested and documented, not fixed):** lexical similarity cannot tell that "Houthis seize strategic Perim Island" and "Houthis reach strategic island at mouth of vital shipping lane" are the same event. Catching that needs semantic matching; the thresholds low enough to catch it lexically are the same ones that flip the ranking. `test_known_limitation_semantic_duplicates_are_not_caught` pins the behaviour.
   - [x] Added `DECAY_LOOKBACK_DAYS = 180` — events past it contribute e^(-18) ≈ 1.5e-8 (nothing) and excluding them bounds the O(n²) clustering against a permanently-growing event table.
   - [x] **Post-fix scores on the real corpus: Red Sea 46.021 → 0.865, Hormuz 28.167 → 0.741, Cape 0 → 0.050.** 120 tests passing.
-  - [ ] **K STILL UNCALIBRATED — and deliberately left at 25.0.** Post-dedup the scores are high (0.865 / 0.741) but arguably correct: the corpus describes Houthis seizing Perim Island and Mocha port, Saudi shutting a pipeline after a drone strike, Hormuz "effectively shut since March", Brent $104. That may genuinely be a 0.87 week. **The blocker is that every article ingested so far comes from this one crisis — there is no calm-period sample to calibrate against, and fitting K to a single crisis point would be worse than leaving it.** Phase 7's backtest supplies both crisis and calm on one scale; fit it there. Note the dedup sweep showed the corridor *ranking* is controlled by the similarity threshold, while K controls only the absolute *level* — two separable knobs.
+  - [ ] **K STILL UNCALIBRATED — and deliberately left at 25.0.** Post-dedup the scores are high (0.865 / 0.741) but arguably correct: the corpus describes Houthis seizing Perim Island and Mocha port, Saudi shutting a pipeline after a drone strike, Hormuz "effectively shut since March", Brent $104. That may genuinely be a 0.87 week. **The blocker is that every article ingested so far comes from this one crisis — there is no calm-period sample to calibrate against, and fitting K to a single crisis point would be worse than leaving it.** Phase 7's backtest supplies both crisis and calm on one scale; fit it there. Note the dedup sweep showed the corridor *ranking* is controlled by the similarity threshold, while K controls only the absolute *level* — two separable knobs. **SUPERSEDED IN PART 2026-09-20 — see Phase 2.6: after the GKG ingest, K is not merely uncalibrated but saturated (both corridors pinned at ~0.99), and a THIRD knob was found — `raw_score` scales with sampling depth, so the same crisis scores 2.5x higher purely from ingesting more articles.**
   - [ ] RIPPLE (do in later phases): severity/confidence rubric compliance is still only eyeballed (57 events, no inter-rater check). `RawArticle` 14-day cleanup is now genuinely overdue — all 106 rows are `processed=True`.
 
 - [x] Phase 2.5 — GDELT sampling-bias fix (unplanned; forced by a Phase 3 finding)  ✅ COMPLETE
@@ -1519,7 +1590,49 @@ Terminal 4: redis-server
   - [x] **NEW, MORE URGENT PROBLEM SURFACED BY THE FIX ITSELF: both corridors are now saturated and the ranking has become NOISE.** A 0.011 gap between Red Sea (0.981) and Hormuz (0.970) is not a finding — the K=25 saturating transform has run out of room to discriminate once both corridors are reporting a genuinely severe, roughly comparable crisis. **The pipeline currently cannot support a claim like "Corridor X is more critical than Corridor Y."** This is not a new bug — it is the same K limitation flagged after the very first extraction, now unmasked because the sampling artifact that was previously (wrongly) creating an apparent gap is gone. Do not tune K from this single-crisis corpus; the Phase 7 backtest still needs calm-period data alongside crisis data to fit it properly (see [[project-risk-scoring-calibration]] memory).
   - [x] **SINGLE-CORRIDOR POLLING (added 2026-09-20, after live 429s made a full sweep impossible).** Observed pattern: the first query succeeds, then every later one returns 429 — including one fired **21 seconds** later, and still 429 **four minutes** on. So GDELT's "one request per 5s" notice understates it: there is a burst allowance followed by a multi-minute per-IP block, longer than `_RETRY_MAX_SECONDS = 60` can outlast. **The retry loop was making it worse** — a full `fetch_by_corridor` sweep fires up to ~21 requests in ~6 minutes (3 corridors × 5 attempts + second pass), and each blocked request re-extends the block. Fix: `gdelt.fetch_corridor(name)` issues exactly ONE request for one corridor (no inter-query delay, no second pass), `tasks.poll_gdelt_corridor(name)` fetches + stores it, and `manage.py poll_sources --corridor Hormuz` drives it. Run the three by hand minutes apart. **This preserves the Phase 2.5 fairness property, which a naive "abort the sweep on first 429" would have destroyed** — that would resample only whichever corridor happened to run first, reintroducing exactly the sampling bias Phase 2.5 fixed. Cross-corridor URL dedup still holds, just in the DB (`get_or_create` on url) rather than in the in-memory `seen_urls` set a single sweep uses; pinned by `test_separate_runs_dedupe_across_corridors_via_the_database`. An unknown corridor raises rather than reporting "not sampled", so a typo can't masquerade as throttling (`"Suez"` is the likely one — folded into Red Sea in Phase 1). 7 new tests, **184 total**.
   - [x] **EXPLICIT TIME WINDOW `lastminutes:` (2026-09-20).** GDELT's docs say the API "by default searches the last 24 hours", but the stored corpus disproves that for this mode: all 195 GDELT rows were ingested on 09-12/09-13, yet their seendates span **09-09 to 09-13**, so a query returned articles GDELT first saw 3-4 days earlier. The window is now set explicitly (`DEFAULT_LAST_MINUTES = 1440`) rather than trusting a default that measurably does not hold. **It is a GDELT *query command*, not a URL parameter** — it goes inside the query string next to `sourcelang:`; sending it as a URL param would be silently ignored and the window lost (pinned by `test_window_goes_in_the_query_not_the_url_params`). Must be a multiple of 15. Overridable via `--last-minutes` for catching up after a gap in polling (e.g. `4320` for 3 days) — important because Celery Beat is not implemented, so polling is manual and irregular, and a fixed 24h window would silently drop coverage after a pause. Secondary benefit under throttling: fewer slots wasted re-fetching already-stored articles. Also added `--max-records` (default 50, GDELT ceiling 250) to test whether smaller requests survive the limiter better — **untested, and confounded**, since the cooldown decays with time; the evidence so far points to request *spacing* mattering more than request *size* (a 50-record query succeeded, and only the second request of any size failed).
-  - [ ] RIPPLE: GDELT throttling is per-IP and was refusing every query during testing — a single laptop polling 3 queries every 6h may simply be near its ceiling. ~~spacing corridors across separate runs~~ [DONE — see single-corridor polling above]. If starvation persists even one-at-a-time, consider lowering `DEFAULT_MAX_RECORDS` (50 may itself be weighted heavily by GDELT), the GKG/Events 15-minute bulk CSVs (article-level, no per-request throttle — the real high-volume path; the *ngrams* dataset is NOT a fit, being word-level rather than article-level and unable to feed Phase 3's headline-similarity dedup), or accepting RSS as a corridor-agnostic supplement (RSS alone has NEVER produced a single Cape event across 27 articles — it cannot substitute for GDELT's per-corridor queries, only complement them).
+  - [x] RIPPLE: GDELT throttling is per-IP and was refusing every query during testing — a single laptop polling 3 queries every 6h may simply be near its ceiling. ~~spacing corridors across separate runs~~ [DONE — see single-corridor polling above]. ~~consider the GKG 15-minute bulk CSVs~~ [DONE 2026-09-20 — see Phase 2.6 below]. Still open if starvation persists: lowering `DEFAULT_MAX_RECORDS` (50 may itself be weighted heavily by GDELT), or accepting RSS as a corridor-agnostic supplement (RSS alone has NEVER produced a single Cape event across 27 articles — it cannot substitute for GDELT's per-corridor queries, only complement them).
+  - [x] **Web NGrams 3.0 evaluated and REJECTED, for different reasons than previously recorded here.** The old note said ngrams were "word-level rather than article-level and unable to feed Phase 3's headline-similarity dedup". Measured against a real file, the first half is wrong: 3.0 records carry `url` inline plus `pre`/`post` context (~7 words each side), so they *are* resolvable to articles. The actual blockers are (a) **no title field**, which is what kills the headline dedup, and (b) **size — 14-36 MB gzipped per MINUTE** (539,000 lines, 935 distinct articles in the sample), i.e. **~30 GB/day**, roughly 100x GKG for less usable metadata. Also note `ngram` is a single word, so multi-word corridor terms (`"Red Sea"`, `"Bab el-Mandeb"`) return zero matches and would have to be matched against `pre`/`post` instead. GDELT's own "horizon scanning" workflow (grep one file, discard it) is a good fit for an always-on host; it is a bad fit here, where polling is manual and irregular and catching up on a missed day means 1,440 files.
+
+- [x] Phase 2.6 — GDELT GKG bulk-file ingestion (unplanned; the answer to the 429s)  ✅ COMPLETE
+  - [x] **Why: the DOC API limiter is not something more retry logic can fix.** `pipeline/ingest/gdelt_gkg.py` reads the same underlying corpus from GDELT's *static* 15-minute CSV drops (`data.gdeltproject.org/gdeltv2/YYYYMMDDHHMMSS.gkg.csv.zip`) — plain files on a CDN, no per-request limiter, and GDELT never deletes them, so **the identical code path serves live polling and Phase 7's historical reconstruction.** Filenames are deterministic from a datetime, so there is no index or search call to be throttled on.
+  - [x] **Measured, not assumed** (one real slice, 2026-09-20): 3.1 MB zipped per slice, 672 usable rows, `PAGE_TITLE` on **672/672**, `PAGE_PRECISEPUBTIMESTAMP` on 377/672 (56%). A 24h window is **91 slices ≈ 280 MB** — 96 slices per day minus the newest 6, which are inside the publication lag.
+  - [x] **Publication lag is real and bigger than the docs imply**: at 14:05 UTC the 13:15 slice was readable but 13:30 was not, *even though `lastupdate.txt` already named the 14:00 file*. `PUBLICATION_LAG_MINUTES = 90` skips that zone rather than spending a request per gap on a guaranteed 404. `--last-minutes` below the lag is rejected with an explanation, since it would otherwise resolve to zero slices and report as an unsampled window — true but useless.
+  - [x] **GKG has no title COLUMN** — the headline lives inside V2EXTRASXML as `<PAGE_TITLE>`, extracted by regex because the field is not real XML (no root element, no escaping, so a parser rejects it). This matters beyond display: Phase 3's story dedup clusters on headline similarity, so a source with no title could not feed it at all.
+  - [x] **Corridor selection moves server-side → local** (`CORRIDOR_KEYWORDS` + `TOPIC_KEYWORDS` + `TOPIC_THEMES`), mirroring the two-clause shape of each DOC query (corridor term AND topic signal — `"Red Sea"` alone matches coral-reef and tourism coverage). GKG's own theme codes are a second route past the topic gate, since a headline can describe an oil disruption without using any of our words. **This is a net WIN for the Phase 2.5 bias problem, not just a workaround: all three corridors are filtered from one identical corpus, so throttling can no longer starve one corridor relative to another.** Keywords deliberately over-match (a Riyadh missile story tags Red Sea via "Houthi") — same contract as the DOC path, where `matched_corridor_query` is a weak hint the extractor overrides.
+  - [x] **Honesty property preserved and adapted.** Reuses `gdelt.CorridorFetch` / `FETCH_*` verbatim. A corridor matching nothing reports `FETCH_EMPTY` + `sampled=True` (real evidence it is quiet, since its slices were read like everyone else's), but a window where under 50% of slices were readable reports `FETCH_ERROR` for **every** corridor — otherwise a failed download masquerades as three quiet corridors, which is exactly the bug class Phase 2.5 existed to kill.
+  - [x] **`raw_text` is byte-compatible with the DOC path's**, verified live: `_build_raw_text` emits the same `seendate:` line so `gdelt.parse_seendate` recovers it unchanged and Phase 3 needs **zero** changes. `PAGE_PRECISEPUBTIMESTAMP` is preferred over `V2.1DATE` when present — a real publication time, strictly better than the seendate the 2026-09-20 fix had to reverse-engineer. **GKG themes are deliberately NOT put in raw_text** even though they'd help the LLM: richer prompts for GKG rows would confound any later comparison of extraction quality between the two sources.
+  - [x] **Rows stored under `source="gdelt_gkg"`, not `"gdelt"`.** The two paths select articles by different mechanisms (GDELT's search vs. our matcher), so recall differs and a mixed corpus is not homogeneous. Separate labels mean that difference can be measured in Phase 7 instead of assumed away. **State this in the write-up — a GKG-sourced corpus is not directly comparable with the existing 195 DOC-sourced rows.**
+  - [x] `pipeline/tasks.py::poll_gdelt_gkg(last_minutes=None)` returns the same `{corridor: {"fetched","stored","status","sampled"}}` shape as `poll_gdelt_by_corridor`, so reporting code is shared. `manage.py poll_sources --source gkg`. **Excluded from `--source all` on purpose** — a default run must not silently pull 280 MB; pinned by `test_source_all_does_not_trigger_a_300mb_download`.
+  - [x] `tests/test_gkg_ingestion.py` — 49 tests, no network (mocked at `gdelt_gkg.requests.get`, same convention as `test_ingestion.py`). **Full suite 248, all passing.** Live-verified against a real downloaded slice: 4 corridor matches from one 15-min slice (1 Hormuz, 3 Red Sea), seendate round-trip confirmed for both the precise-pub-timestamp and V2.1DATE cases.
+  - [x] **FIRST LIVE RUN (2026-09-20) EXPOSED A MATCHER DEFECT — fixed, and measured against the real corpus rather than guessed at.** `--source gkg --last-minutes 240` read 11/11 slices with **zero throttling** and stored 41 articles. Hormuz's 14 were all genuinely on-topic; **Red Sea's 27 were ~24 Houthi ballistic-missile attacks on Riyadh** — Yemen-Saudi land conflict with no maritime content. Cause: `houthi` sat in `CORRIDOR_KEYWORDS` while `missile`/`attack`/`military` sat in `TOPIC_KEYWORDS`, so both clauses were satisfied by a land war. Over-matching is tolerable (the extractor overrides the hint) but at **89% of a corridor's intake it is the corpus, not a hint**.
+  - [x] **Fix is a two-tier corridor gate**, not a keyword tweak. `CORRIDOR_KEYWORDS` holds unambiguous *geographic* names (Hormuz, Red Sea, Bab-el-Mandeb, Suez Canal, Gulf of Aden, Cape) and passes on a deliberately PERMISSIVE topic gate — a headline containing "Hormuz" is about the strait essentially always, so the gate only needs to reject coral reefs. `CORRIDOR_WEAK_KEYWORDS` holds *implied* corridors (`houthi`, `yanbu`, `hodeidah`, `djibouti`, …) and requires a stricter `MARITIME_KEYWORDS` signal, so a Houthi land offensive cannot enter as Red Sea shipping risk.
+  - [x] **Two sub-bugs found only by measuring, both now pinned by tests.** (1) **Substring matching was wrong**: `"port"` fired on "Riyadh air*port*" and "sup*port*s measures", which was re-admitting the exact land-war stories the two-tier split removed (`"mine"` in "deter*mine*", `"close"` in "*close*ly" are the same trap). `_contains_term` now matches on word boundaries. (2) That change silently broke **plurals** — "Tankers divert from Hormuz" stopped matching `tanker` — so the pattern allows an optional trailing `s` and the term lists stay singular. (3) Also fixed: GDELT does not decode entities before writing `PAGE_TITLE`, so `&#xA0;` and `&amp;` reached both the prompt and Phase 3's headline dedup, where they depress the similarity ratio between two copies of one wire story; titles are now `html.unescape`d.
+  - [x] **Result, replayed over the same 41 real titles** (keyword-only, so a lower bound — themes are not stored on RawArticle and cannot be replayed): **Hormuz 13/14 kept** (only drop is a genuinely borderline Trump/UN story) and **Red Sea 2/27 kept** — exactly the two with real maritime content ("…amid Red Sea tensions", "Houthis hit Saudi Aramco facilities in **Yanbu**", a Red Sea oil port). All 25 Riyadh land-war stories dropped. **253 tests passing.**
+  - [x] **`V1LOCATIONS` / `V2ENHANCEDLOCATIONS` / `V2.1ALLNAMES` matching EVALUATED AND REJECTED (2026-09-20).** The idea was to recover the DOC API's full-text recall from columns GKG already ships — GKG extracts locations and proper names from the article *body*, which title+URL matching cannot see. Measured across **10 slices / 4,734 rows**, it fails on both precision and recall:
+    - **The corridor names are essentially absent.** In 4,734 rows the only corridor-ish location names were `Red Sea, Djibouti (General), Djibouti` (×132) and `Bab El-Mandeb, , Djibouti` (×17); ALLNAMES gave `Red Sea` (×71) and `Mandeb Strait` (×12). **"Hormuz" appears ZERO times in either column** — so it adds nothing for the corridor that matters most.
+    - **GDELT's "Red Sea" location is a Djiboutian ADMINISTRATIVE REGION, not the waterway.** Any article mentioning Yemen geocodes to it, making the field a proxy for "mentions Yemen" — exactly the false-positive class the two-tier gate exists to remove.
+    - **Precision ~5%.** ALLNAMES added 43 articles of which ~2 were relevant; the rest included "Why the AI industry wants to be saved from itself", "Why Forex Traders Are Watching the Dollar and Yen Now", and five copies of "World leaders meet at UN". It would have tripled Red Sea intake with noise.
+    - **Consequence for the DOC-vs-GKG decision:** GDELT's server-side full-text search is a capability GKG **cannot** replicate from metadata at usable precision. This is the argument for freezing rather than deleting `gdelt.py` — the DOC path remains the only route to body-text recall. Confirmed by the zero URL overlap between the two corpora.
+  - [ ] **OPEN MODELLING QUESTION, deliberately not decided in code: should Houthi escalation count as Red Sea corridor risk at all?** The matcher now says "only when the story is maritime". The defensible counter-argument is that Houthi military escalation is a *leading indicator* of Red Sea shipping risk even when a given article is about Riyadh — which is how a human analyst would read it. Current behaviour is the conservative choice and matches the DOC query's shape; it also means Red Sea intake from GKG is small. Revisit when fitting `SATURATION_K` in Phase 7, since the two interact: a stricter corridor gate lowers raw scores, and K is what converts raw to normalized.
+  - [ ] **The 41 rows already stored carry the OLD (buggy) `matched_corridor_query` hints and are all `processed=False`.** Nothing has been extracted, so no money has been spent and no ExtractedEvent is contaminated. Either delete them and re-poll with the fixed matcher (free, ~30s, gives a clean corpus), or extract them and rely on the LLM to reassign the 24 Riyadh stories — Phase 2.5 proved it does override bad hints, but that leaves 24 near-duplicate land-war articles in the permanent event store. **Deleting and re-polling is the recommendation.**
+  - [x] **FULL 24h GKG RUN, 2026-09-20: 91/91 slices, 113 articles (Hormuz 83 / Red Sea 30 / Cape 0), zero throttling.** Extraction quality confirms the matcher fix: **106 events from 113 articles, only 7 irrelevant, 0 unparseable, 0 call failures** — a 94% relevance rate against ~50% on the DOC corpus. Red Sea's intake is now substantive rather than Riyadh noise, including *"Houthis Seize Bab al-Mandeb, Closing World's Second Oil Chokepoint"*, the most consequential single event in the corpus. Corpus now 256 ExtractedEvents (was 150).
+  - [x] **The predicted uneven-dedup skew did NOT materialize** — worth recording because it was the stated worry. Hormuz 238.67 → 115.57 (**2.07x**), Red Sea 197.47 → 104.73 (**1.89x**). Near-identical ratios, so the 0.60 similarity threshold handled reworded wire copy better than expected and the truncated-title problem did not move the aggregate.
+  - [ ] **🚨 `SATURATION_K = 25` IS NOW DEFINITIVELY BROKEN — the score has run out of headroom entirely.** Hormuz raw 115.577 → **0.992**, Red Sea raw 104.732 → **0.987**. A **10.3% raw difference compresses to a 0.005 normalized difference** (`1 - e^(-115/25)` = 0.990), which is worse than the 0.011 gap Phase 2.5 already flagged as noise. Physical consequence, straight from `score_risk` output: `Hormuz -> Vadinar 0.855 -> 0.007` — **the model asserts Hormuz is 99.2% closed and Red Sea 98.7% closed.** There is no room left to represent an actual closure.
+  - [ ] **ROOT CAUSE IS BIGGER THAN K, AND IS NEW: `raw_score` is a SUM, so it scales with SAMPLING DEPTH, not just with severity.** Same crisis, two ingestion methods:
+
+    | | DOC-only corpus | + GKG corpus |
+    |---|---|---|
+    | Hormuz raw | 39.4 | **115.6** |
+    | Red Sea raw | 45.1 | **104.7** |
+    | leader | **Red Sea** | **Hormuz** |
+
+    The world did not become 2.5x more dangerous — we started ingesting ~2x more articles, because GKG surfaces more distinct stories per day than the DOC API's hard 50-per-corridor cap allowed. Scoring-time dedup removes duplicate *coverage* of one story; it does nothing about greater sampling *depth*. **The corridor ranking INVERTED as a result** — the same class of artefact as the Phase 2.5 sampling bug, one level up: "which corridor is riskier" depends on the ingestion method, not only on the world. **Fitting K on calm-vs-crisis data (the Phase 7 plan) is necessary but NOT sufficient — the volume-sensitivity has to be addressed too** (candidates: score on story count rather than summed weight, cap contribution per unit time, or normalize by articles sampled in the window; each has its own failure mode — e.g. a mean lets one severe event read like a sustained crisis).
+  - [x] **RSS timestamp gap CLOSED (2026-09-20)** — the "remaining piece" flagged in Phase 3. `rss.py` now reads `published_parsed` / `updated_parsed` and emits the SAME `seendate:` line `gdelt.parse_seendate` reads, so Phase 3 dates RSS events from publication without knowing the source. Measured against the live feeds: **27/27 entries carry a usable date**, mean age **1.4-1.6 days**, oldest 2.24 days — so ingest-time dating was over-weighting RSS events by ~16% on average and ~25% at worst, and unlike GDELT's seendate there is nothing in an RSS row to repair it from later. 5 tests, 258 total. Note the feeds hold only ~2 days of history and there is no `--last-minutes` equivalent, so a week between manual polls loses ~5 days of RSS coverage permanently — poll RSS more often than GKG, it is free and takes seconds.
+  - [x] **RSS confirmed a third time as supplement-only**: 10 events from 27 articles (17 irrelevant, 63%), of which **Hormuz +8, Red Sea +0, Cape +0** and ~2 stored with a NULL corridor. RSS has still never produced a single Cape event.
+  - [x] **PHASE 4'S HEADLINE FINDING SURVIVES THE CORPUS CHANGE — real external validation.** Re-run on 266 events (77% larger than the 150 it was originally computed on) from a *different ingestion method*: `Cape 2→1 (+1), Hormuz 1→2 (-1), Red Sea 3→3`, identical to the original. The rank-shift mechanism was not an artefact of the DOC corpus. Capacity-weighted centrality also crossed over (Cape 0.0655 > Hormuz 0.0651, from a static 0.0532 < 0.0756).
+  - [ ] **…BUT THE MAGNITUDES ARE NOW DEGENERATE AND MUST NOT BE QUOTED.** `Hormuz risk-weighted capacity_loss = 0.009 mb/d` (was 0.364) — the model says losing the Strait of Hormuz entirely would cost India nine *thousandths* of a mb/d, on a corridor carrying 2.316 mb/d of its inflow. Mechanically correct (at risk 0.996 there is nothing left to lose) and physically absurd. `risk_flow` fell 2.485 → **2.096**, i.e. **50.4% of deliverability already lost**, and 2.096 ≈ Cape's risk-weighted capacity alone (2.255 × 0.95 = 2.142) — the model has reduced India's whole supply chain to one corridor. **This is the cleanest available demonstration of WHY K needs calibrating: the mechanism is validated, the levels are worthless.** Good material for the write-up as a stated limitation; not a result.
+  - [x] **DO NOT PUT IN THE WRITE-UP until recalibrated:** the 0.992/0.987 figures as risk levels; any "Hormuz is riskier than Red Sea" claim (0.005 gap, and the ordering flips with ingestion method); the implied ~99% capacity loss. **Phase 4's rank-shift finding DOES survive** — it is robust for any Hormuz risk above ~0.10 and reads the graph's response rather than the score spread. `RiskScore.raw_score` persistence means recalibration never costs another extraction run.
+  - [ ] RIPPLE: **zero URL overlap between the 41 GKG rows and the 195 DOC rows** — the two paths found completely disjoint articles, confirming that GKG genuinely adds coverage rather than re-finding what the DOC API already had, and reinforcing that the two corpora are not comparable. After the fixed matcher, a 4h window yields ~15 articles → a 24h window roughly 90, versus the DOC path's hard 50-per-corridor cap; still enough to shift `SATURATION_K` and the Phase 4 rank-shift finding, so re-check both after the first real ingest. Automatic DOC→GKG fallback is NOT wired: `--source gkg` is a deliberate manual choice, since an automatic fallback would trigger a 280 MB download from a throttle. Also observed: some `PAGE_TITLE` values are truncated at source ("Iran's Ghalibaf says", "Turkish FM Fidan says Ankara has") — GDELT's own data, not fixable here, and it degrades headline-similarity dedup for those rows.
 - [x] Phase 4 — Criticality engine (centrality + max-flow + cascading failure)  ✅ COMPLETE
   - [x] `graph/algorithms.py` — pure NetworkX primitives, no GraphState/DB access (callers choose the graph): `structural_betweenness`, `capacity_weighted_betweenness`, `baseline_max_flow` / `risk_weighted_max_flow`, `degrade_corridor`, `degrade_supply`, `residual_port_criticality`, `corridor_load_bearing_ports`. `degrade_corridor`/`degrade_supply` both return a NEW graph — the input is never mutated (pinned by tests), so a simulation can never corrupt the singleton.
   - [x] **BETWEENNESS WEIGHTING — CLAUDE.md's original formula was semantically backwards and is NOT implemented as written.** The spec said `nx.betweenness_centrality(G, weight='effective_capacity')`, but NetworkX's `weight=` is edge **distance** (lower = more traversable = more central), not edge importance. Taken literally, a corridor becoming *safer* (higher `effective_capacity`) would read as a *longer* path and score as *less* central — the risk signal inverted. Fix: two distinct measures, neither claiming to be "the" centrality. `structural_betweenness` = plain unweighted (the structural/static half of the thesis comparison, and the measure `test_graph.py::test_betweenness_centrality_runs` already asserts — left untouched). `capacity_weighted_betweenness` distance-transforms **every** edge as `1/max(capacity, EPS)` before calling betweenness — uniformly across all layers, not just corridor edges, so the transform can't be accused of being cherry-picked. `test_capacity_weighted_betweenness_direction_is_correct` is the executable proof: throttling Hormuz to 99% must *lower* its weighted betweenness, which is exactly the assertion that would FAIL under the literal spec.
@@ -1563,13 +1676,26 @@ django.core.exceptions.ImproperlyConfigured: Could not find the GDAL library
 
 Fix: Install GDAL — `brew install gdal` (Mac) or `sudo apt install gdal-bin` (Ubuntu)
 
-**Celery task not found**
+**GDELT 429 Too Many Requests** (the most common failure in practice)
 
-NotRegistered: pipeline.tasks.poll_gdelt
+429 Client Error: Too Many Requests
 
-Fix: Make sure `config/celery.py` has `app.autodiscover_tasks()` and all apps are in INSTALLED_APPS
+The "one request per 5s" notice understates it: measured behaviour is a burst
+allowance then a **multi-minute per-IP block** — a query 21s after a success
+still 429'd, and was still blocked 4 minutes later. Retrying makes it worse,
+since each blocked request re-extends the block.
+Fix: poll ONE corridor per run, minutes apart (`--corridor`), and if a corridor
+comes back NOT SAMPLED, wait longer rather than retrying. Nothing is stored on
+a block, so the corpus stays balanced. Do not re-poll while debugging.
+If it refuses even one corridor at a time, use `--source gkg` — the bulk files
+have no limiter at all. Costs ~280 MB for 24h and stores rows under
+`source="gdelt_gkg"` (different selection mechanism, see Phase 2.6).
 
-**Claude API JSON parse failure**
+**Celery task not found** — NOT APPLICABLE, Celery is not implemented.
+`pipeline/tasks.py` is plain functions with no Celery imports, enforced by a
+guard test. If you see this, something re-introduced Celery by mistake.
+
+**LLM JSON parse failure**
 
 json.JSONDecodeError: Expecting value
 
@@ -1581,17 +1707,27 @@ NetworkXError: node not in graph
 
 Fix: Check seed data JSON — node names must match exactly between suppliers.json, corridors.json, and edges.json
 
-**Redis connection refused**
+**Redis connection refused** — NOT APPLICABLE, Redis is not used. Nothing in
+the implemented pipeline needs a broker.
 
-redis.exceptions.ConnectionError: Error connecting to Redis
+**Risk-weighted criticality identical to static (all rank_shift = 0)**
 
-Fix: Start Redis server — `redis-server` in a separate terminal
+Cause: the graph was rebuilt but risk was never pushed onto its edges, so
+`effective_capacity == volume` and both rankings read the same world. This is
+dangerous because it looks like a legitimate "no shift" finding.
+Fix: `criticality/engine.py` logs a WARNING naming the affected corridors when
+it detects this. Run `manage.py score_risk`, or use `run_criticality` which
+applies stored risk itself.
 
 ---
 
 ## Important Reminders
 
-- RawArticle rows are TEMPORARY — delete after extraction (processed=True + age > 14 days)
+- RawArticle rows are TEMPORARY — delete after extraction (processed=True + age > 14 days).
+  **STILL NOT IMPLEMENTED.** Before building it, note that `ExtractedEvent.timestamp`
+  is recovered from `RawArticle.raw_text` (GDELT seendate) — once these rows are
+  deleted, historical event dates can no longer be repaired. Run
+  `backfill_event_timestamps` first.
 - ExtractedEvent rows are PERMANENT — never delete, needed for backtest
 - RiskScore rows are PERMANENT — needed for historical trend charts
 - Graph singleton in graph/state.py must be thread-safe (use threading.Lock)

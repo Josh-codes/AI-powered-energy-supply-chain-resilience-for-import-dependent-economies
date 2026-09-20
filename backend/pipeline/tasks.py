@@ -19,6 +19,11 @@ from pipeline.ingest.gdelt import (
     fetch_corridor,
     store_gdelt_articles,
 )
+from pipeline.ingest.gdelt_gkg import (
+    CORRIDOR_KEYWORDS as GKG_CORRIDOR_KEYWORDS,
+    fetch_by_corridor as fetch_gkg_by_corridor,
+    store_gkg_articles,
+)
 from pipeline.ingest.ofac import download_ofac_sdn
 from pipeline.ingest.rss import fetch_energy_news, fetch_shipping_news, store_rss_articles
 from pipeline.score.risk_scorer import compute_all_risk_scores
@@ -101,6 +106,44 @@ def poll_gdelt_corridor(corridor_name, max_records=None, last_minutes=None):
         "status": result.status,
         "sampled": result.sampled,
     }
+
+
+def poll_gdelt_gkg(last_minutes=None):
+    """Fetch and store GDELT GKG bulk-file articles, reporting per corridor.
+
+    Same return shape as :func:`poll_gdelt_by_corridor`, so reporting code works
+    against either path. Unlike the DOC API this cannot be rate-limited, but it
+    downloads roughly 300 MB for a 24h window — call it deliberately, not on a
+    timer.
+
+    All three corridors share one download and one status: they are filtered
+    from the same slices, so a partial read thins every corridor equally rather
+    than starving one. That is the property the Phase 2.5 fix was defending.
+    """
+    empty_report = {
+        c: {"fetched": 0, "stored": 0, "status": FETCH_ERROR, "sampled": False}
+        for c in GKG_CORRIDOR_KEYWORDS
+    }
+    try:
+        by_corridor = fetch_gkg_by_corridor(last_minutes=last_minutes)
+    except Exception:
+        logger.exception("poll_gdelt_gkg failed")
+        return empty_report
+
+    report = {}
+    for corridor, result in by_corridor.items():
+        try:
+            stored = store_gkg_articles(result.articles)
+        except Exception:
+            logger.exception("storing GKG articles failed for %s", corridor)
+            stored = 0
+        report[corridor] = {
+            "fetched": len(result.articles),
+            "stored": stored,
+            "status": result.status,
+            "sampled": result.sampled,
+        }
+    return report
 
 
 def poll_gdelt():

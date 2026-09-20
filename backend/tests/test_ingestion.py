@@ -9,6 +9,7 @@ of these assert graceful degradation, not just the happy path.
 """
 import json
 import tempfile
+from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -479,6 +480,98 @@ class RssIngestTests(TestCase):
         self.assertEqual(len(articles), 2)
         self.assertEqual(articles[0]["source"], "oilprice")
         self.assertEqual(articles[0]["raw_text"], "prices rose")
+
+    @patch("pipeline.ingest.rss.feedparser.parse")
+    def test_publication_date_round_trips_through_the_shared_parser(self, mock_parse):
+        """RSS events must be dated from PUBLICATION time, not ingest time.
+
+        Unlike GDELT's seendate there is nothing in an RSS row to repair this
+        from later, so an entry ingested days after publication would be
+        permanently over-weighted by the 0.1/day decay.
+        """
+        mock_parse.return_value = _mock_feed(
+            [
+                {
+                    "link": "https://news.example/1",
+                    "title": "Tanker rates spike",
+                    "summary": "rates rose",
+                    # feedparser hands back a struct_time already in UTC.
+                    "published_parsed": (2026, 9, 14, 6, 45, 0, 0, 257, 0),
+                }
+            ]
+        )
+
+        articles = rss.fetch_rss_feed("https://feed.example/rss", "oilprice")
+
+        self.assertEqual(
+            gdelt.parse_seendate(articles[0]["raw_text"]),
+            datetime(2026, 9, 14, 6, 45, tzinfo=timezone.utc),
+        )
+        self.assertIn("rates rose", articles[0]["raw_text"])
+
+    @patch("pipeline.ingest.rss.feedparser.parse")
+    def test_updated_date_is_used_when_published_is_absent(self, mock_parse):
+        """Some feeds carry only updated_parsed."""
+        mock_parse.return_value = _mock_feed(
+            [
+                {
+                    "link": "https://news.example/1",
+                    "title": "t",
+                    "summary": "s",
+                    "updated_parsed": (2026, 9, 14, 6, 45, 0, 0, 257, 0),
+                }
+            ]
+        )
+
+        articles = rss.fetch_rss_feed("https://feed.example/rss", "oilprice")
+
+        self.assertEqual(
+            gdelt.parse_seendate(articles[0]["raw_text"]),
+            datetime(2026, 9, 14, 6, 45, tzinfo=timezone.utc),
+        )
+
+    @patch("pipeline.ingest.rss.feedparser.parse")
+    def test_a_dateless_entry_keeps_its_body_unchanged(self, mock_parse):
+        """No date line is invented — extraction then falls back to ingest time,
+        which is the best available for a feed that publishes no dates."""
+        mock_parse.return_value = _mock_feed(
+            [{"link": "https://news.example/1", "title": "t", "summary": "just this"}]
+        )
+
+        articles = rss.fetch_rss_feed("https://feed.example/rss", "oilprice")
+
+        self.assertEqual(articles[0]["raw_text"], "just this")
+        self.assertIsNone(gdelt.parse_seendate(articles[0]["raw_text"]))
+
+    @patch("pipeline.ingest.rss.feedparser.parse")
+    def test_a_malformed_date_does_not_break_ingestion(self, mock_parse):
+        mock_parse.return_value = _mock_feed(
+            [
+                {
+                    "link": "https://news.example/1",
+                    "title": "t",
+                    "summary": "s",
+                    "published_parsed": "not-a-struct-time",
+                }
+            ]
+        )
+
+        articles = rss.fetch_rss_feed("https://feed.example/rss", "oilprice")
+
+        self.assertEqual(len(articles), 1)
+        self.assertIsNone(gdelt.parse_seendate(articles[0]["raw_text"]))
+
+    @patch("pipeline.ingest.rss.feedparser.parse")
+    def test_rss_carries_no_corridor_hint(self, mock_parse):
+        """RSS feeds are corridor-agnostic — there is no query to hint from, so
+        the extractor must judge corridor from content alone."""
+        mock_parse.return_value = _mock_feed(
+            [{"link": "https://news.example/1", "title": "Hormuz shut", "summary": "s"}]
+        )
+
+        articles = rss.fetch_rss_feed("https://feed.example/rss", "oilprice")
+
+        self.assertNotIn("matched_corridor_query", articles[0]["raw_text"])
 
     @patch("pipeline.ingest.rss.feedparser.parse")
     def test_bozo_feed_keeps_entries_without_warning(self, mock_parse):

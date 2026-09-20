@@ -5,7 +5,9 @@ retired its public RSS feeds in 2020 and Lloyd's List is subscription-only.
 ENERGY_NEWS_RSS_URL / SHIPPING_NEWS_RSS_URL below stand in as free, live
 equivalents.
 """
+import calendar
 import logging
+from datetime import datetime, timezone
 
 import feedparser
 
@@ -49,17 +51,60 @@ def fetch_rss_feed(feed_url, source_label, limit=50):
         if not url or not title:
             logger.debug("skipping RSS entry with no link/title from %s", feed_url)
             continue
+        body = entry.get("summary") or entry.get("description") or title
         articles.append(
             {
                 "url": url,
                 "source": source_label,
                 "title": title[:500],
-                "raw_text": entry.get("summary") or entry.get("description") or title,
+                "raw_text": _build_raw_text(body, _entry_timestamp(entry)),
             }
         )
 
     logger.info("%s returned %d usable articles", source_label, len(articles))
     return articles
+
+
+def _entry_timestamp(entry):
+    """Publication time of an RSS entry as an aware UTC datetime, or None.
+
+    feedparser normalizes whatever date format a feed uses into a
+    ``time.struct_time`` already converted to UTC, so ``calendar.timegm`` (UTC)
+    is correct here and ``time.mktime`` (local time) would be wrong.
+
+    ``published_parsed`` is preferred; ``updated_parsed`` is the fallback, since
+    some feeds only carry the latter. Both are absent often enough that the
+    caller must handle None.
+    """
+    for key in ("published_parsed", "updated_parsed"):
+        parsed = entry.get(key)
+        if not parsed:
+            continue
+        try:
+            return datetime.fromtimestamp(calendar.timegm(parsed), tz=timezone.utc)
+        except (TypeError, ValueError, OverflowError):
+            logger.debug("unusable RSS %s: %r", key, parsed)
+    return None
+
+
+def _build_raw_text(body, published_at):
+    """Append a ``seendate:`` line so the event can be dated from the article.
+
+    Deliberately the SAME line format ``gdelt.parse_seendate`` reads, so Phase 3
+    dates RSS events from publication time without knowing the source. Without
+    it, ``ExtractedEvent.timestamp`` silently falls back to ingest time — and
+    unlike GDELT's seendate (recoverable by regex from raw_text) there would be
+    nothing left in the row to repair it from later, so an RSS event ingested a
+    week after publication would be permanently over-weighted by the 0.1/day
+    decay.
+
+    No ``matched_corridor_query`` line: RSS feeds are corridor-agnostic, so
+    there is no query hint to pass on and the extractor judges corridor purely
+    from content.
+    """
+    if published_at is None:
+        return body
+    return f"{body}\nseendate: {published_at.strftime('%Y%m%dT%H%M%SZ')}"
 
 
 def fetch_energy_news():
