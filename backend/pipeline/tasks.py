@@ -16,6 +16,7 @@ from pipeline.ingest.gdelt import (
     CORRIDOR_QUERIES,
     FETCH_ERROR,
     fetch_by_corridor,
+    fetch_corridor,
     store_gdelt_articles,
 )
 from pipeline.ingest.ofac import download_ofac_sdn
@@ -25,7 +26,7 @@ from pipeline.score.risk_scorer import compute_all_risk_scores
 logger = logging.getLogger(__name__)
 
 
-def poll_gdelt_by_corridor():
+def poll_gdelt_by_corridor(max_records=None, last_minutes=None):
     """Fetch and store GDELT articles, reporting per corridor.
 
     Returns {corridor: {"fetched": int, "stored": int, "status": str,
@@ -40,7 +41,9 @@ def poll_gdelt_by_corridor():
         for c in CORRIDOR_QUERIES
     }
     try:
-        by_corridor = fetch_by_corridor()
+        by_corridor = fetch_by_corridor(
+            max_records_per_corridor=max_records, last_minutes=last_minutes
+        )
     except Exception:
         logger.exception("poll_gdelt failed")
         return empty_report
@@ -68,6 +71,36 @@ def poll_gdelt_by_corridor():
         }
 
     return report
+
+
+def poll_gdelt_corridor(corridor_name, max_records=None, last_minutes=None):
+    """Fetch and store ONE corridor's GDELT articles.
+
+    Returns ``{"fetched", "stored", "status", "sampled"}`` — the same shape as
+    a single entry of :func:`poll_gdelt_by_corridor`, so both paths report
+    identically. Raises ValueError on an unknown corridor (a typo should be
+    loud, not silently reported as an unsampled corridor).
+
+    ``max_records`` overrides ``DEFAULT_MAX_RECORDS`` (50). A smaller request
+    may survive GDELT's rate limiter better — untested, since measuring it
+    means deliberately tripping the limiter again.
+    """
+    result = fetch_corridor(
+        corridor_name, max_records=max_records, last_minutes=last_minutes
+    )
+
+    try:
+        stored = store_gdelt_articles(result.articles)
+    except Exception:
+        logger.exception("storing GDELT articles failed for %s", corridor_name)
+        stored = 0
+
+    return {
+        "fetched": len(result.articles),
+        "stored": stored,
+        "status": result.status,
+        "sampled": result.sampled,
+    }
 
 
 def poll_gdelt():

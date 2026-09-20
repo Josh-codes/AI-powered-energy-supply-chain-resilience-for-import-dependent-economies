@@ -15,6 +15,7 @@ from unittest.mock import Mock, patch
 
 import requests
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 
 from core.models import RawArticle
@@ -68,6 +69,197 @@ def _mock_feed(entries, bozo=0):
     feed.bozo_exception = "malformed xml"
     feed.entries = entries
     return feed
+
+
+class GdeltSingleCorridorTests(TestCase):
+    """The one-corridor-per-run path, used to hand-space the three queries when
+    GDELT's per-IP limiter refuses a full sweep."""
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_fetch_corridor_issues_exactly_one_request(self, mock_get):
+        """The whole point: a full sweep fires 3 queries plus retries plus a
+        second pass, and every extra request extends GDELT's block."""
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        result = gdelt.fetch_corridor("Hormuz")
+
+        self.assertEqual(mock_get.call_count, 1)
+        self.assertEqual(result.corridor, "Hormuz")
+        self.assertTrue(result.sampled)
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_fetch_corridor_uses_that_corridors_query(self, mock_get):
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        gdelt.fetch_corridor("Cape")
+
+        sent = mock_get.call_args.kwargs["params"]["query"]
+        # startswith, not equality: the time window is appended to the query
+        self.assertTrue(sent.startswith(gdelt.CORRIDOR_QUERIES["Cape"]))
+
+    def test_unknown_corridor_raises_rather_than_reporting_unsampled(self):
+        """A typo must be loud — reporting it as 'not sampled' would look like
+        throttling and send the operator chasing the wrong problem."""
+        with self.assertRaises(ValueError):
+            gdelt.fetch_corridor("Suez")  # folded into Red Sea in Phase 1
+
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_throttled_corridor_stores_nothing_and_reports_unsampled(self, mock_get, _sleep):
+        mock_get.side_effect = requests.HTTPError("429 Client Error: Too Many Requests")
+
+        counts = tasks.poll_gdelt_corridor("Hormuz")
+
+        self.assertFalse(counts["sampled"])
+        self.assertEqual(counts["status"], gdelt.FETCH_THROTTLED)
+        self.assertEqual(counts["stored"], 0)
+        self.assertEqual(RawArticle.objects.count(), 0)
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_polling_one_corridor_stores_its_articles(self, mock_get):
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        counts = tasks.poll_gdelt_corridor("Hormuz")
+
+        self.assertTrue(counts["sampled"])
+        self.assertEqual(counts["fetched"], 2)
+        self.assertEqual(counts["stored"], 2)
+        self.assertEqual(RawArticle.objects.count(), 2)
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_separate_runs_dedupe_across_corridors_via_the_database(self, mock_get):
+        """Separate runs lose the in-memory seen_urls set that a single sweep
+        uses, so the URL dedup has to hold at the database layer instead."""
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        first = tasks.poll_gdelt_corridor("Hormuz")
+        second = tasks.poll_gdelt_corridor("Red Sea")
+
+        self.assertEqual(first["stored"], 2)
+        self.assertEqual(second["stored"], 0)
+        self.assertEqual(RawArticle.objects.count(), 2)
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_default_request_size_is_the_module_default(self, mock_get):
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        gdelt.fetch_corridor("Hormuz")
+
+        self.assertEqual(
+            mock_get.call_args.kwargs["params"]["maxrecords"], gdelt.DEFAULT_MAX_RECORDS
+        )
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_max_records_override_reaches_the_query(self, mock_get):
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        tasks.poll_gdelt_corridor("Hormuz", max_records=25)
+
+        self.assertEqual(mock_get.call_args.kwargs["params"]["maxrecords"], 25)
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_command_passes_max_records_through(self, mock_get):
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        call_command("poll_sources", "--corridor", "Hormuz", "--max-records", "10",
+                     stdout=StringIO())
+
+        self.assertEqual(mock_get.call_args.kwargs["params"]["maxrecords"], 10)
+
+    def test_command_rejects_an_out_of_range_max_records(self):
+        for bad in ("0", str(gdelt.GDELT_RECORD_CEILING + 1)):
+            with self.assertRaises(CommandError):
+                call_command("poll_sources", "--corridor", "Hormuz",
+                             "--max-records", bad, stdout=StringIO())
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_command_polls_a_single_corridor(self, mock_get):
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+        out = StringIO()
+
+        call_command("poll_sources", "--corridor", "Hormuz", stdout=out)
+
+        printed = out.getvalue()
+        self.assertIn("Hormuz", printed)
+        self.assertIn("Still to poll", printed)
+        self.assertEqual(mock_get.call_count, 1)
+
+
+class GdeltTimeWindowTests(TestCase):
+    """`lastminutes:` is set explicitly rather than trusting the documented 24h
+    default — measured against the stored corpus, queries were returning
+    articles GDELT first saw up to 4 days earlier."""
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_default_window_is_applied_to_the_query(self, mock_get):
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        gdelt.fetch_corridor("Hormuz")
+
+        sent = mock_get.call_args.kwargs["params"]["query"]
+        self.assertIn(f"lastminutes:{gdelt.DEFAULT_LAST_MINUTES}", sent)
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_window_goes_in_the_query_not_the_url_params(self, mock_get):
+        """lastminutes is a GDELT *query command*; sending it as a URL
+        parameter would be silently ignored and the window lost."""
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        gdelt.fetch_corridor("Hormuz")
+
+        params = mock_get.call_args.kwargs["params"]
+        self.assertNotIn("lastminutes", params)
+        self.assertIn("lastminutes", params["query"])
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_window_override_reaches_the_query(self, mock_get):
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        tasks.poll_gdelt_corridor("Hormuz", last_minutes=4320)
+
+        self.assertIn("lastminutes:4320", mock_get.call_args.kwargs["params"]["query"])
+
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_window_preserves_the_corridor_keywords(self, mock_get):
+        mock_get.return_value = _mock_response(GDELT_PAYLOAD)
+
+        gdelt.fetch_corridor("Cape")
+
+        sent = mock_get.call_args.kwargs["params"]["query"]
+        self.assertTrue(sent.startswith(gdelt.CORRIDOR_QUERIES["Cape"]))
+
+    def test_command_rejects_a_window_off_the_15_minute_grid(self):
+        for bad in ("0", "37"):
+            with self.assertRaises(CommandError):
+                call_command("poll_sources", "--corridor", "Hormuz",
+                             "--last-minutes", bad, stdout=StringIO())
+
+
+class GdeltSeendateTests(TestCase):
+    def test_parses_the_stamp_the_builder_writes(self):
+        raw = gdelt._build_raw_text(
+            {"domain": "example.com", "seendate": "20260913T064500Z"},
+            "Tanker seized", corridor_hint="Hormuz",
+        )
+
+        parsed = gdelt.parse_seendate(raw)
+
+        self.assertEqual(parsed.year, 2026)
+        self.assertEqual(parsed.month, 9)
+        self.assertEqual(parsed.day, 13)
+        self.assertEqual(parsed.hour, 6)
+        self.assertIsNotNone(parsed.tzinfo)
+
+    def test_returns_none_when_no_seendate_present(self):
+        self.assertIsNone(gdelt.parse_seendate("Headline only\ndomain: example.com"))
+        self.assertIsNone(gdelt.parse_seendate(""))
+        self.assertIsNone(gdelt.parse_seendate(None))
+
+    def test_malformed_stamp_is_none_not_an_exception(self):
+        self.assertIsNone(gdelt.parse_seendate("seendate: not-a-date"))
+
+    def test_does_not_confuse_seendate_with_another_field(self):
+        self.assertIsNone(gdelt.parse_seendate("unseendate: 20260913T064500Z"))
 
 
 class GdeltIngestTests(TestCase):

@@ -19,6 +19,7 @@ from django.conf import settings
 
 from core.models import Corridor, ExtractedEvent, RawArticle
 from pipeline.extract.prompt import CORRIDOR_VALUES, EVENT_TYPE_VALUES, build_prompt
+from pipeline.ingest.gdelt import parse_seendate
 
 logger = logging.getLogger(__name__)
 
@@ -198,11 +199,13 @@ def extract_pending_events(limit=None):
                 event_type=result["event_type"],
                 severity=result["severity"],
                 confidence=result["confidence"],
-                # RawArticle keeps no publication date (GDELT gives seendate only
-                # inside raw_text, RSS entries vary), so ingest time is the one
-                # timestamp available for every source. Polling every 6h keeps it
-                # close enough to the real event for a 0.1/day decay.
-                timestamp=article.ingested_at,
+                # GDELT's seendate when we have it, ingest time otherwise.
+                # Ingest time alone is NOT a safe proxy: GDELT returns articles
+                # it first saw days earlier (up to 4 on the stored corpus), and
+                # under the scorer's 0.1/day decay a 3-day error over-weights an
+                # article by ~35%. RSS rows carry no date yet, so they still
+                # fall back — acceptable because feeds only list recent items.
+                timestamp=parse_seendate(article.raw_text) or article.ingested_at,
                 article_url=article.url,
                 # Needed to spot syndicated duplicates at scoring time, once the
                 # RawArticle this came from has been cleaned up.

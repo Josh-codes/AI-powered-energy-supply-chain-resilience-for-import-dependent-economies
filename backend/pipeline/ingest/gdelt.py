@@ -6,7 +6,9 @@ Phase 3 extraction works off the headline plus context.
 """
 import logging
 import random
+import re
 import time
+from datetime import datetime, timezone
 from typing import NamedTuple
 
 import requests
@@ -53,6 +55,17 @@ CORRIDOR_QUERIES = {
     "Cape": '("Cape of Good Hope" OR "Cape route") (tanker OR oil OR piracy OR shipping) sourcelang:eng',
 }
 DEFAULT_MAX_RECORDS = 50
+# GDELT's DOC API refuses maxrecords above this.
+GDELT_RECORD_CEILING = 250
+
+# How far back each query looks, as GDELT's `lastminutes:` query command.
+# Set EXPLICITLY rather than relying on the documented 24h default: measured
+# against the stored corpus, queries were returning articles GDELT first saw
+# up to 4 days earlier, so that default does not hold for this mode. Must be a
+# multiple of 15 (GDELT rounds otherwise) and GDELT notes a rolling 15-30
+# minute indexing delay, so the newest few minutes are never visible anyway.
+DEFAULT_LAST_MINUTES = 1440  # 24 hours
+LAST_MINUTES_GRANULARITY = 15
 
 # GDELT allows roughly one request per 5s per IP and answers 429 otherwise — in
 # practice noticeably stricter, and it stays angry for a while once tripped. A
@@ -72,25 +85,32 @@ _INTER_QUERY_DELAY_SECONDS = 10
 _SECOND_PASS_COOLDOWN_SECONDS = 30
 
 
-def fetch_gdelt_articles(query, corridor_hint=None, max_records=None, timeout=15):
+def fetch_gdelt_articles(query, corridor_hint=None, max_records=None, timeout=15,
+                         last_minutes=None):
     """Query GDELT and return a list of normalized article dicts.
 
     Never raises — returns [] on any failure. Callers that need to tell a
     throttled query from one that genuinely matched nothing must use
     :func:`fetch_gdelt_result` instead; this wrapper discards that distinction.
     """
-    return fetch_gdelt_result(query, corridor_hint, max_records, timeout).articles
+    return fetch_gdelt_result(
+        query, corridor_hint, max_records, timeout, last_minutes
+    ).articles
 
 
-def fetch_gdelt_result(query, corridor_hint=None, max_records=None, timeout=15):
+def fetch_gdelt_result(query, corridor_hint=None, max_records=None, timeout=15,
+                       last_minutes=None):
     """Query the GDELT DOC API and return a :class:`CorridorFetch`.
 
     Never raises, so a dead or rate-limited GDELT can't take the pipeline down —
     but the outcome is reported honestly via ``.status``. `corridor_hint`, when
     given, is stitched into raw_text and used for logging (no schema change).
     """
+    window = DEFAULT_LAST_MINUTES if last_minutes is None else last_minutes
     params = {
-        "query": query,
+        # lastminutes is a GDELT *query command*, not a URL parameter — it goes
+        # inside the query string alongside sourcelang: and the keywords.
+        "query": f"{query} lastminutes:{window}",
         "mode": "ArtList",
         "format": "json",
         "maxrecords": max_records or DEFAULT_MAX_RECORDS,
@@ -123,7 +143,35 @@ def fetch_gdelt_result(query, corridor_hint=None, max_records=None, timeout=15):
     return CorridorFetch(corridor_hint, articles, FETCH_OK if articles else FETCH_EMPTY)
 
 
-def fetch_by_corridor(max_records_per_corridor=None, timeout=15):
+def fetch_corridor(corridor_name, max_records=None, timeout=15, last_minutes=None):
+    """Fetch ONE corridor's query — a single request, with no inter-query delay
+    and no second pass.
+
+    Exists so the three corridors can be polled from separate terminal runs
+    spaced minutes apart by hand, when GDELT's per-IP limiter is refusing a
+    full ``fetch_by_corridor`` sweep. That keeps every corridor sampled (the
+    Phase 2.5 fairness property) without a retry storm: ``fetch_by_corridor``
+    fires up to 3 queries plus retries plus a second pass in one run, and once
+    GDELT starts answering 429 each extra request extends the block.
+
+    Cross-corridor URL dedup still happens, just in the database rather than
+    in memory — ``store_gdelt_articles`` is get_or_create on url, so an article
+    matching two corridors is stored once, against whichever run polled first.
+    """
+    if corridor_name not in CORRIDOR_QUERIES:
+        raise ValueError(
+            f"unknown corridor {corridor_name!r} — known: {sorted(CORRIDOR_QUERIES)}"
+        )
+    return fetch_gdelt_result(
+        CORRIDOR_QUERIES[corridor_name],
+        corridor_hint=corridor_name,
+        max_records=max_records,
+        timeout=timeout,
+        last_minutes=last_minutes,
+    )
+
+
+def fetch_by_corridor(max_records_per_corridor=None, timeout=15, last_minutes=None):
     """Run one GDELT query per corridor (Hormuz / Red Sea / Cape).
 
     Returns {corridor: CorridorFetch}, so callers can distinguish a corridor
@@ -141,7 +189,8 @@ def fetch_by_corridor(max_records_per_corridor=None, timeout=15):
         if i > 0:
             time.sleep(_INTER_QUERY_DELAY_SECONDS)
         results[corridor] = fetch_gdelt_result(
-            query, corridor_hint=corridor, max_records=max_records_per_corridor, timeout=timeout
+            query, corridor_hint=corridor, max_records=max_records_per_corridor,
+            timeout=timeout, last_minutes=last_minutes,
         )
 
     retry = [c for c, result in results.items() if result.status == FETCH_THROTTLED]
@@ -157,6 +206,7 @@ def fetch_by_corridor(max_records_per_corridor=None, timeout=15):
             results[corridor] = fetch_gdelt_result(
                 CORRIDOR_QUERIES[corridor], corridor_hint=corridor,
                 max_records=max_records_per_corridor, timeout=timeout,
+                last_minutes=last_minutes,
             )
 
     starved = [c for c, result in results.items() if not result.sampled]
@@ -265,6 +315,32 @@ def _build_raw_text(item, title, corridor_hint=None):
         if value:
             parts.append(f"{key}: {value}")
     return "\n".join(parts)
+
+
+def parse_seendate(raw_text):
+    """Recover the GDELT ``seendate`` that :func:`_build_raw_text` stitched in,
+    as an aware UTC datetime, or None when absent or malformed.
+
+    The inverse of the builder above, kept beside it so the two cannot drift.
+    This matters because GDELT routinely returns articles it first saw days
+    earlier — measured at up to 4 days on the stored corpus — so ingest time
+    is NOT a usable proxy for when an event happened. Under the scorer's
+    0.1/day decay a 3-day error over-weights an article by about 35%.
+
+    Format is GDELT's compact ISO-ish stamp, e.g. ``20260913T064500Z``.
+    """
+    if not raw_text:
+        return None
+    match = re.search(r"^seendate:\s*(\S+)", raw_text, re.MULTILINE)
+    if not match:
+        return None
+    try:
+        return datetime.strptime(match.group(1), "%Y%m%dT%H%M%SZ").replace(
+            tzinfo=timezone.utc
+        )
+    except ValueError:
+        logger.debug("unparsable GDELT seendate: %r", match.group(1))
+        return None
 
 
 def store_gdelt_articles(articles):

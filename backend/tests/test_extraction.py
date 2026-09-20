@@ -200,6 +200,31 @@ class ExtractPendingEventsTests(TestCase):
             )
 
     @patch("pipeline.extract.extractor._call_llm")
+    def test_event_timestamp_uses_gdelt_seendate_not_ingest_time(self, call_llm):
+        """GDELT returns articles it first saw days earlier, so dating an event
+        by ingest time over-weights it under the 0.1/day decay."""
+        call_llm.return_value = _response()
+        _article(text="Tanker seized\nseendate: 20260913T064500Z")
+
+        extractor.extract_pending_events()
+
+        event = ExtractedEvent.objects.get()
+        self.assertEqual(event.timestamp.year, 2026)
+        self.assertEqual(event.timestamp.month, 9)
+        self.assertEqual(event.timestamp.day, 13)
+        self.assertEqual(event.timestamp.hour, 6)
+
+    @patch("pipeline.extract.extractor._call_llm")
+    def test_event_timestamp_falls_back_to_ingest_time_without_a_seendate(self, call_llm):
+        """RSS rows carry no publication date, so they must still get one."""
+        call_llm.return_value = _response()
+        article = _article(text="Tanker seized, no date here")
+
+        extractor.extract_pending_events()
+
+        self.assertEqual(ExtractedEvent.objects.get().timestamp, article.ingested_at)
+
+    @patch("pipeline.extract.extractor._call_llm")
     def test_relevant_article_creates_event_and_marks_processed(self, call_llm):
         call_llm.return_value = _response()
         article = _article()
