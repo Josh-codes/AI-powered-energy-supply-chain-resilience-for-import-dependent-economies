@@ -54,3 +54,47 @@ def refresh_graph_risk(risk_scores):
 
     update_edge_weights(graph, risk_scores)
     return graph
+
+
+def stored_risk_scores():
+    from core.models import Corridor
+
+    return {c.name: c.live_risk_score for c in Corridor.objects.all()}
+
+
+def _risk_matches(G, risk_scores, tol=1e-12):
+    return all(
+        name in G.nodes and abs(G.nodes[name].get("live_risk_score", 0.0) - risk) <= tol
+        for name, risk in risk_scores.items()
+    )
+
+
+def load_live_graph():
+    """Return the singleton graph with the DB's stored ``live_risk_score`` on
+    its edges, building it first if this process has none.
+
+    For long-lived readers (the API server, the orchestrator): ``score_risk``
+    may have run in another process since the graph was built, and
+    ``Corridor.updated_at`` does not move when it does (``score_risk`` saves
+    with ``update_fields``), so staleness is detected by comparing risk values.
+    A stale graph is corrected on a COPY that is then swapped in, so a request
+    already reading the old graph never sees half-updated edges.
+    """
+    from graph.builder import build_graph
+
+    state = GraphState.get_instance()
+    scores = stored_risk_scores()
+    G = state.get_graph()
+    if G is None:
+        G = build_graph(persist=False)
+        update_edge_weights(G, scores)
+        state.set_graph(G)
+        return G
+    if _risk_matches(G, scores):
+        return G
+
+    logger.info("stored corridor risk changed since the graph was loaded - refreshing")
+    H = G.copy()
+    update_edge_weights(H, scores)
+    state.set_graph(H)
+    return H

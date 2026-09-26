@@ -866,3 +866,101 @@ class PollSourcesCommandTests(TestCase):
         self.assertIn("NOT SAMPLED", output)
         self.assertIn("CORPUS IS BIASED", output)
         self.assertIn("Cape", output)
+
+def _gkg_report(fetched=5, stored=4, status=gdelt.FETCH_OK):
+    return {
+        c: {"fetched": fetched, "stored": stored, "status": status,
+            "sampled": status not in gdelt.FETCH_FAILED}
+        for c in gdelt.CORRIDOR_QUERIES
+    }
+
+
+@patch("pipeline.tasks.time.sleep")
+@patch("pipeline.tasks.store_gdelt_articles", side_effect=lambda arts: len(arts))
+class GdeltFallbackTests(TestCase):
+    """poll_gdelt_with_fallback (Phase 6, run_pipeline --full): DOC first,
+    GKG for every corridor the moment DOC stops answering."""
+
+    @patch("pipeline.tasks.poll_gdelt_gkg")
+    @patch("pipeline.tasks.fetch_corridor")
+    def test_all_corridors_answered_never_touches_gkg(self, mock_fetch, mock_gkg, _store, _sleep):
+        mock_fetch.side_effect = lambda c, **kw: _fetch_ok(c, [{"url": f"https://x/{c}"}])
+
+        report = tasks.poll_gdelt_with_fallback()
+
+        mock_gkg.assert_not_called()
+        self.assertEqual(mock_fetch.call_count, len(gdelt.CORRIDOR_QUERIES))
+        self.assertTrue(all(c["path"] == "doc" and c["sampled"] for c in report.values()))
+
+    @patch("pipeline.tasks.poll_gdelt_gkg")
+    @patch("pipeline.tasks.fetch_corridor")
+    def test_every_doc_request_is_single_shot(self, mock_fetch, mock_gkg, _store, _sleep):
+        """attempts=1: retrying into GDELT's block only extends it."""
+        mock_fetch.side_effect = lambda c, **kw: _fetch_ok(c, [])
+
+        tasks.poll_gdelt_with_fallback()
+
+        for call in mock_fetch.call_args_list:
+            self.assertEqual(call.kwargs["attempts"], 1)
+
+    @patch("pipeline.tasks.poll_gdelt_gkg")
+    @patch("pipeline.tasks.fetch_corridor")
+    def test_first_throttle_stops_doc_and_falls_back_once(self, mock_fetch, mock_gkg, _store, _sleep):
+        order = list(gdelt.CORRIDOR_QUERIES)
+        first, second, rest = order[0], order[1], order[2:]
+        mock_fetch.side_effect = lambda c, **kw: (
+            _fetch_ok(c, [{"url": "https://x/a"}]) if c == first
+            else gdelt.CorridorFetch(c, [], gdelt.FETCH_THROTTLED)
+        )
+        mock_gkg.return_value = _gkg_report()
+
+        report = tasks.poll_gdelt_with_fallback(last_minutes=240)
+
+        # the corridor after the throttled one is never requested from DOC
+        self.assertEqual([c.args[0] for c in mock_fetch.call_args_list], [first, second])
+        mock_gkg.assert_called_once_with(last_minutes=240)
+        self.assertEqual(report[first]["path"], "doc+gkg")
+        self.assertEqual(report[first]["fetched"], 1 + 5)
+        self.assertEqual(report[second]["path"], "gkg")
+        self.assertEqual(report[second]["doc_status"], gdelt.FETCH_THROTTLED)
+        for c in rest:
+            self.assertEqual(report[c]["path"], "gkg")
+            self.assertEqual(report[c]["doc_status"], tasks.DOC_NOT_ATTEMPTED)
+        # GKG answered, so every corridor ends up sampled - the balanced corpus
+        self.assertTrue(all(c["sampled"] for c in report.values()))
+
+    @patch("pipeline.tasks.poll_gdelt_gkg")
+    @patch("pipeline.tasks.fetch_corridor")
+    def test_failed_fallback_is_reported_unsampled(self, mock_fetch, mock_gkg, _store, _sleep):
+        """If GKG also fails, the corpus is not quietly reported as quiet."""
+        mock_fetch.side_effect = lambda c, **kw: gdelt.CorridorFetch(c, [], gdelt.FETCH_THROTTLED)
+        mock_gkg.return_value = _gkg_report(0, 0, gdelt.FETCH_ERROR)
+
+        report = tasks.poll_gdelt_with_fallback()
+
+        self.assertEqual(mock_fetch.call_count, 1)
+        self.assertTrue(all(not c["sampled"] for c in report.values()))
+        self.assertTrue(all(c["status"] == gdelt.FETCH_ERROR for c in report.values()))
+
+
+class GdeltAttemptsOverrideTests(TestCase):
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_attempts_one_makes_exactly_one_request(self, mock_get, mock_sleep):
+        mock_get.side_effect = requests.HTTPError("429 Client Error: Too Many Requests")
+
+        result = gdelt.fetch_corridor("Hormuz", attempts=1)
+
+        self.assertEqual(mock_get.call_count, 1)
+        mock_sleep.assert_not_called()
+        self.assertEqual(result.status, gdelt.FETCH_THROTTLED)
+
+    @patch("pipeline.ingest.gdelt.time.sleep")
+    @patch("pipeline.ingest.gdelt.requests.get")
+    def test_default_still_retries(self, mock_get, mock_sleep):
+        """The override is opt-in: existing callers keep the full retry loop."""
+        mock_get.side_effect = requests.HTTPError("429 Client Error: Too Many Requests")
+
+        gdelt.fetch_corridor("Hormuz")
+
+        self.assertEqual(mock_get.call_count, gdelt._RETRY_ATTEMPTS)

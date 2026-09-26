@@ -19,9 +19,8 @@ from criticality.scenarios import SCENARIOS
 from graph.builder import build_graph
 from graph.state import GraphState
 from graph.updater import update_edge_weights
-from response.gap import estimate_supply_gap, gap_from_scenario
-from response.reroute import CRISIS_WEIGHTS, rank_alternatives, replacement_timeline
-from response.spr import compute_spr_schedule
+from response.plan import build_response
+from response.reroute import CRISIS_WEIGHTS
 from response.trigger import evaluate_graph
 
 
@@ -97,24 +96,29 @@ class Command(BaseCommand):
         if duration <= 0:
             w(err("\n--duration-days must be > 0"))
             return
+        common = dict(
+            crisis=options["crisis"], duration_days=duration,
+            include_sanctioned=options["include_sanctioned"],
+        )
         try:
             if options["scenario"]:
-                gap = gap_from_scenario(options["scenario"], G=G, duration_days=duration)
+                resp = build_response(G, scenario=options["scenario"], **common)
             elif options["corridor"]:
-                gap = estimate_supply_gap(
-                    options["corridor"], options["degradation"], G=G, duration_days=duration,
+                resp = build_response(
+                    G, corridor=options["corridor"], degradation_pct=options["degradation"], **common,
                 )
             elif options["auto"]:
                 if not t["threshold_crossed"]:
                     w("\n  --auto: nothing crossed, so no recommendations generated.")
                     return
-                gap = estimate_supply_gap(t["triggered_corridor"], 100, G=G, duration_days=duration)
+                resp = build_response(G, corridor=t["triggered_corridor"], **common)
             else:
                 w("\n  Pass --corridor NAME, --scenario KEY or --auto for recommendations.")
                 return
         except ValueError as exc:
             w(err(f"\n{exc}"))
             return
+        gap, ranked, timeline, spr = resp["gap"], resp["reroute"], resp["timeline"], resp["spr"]
 
         # ---- 3. gap ---------------------------------------------------------
         label = (
@@ -135,10 +139,6 @@ class Command(BaseCommand):
                    "alternatives is not modelled."))
 
         # ---- 4. reroute -----------------------------------------------------
-        ranked = rank_alternatives(
-            gap["corridor"], crisis=options["crisis"], gap_mbd=gap["gap_mbd"],
-            include_sanctioned=options["include_sanctioned"],
-        )
         w(ok(f"\nReroute ranking (crisis={options['crisis']}, "
              f"weights cost/transit/compat={CRISIS_WEIGHTS[options['crisis']]})"))
         if not ranked:
@@ -156,7 +156,6 @@ class Command(BaseCommand):
                 w(warn(line) if r["sanctioned"] else line)
             w("  (+mb/d volumes are cited ESTIMATES, not a reconciled balance - coverage is indicative)")
 
-        timeline = replacement_timeline(ranked, gap["gap_mbd"], duration)
         if timeline["transit_days"] is None:
             if gap["gap_mbd"] > 0:
                 w(warn(f"  no replacement crude: SPR faces the full gap for the whole {duration}-day horizon"))
@@ -171,9 +170,6 @@ class Command(BaseCommand):
         # The gap steps down as each cargo lands and keeps any residual open,
         # rather than one step to zero at the slowest arrival.
         profile = timeline["daily_gap_mbd"]
-        spr = compute_spr_schedule(
-            gap["gap_mbd"], duration, timeline["transit_days"] or duration, gap_profile=profile,
-        )
         w(ok(f"\nSPR drawdown ({duration}-day horizon, gap open on {spr['bridge_days']} days; "
              f"{spr['available_mb']:.2f} mb releasable)"))
         w(f"  status           : {spr['status']}")

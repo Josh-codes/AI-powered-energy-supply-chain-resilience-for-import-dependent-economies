@@ -100,6 +100,13 @@ Story = namedtuple("Story", "weight severity confidence timestamp title members"
 #: pipeline/score/candidates.py) divide by this.
 MAX_EVENT_WEIGHT = 5.0
 
+#: RiskScore rows computed at or after this instant hold the bounded top-k
+#: statistic in ``raw_score``; earlier rows hold the superseded unbounded sum.
+#: Read off the dev DB: last summed rows 2026-09-20 15:11 UTC (ids <= 33),
+#: first top-k rows 2026-09-26 06:26 UTC (id 34). Trend charts must not put
+#: the two on one axis.
+TOP_K_FORMULA_SINCE = datetime(2026, 9, 26, tzinfo=timezone.utc)
+
 
 def event_weight(severity, confidence, timestamp, now, lambda_decay=LAMBDA_DECAY):
     """severity x confidence x exp(-lambda*days). Clamped at 0 days so a clock

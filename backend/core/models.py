@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django.utils import timezone
 
 
 class Supplier(models.Model):
@@ -127,3 +128,48 @@ class AlternativeSupplier(models.Model):
 
     def __str__(self):
         return f"{self.name} via {self.route_description}"
+
+
+class PipelineRun(models.Model):
+    """One orchestrator run (Phase 6): what ran, what it found, and the
+    response it recommended. PERMANENT, like ExtractedEvent and RiskScore.
+
+    Outputs are stored as JSON snapshots rather than normalized tables: they
+    are nested (per-refinery shortfalls, daily SPR schedules) and their shapes
+    are still additive-evolving, so a relational schema would need a migration
+    every time a key is added. Writing a run never touches
+    ``Corridor.live_risk_score``, so persisting one cannot move the thesis
+    snapshot figures — only the ``score`` stage does that.
+    """
+    STATUS_RUNNING = 'running'
+    STATUS_SUCCEEDED = 'succeeded'
+    STATUS_PARTIAL = 'partial'      # completed, but at least one stage failed
+    STATUS_FAILED = 'failed'        # the orchestrator itself raised
+    STATUS_CHOICES = [
+        (STATUS_RUNNING, 'Running'),
+        (STATUS_SUCCEEDED, 'Succeeded'),
+        (STATUS_PARTIAL, 'Partial'),
+        (STATUS_FAILED, 'Failed'),
+    ]
+
+    started_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_RUNNING)
+    options = models.JSONField(default=dict)
+    stages_run = models.JSONField(default=list)
+    ingest_report = models.JSONField(null=True, blank=True)
+    extraction_report = models.JSONField(null=True, blank=True)
+    risk_scores = models.JSONField(default=dict)
+    criticality = models.JSONField(default=list)
+    threshold = models.JSONField(null=True, blank=True)
+    triggered_corridor = models.CharField(max_length=100, null=True, blank=True)
+    capacity_loss_mbd = models.FloatField(null=True, blank=True)
+    response = models.JSONField(null=True, blank=True)  # {gap, reroute, timeline, spr}
+    errors = models.JSONField(default=list)
+
+    class Meta:
+        indexes = [models.Index(fields=['started_at'])]
+        ordering = ['-started_at']
+
+    def __str__(self):
+        return f"PipelineRun {self.pk} ({self.status}) {self.started_at:%Y-%m-%d %H:%M}"

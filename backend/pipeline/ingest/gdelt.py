@@ -99,12 +99,15 @@ def fetch_gdelt_articles(query, corridor_hint=None, max_records=None, timeout=15
 
 
 def fetch_gdelt_result(query, corridor_hint=None, max_records=None, timeout=15,
-                       last_minutes=None):
+                       last_minutes=None, attempts=None):
     """Query the GDELT DOC API and return a :class:`CorridorFetch`.
 
     Never raises, so a dead or rate-limited GDELT can't take the pipeline down —
     but the outcome is reported honestly via ``.status``. `corridor_hint`, when
     given, is stitched into raw_text and used for logging (no schema change).
+    ``attempts`` overrides ``_RETRY_ATTEMPTS``; ``attempts=1`` is a single
+    request with no backoff, for callers that fall back elsewhere on a 429
+    instead of retrying into the block.
     """
     window = DEFAULT_LAST_MINUTES if last_minutes is None else last_minutes
     params = {
@@ -116,7 +119,7 @@ def fetch_gdelt_result(query, corridor_hint=None, max_records=None, timeout=15,
         "maxrecords": max_records or DEFAULT_MAX_RECORDS,
         "sort": "datedesc",
     }
-    payload, status = _get_with_retry(params, timeout)
+    payload, status = _get_with_retry(params, timeout, attempts)
     if payload is None:
         logger.warning(
             "GDELT query for %r was not sampled (%s)", corridor_hint or query, status
@@ -143,7 +146,8 @@ def fetch_gdelt_result(query, corridor_hint=None, max_records=None, timeout=15,
     return CorridorFetch(corridor_hint, articles, FETCH_OK if articles else FETCH_EMPTY)
 
 
-def fetch_corridor(corridor_name, max_records=None, timeout=15, last_minutes=None):
+def fetch_corridor(corridor_name, max_records=None, timeout=15, last_minutes=None,
+                   attempts=None):
     """Fetch ONE corridor's query — a single request, with no inter-query delay
     and no second pass.
 
@@ -168,6 +172,7 @@ def fetch_corridor(corridor_name, max_records=None, timeout=15, last_minutes=Non
         max_records=max_records,
         timeout=timeout,
         last_minutes=last_minutes,
+        attempts=attempts,
     )
 
 
@@ -272,14 +277,15 @@ def _backoff_seconds(attempt, exc):
     return delay + random.uniform(0, delay * 0.25)
 
 
-def _get_with_retry(params, timeout):
+def _get_with_retry(params, timeout, attempts=None):
     """Return ``(payload, status)``; payload is None unless status is FETCH_OK.
 
     The status is what lets callers separate "GDELT never answered" from "GDELT
     answered, nothing matched" — see the FETCH_* constants.
     """
+    max_attempts = _RETRY_ATTEMPTS if attempts is None else max(1, int(attempts))
     last_status = FETCH_ERROR
-    for attempt in range(1, _RETRY_ATTEMPTS + 1):
+    for attempt in range(1, max_attempts + 1):
         try:
             response = requests.get(GDELT_DOC_API, params=params, timeout=timeout)
             response.raise_for_status()
@@ -288,7 +294,7 @@ def _get_with_retry(params, timeout):
             return response.json(), FETCH_OK
         except (requests.RequestException, ValueError) as exc:
             last_status = FETCH_THROTTLED if _is_throttled(exc) else FETCH_ERROR
-            if attempt == _RETRY_ATTEMPTS:
+            if attempt == max_attempts:
                 logger.warning(
                     "GDELT fetch failed after %d attempts (%s): %s",
                     attempt, last_status, exc,

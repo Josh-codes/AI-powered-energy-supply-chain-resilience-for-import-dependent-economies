@@ -9,10 +9,12 @@ Each function swallows its own failures and returns a count, so one dead source
 can never abort a pipeline run.
 """
 import logging
+import time
 
 from graph.updater import refresh_graph_risk
 from pipeline.extract.extractor import extract_pending_events
 from pipeline.ingest.gdelt import (
+    _INTER_QUERY_DELAY_SECONDS as GDELT_INTER_QUERY_DELAY_SECONDS,
     CORRIDOR_QUERIES,
     FETCH_ERROR,
     fetch_by_corridor,
@@ -143,6 +145,82 @@ def poll_gdelt_gkg(last_minutes=None):
             "status": result.status,
             "sampled": result.sampled,
         }
+    return report
+
+
+DOC_NOT_ATTEMPTED = "not_attempted"
+
+
+def poll_gdelt_with_fallback(max_records=None, last_minutes=None):
+    """DOC API first, GKG bulk files the moment DOC stops answering.
+
+    One single-shot DOC request per corridor (``attempts=1``, no backoff), in a
+    fixed order. On the FIRST corridor that is not sampled (429 or error) no
+    further DOC request is made — every blocked request extends GDELT's per-IP
+    block, which is why the retry loop cannot win — and GKG is polled for the
+    same window. GKG covers ALL three corridors from one identical corpus, so
+    the fallback keeps the corridors balanced (the Phase 2.5 fairness
+    property) instead of topping up only the ones DOC missed. DOC rows already
+    stored are kept; ``store_*`` dedups on URL, and the two paths were measured
+    to find disjoint articles anyway.
+
+    Mixing paths is acceptable only because production scoring is the
+    bounded top-3-story mean, measured at 1.00x across ingestion paths (Phase
+    4.5); under the old summed score it would have inverted the ranking. Each
+    corridor's ``path`` ("doc", "doc+gkg" or "gkg") is reported so a run's
+    provenance is never hidden.
+
+    Downloads ~280 MB for a 24h window when it falls back — which is why it is
+    only reachable from an explicit ``run_pipeline --full`` /
+    ``--ingest gdelt-fallback``, never from ``poll_sources --source all``.
+
+    Returns ``{corridor: {"fetched", "stored", "status", "sampled", "path",
+    "doc_status"}}`` — the shared per-corridor shape plus provenance.
+    """
+    report = {}
+    fell_back = False
+    for i, corridor in enumerate(CORRIDOR_QUERIES):
+        if fell_back:
+            report[corridor] = {
+                "fetched": 0, "stored": 0, "status": DOC_NOT_ATTEMPTED,
+                "sampled": False, "doc_status": DOC_NOT_ATTEMPTED,
+            }
+            continue
+        if i:
+            time.sleep(GDELT_INTER_QUERY_DELAY_SECONDS)
+        result = fetch_corridor(
+            corridor, max_records=max_records, last_minutes=last_minutes, attempts=1,
+        )
+        try:
+            stored = store_gdelt_articles(result.articles)
+        except Exception:
+            logger.exception("storing GDELT articles failed for %s", corridor)
+            stored = 0
+        report[corridor] = {
+            "fetched": len(result.articles), "stored": stored, "status": result.status,
+            "sampled": result.sampled, "doc_status": result.status,
+        }
+        if not result.sampled:
+            fell_back = True
+            logger.warning(
+                "GDELT DOC %s for %s - no further DOC requests; falling back to GKG "
+                "for all corridors", result.status, corridor,
+            )
+
+    if not fell_back:
+        for counts in report.values():
+            counts["path"] = "doc"
+        return report
+
+    gkg = poll_gdelt_gkg(last_minutes=last_minutes)
+    for corridor, counts in report.items():
+        g = gkg.get(corridor, {"fetched": 0, "stored": 0, "status": FETCH_ERROR, "sampled": False})
+        doc_sampled = counts["sampled"]
+        counts["path"] = "doc+gkg" if doc_sampled else "gkg"
+        counts["fetched"] += g["fetched"]
+        counts["stored"] += g["stored"]
+        counts["sampled"] = doc_sampled or g["sampled"]
+        counts["status"] = g["status"] if not doc_sampled else counts["status"]
     return report
 
 

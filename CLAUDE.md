@@ -38,9 +38,12 @@ production deployment. **Celery Beat / Celery worker / Redis are NOT being imple
 for this thesis build** — there is no always-on host to run them, and the project is
 demonstrated by triggering each stage manually.
 
-**`manage.py run_pipeline` DOES NOT EXIST YET** — the file is an empty stub, as is
-`orchestrator/pipeline.py`; the LangGraph orchestrator that would chain the stages
-is Phase 6. Until then the pipeline is run as four commands in order:
+**`manage.py run_pipeline` (Phase 6) chains the stages through the LangGraph
+orchestrator in one synchronous process.** A bare run is ANALYSIS ONLY on the
+stored scores (update_graph → criticality → threshold → response → persist a
+`PipelineRun`), so it is free and leaves the Thesis Snapshot untouched. The data
+stages are opt-in: `--full` = `--ingest rss,gdelt-fallback --extract --score`.
+The four individual commands still work and remain the careful path:
 
 ```bash
 python manage.py poll_sources --corridor Hormuz   # repeat per corridor, minutes apart
@@ -298,7 +301,15 @@ Recharts — charts + analytics
 
 ### LangGraph Pipeline State Flow
 
-PipelineState (TypedDict)
+> **As built (`orchestrator/state.py`), with two deviations.** `raw_articles` /
+> `extracted_events` became `ingest_report` / `extraction_report`: every stage
+> persists to PostgreSQL and downstream stages read from there, so carrying
+> hundreds of article dicts through the state bought nothing. Added:
+> `threshold` (full `check_threshold` result), `baseline_flow_mbd`, `response`
+> (gap + reroute + timeline + SPR), `run_id`, and `stages_run` / `errors`
+> (append-reducers). Run options travel in `config["configurable"]`, not the state.
+
+PipelineState (TypedDict) — original spec
 {
 raw_articles: List[dict] # set by ingest node
 extracted_events: List[dict] # set by extraction node
@@ -474,6 +485,7 @@ PostgreSQL Tables:
 │ core_extractedevent│ Permanent event store │
 │ core_riskscore │ Permanent score history (backtest) │
 │ core_alternativesupplier│ Reroute alternatives table │
+│ core_pipelinerun│ Permanent orchestrator run log + recommendations (Phase 6) │
 └─────────────────┴──────────────────────────────────────────┘
 
 PostGIS geometry columns:
@@ -552,9 +564,10 @@ runs `compute_criticality` + `risk_weighted_max_flow` and calls it. Its
 `threshold_crossed` / `triggered_corridor` keys are the two PipelineState
 fields Phase 6's orchestrator reads.
 
-**Persistence is still NOT built.** The original spec's "store recommendations
-in PostgreSQL" was deferred by decision: Phase 5 computes on demand, and the
-result model gets added in Phase 6 once it is clear how the trigger is invoked.
+**Persistence: built in Phase 6 as `PipelineRun`** (one row per orchestrator
+run, outputs as JSON snapshots). The trigger is invoked by the orchestrator's
+`check_threshold` node, which calls the pure `check_threshold` directly, and
+the result lands in `PipelineRun.threshold` / `.response`.
 
 
 ---
@@ -652,7 +665,8 @@ pipeline/extract/prompt.py → extraction prompt template
 pipeline/score/risk_scorer.py → time-decay formula + normalization + story clustering
 pipeline/score/candidates.py → alternative scoring statistics, for comparison only
                                (nothing in the live pipeline calls these yet)
-pipeline/tasks.py → ALL Celery task definitions
+pipeline/tasks.py → ALL pipeline entry functions (plain, NO Celery), incl. the
+                    Phase 6 poll_gdelt_with_fallback (DOC → GKG on first 429)
 
 criticality/engine.py → main criticality computation
 criticality/cascade.py → cascading failure simulation loop
@@ -662,10 +676,15 @@ response/reroute.py → MCDM alternative supplier ranking + replacement timeline
 response/spr.py → SPR drawdown linear program (scipy HiGHS, NOT PuLP; see Phase 5)
 response/gap.py → supply gap estimation (risk-weighted / cascade baseline)
 response/trigger.py → re-specified threshold trigger (added in Phase 5)
+response/plan.py → build_response: gap → reroute → timeline → SPR in one call
+                   (shared by run_response, /api/simulate/, the orchestrator)
 
-orchestrator/pipeline.py → LangGraph graph + node + edge definitions
-orchestrator/nodes.py → individual node functions
-orchestrator/state.py → PipelineState TypedDict
+orchestrator/pipeline.py → LangGraph graph + node + edge definitions, run_pipeline()
+orchestrator/nodes.py → individual node functions (never raise; errors → state)
+orchestrator/state.py → PipelineState TypedDict + DEFAULT_OPTIONS
+
+graph/updater.py::load_live_graph → singleton + stored risk, auto-refreshed (on a
+                   copy, then swapped) when score_risk ran in another process
 
 backtest/runner.py → backtest execution controller
 backtest/validator.py → signal vs price comparison
@@ -687,7 +706,7 @@ core/management/commands/compare_scoring.py → score the stored corpus under ev
 core/management/commands/run_criticality.py → Phase 4 static vs risk-weighted
 core/management/commands/run_response.py → Phase 5 trigger → gap → reroute → SPR
 core/management/commands/backfill_event_timestamps.py → seendate repair (one-off)
-core/management/commands/run_pipeline.py → EMPTY STUB, Phase 6
+core/management/commands/run_pipeline.py → Phase 6 orchestrator (analysis-only by default)
 core/management/commands/run_backtest.py → EMPTY STUB, Phase 7
 
 ---
@@ -775,7 +794,8 @@ energy-resilience/
 │ │ ├── poll_sources.py, extract_events.py, test_extraction.py
 │ │ ├── score_risk.py, run_criticality.py
 │ │ ├── backfill_event_timestamps.py
-│ │ └── run_pipeline.py, run_backtest.py  (empty stubs)
+│ │ ├── run_response.py, run_pipeline.py
+│ │ └── run_backtest.py  (empty stub)
 │ │
 │ └── tests/
 │ ├── test_graph.py
@@ -785,6 +805,8 @@ energy-resilience/
 │ ├── test_spr.py
 │ ├── test_gap.py
 │ ├── test_trigger.py
+│ ├── test_plan.py
+│ ├── test_orchestrator.py
 │ ├── test_extraction.py
 │ └── test_api.py
 │
@@ -1023,11 +1045,54 @@ class AlternativeSupplier(models.Model):
 
     def __str__(self):
         return f"{self.name} via {self.route_description}"
+
+class PipelineRun(models.Model):                 # Phase 6 — PERMANENT
+    started_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20)     # running/succeeded/partial/failed
+    options = models.JSONField(default=dict)
+    stages_run = models.JSONField(default=list)
+    ingest_report = models.JSONField(null=True, blank=True)
+    extraction_report = models.JSONField(null=True, blank=True)
+    risk_scores = models.JSONField(default=dict)
+    criticality = models.JSONField(default=list)
+    threshold = models.JSONField(null=True, blank=True)
+    triggered_corridor = models.CharField(max_length=100, null=True, blank=True)
+    capacity_loss_mbd = models.FloatField(null=True, blank=True)
+    response = models.JSONField(null=True, blank=True)   # {gap, reroute, timeline, spr}
+    errors = models.JSONField(default=list)
 ```
 
 ---
 
 ## REST API Endpoints (core/urls.py + core/views.py)
+
+> **As built in Phase 6.** Every documented key below is kept; responses are
+> supersets. Differences and additions:
+> - Graph-backed views read `graph.updater.load_live_graph()` and compute live
+>   (0-30 ms each on this graph). They never mutate it.
+> - Errors: 400 for bad input (`{"error": ...}` for domain errors like corridor
+>   `"Suez"`, DRF field errors otherwise), 503 if the graph cannot be built
+>   (unseeded DB), 500 otherwise (logged).
+> - `/api/risk-scores/` returns `Corridor.live_risk_score`, NOT "RiskScore rows
+>   from the last hour" (that filter returns `{}` whenever `score_risk` has not
+>   run within the hour).
+> - `/api/cascade/`: `degradation` = show steps up to that %, default 100.
+> - `/api/spr/` and `/api/simulate/`'s `spr`: `days_until_threshold` is an alias
+>   of `days_of_cover`.
+> - `/api/simulate/` body: `{corridor | scenario, degradation (0-1], duration_days,
+>   crisis, include_sanctioned}`. Returns `{input, cascade, gap, reroute,
+>   timeline, spr}` computed at the EXACT degradation, via `response/plan.py`.
+> - `/api/corridors/geojson/`: Cape's 999 sentinel becomes `capacity_mbd: null`
+>   + `capacity_unlimited: true`.
+> - `/api/scenarios/` rows carry `key` and both `degradation_pct` and the spec's
+>   `degradation` fraction (null for `opec_cut`).
+> - `/api/backtest/` returns **501** until Phase 7.
+> - NEW: `GET /api/risk-scores/history/?corridor=&days=` (each row labelled
+>   `formula`: `top3pad` from 2026-09-26, `sum_saturating` before; never plot
+>   both on one axis), `GET /api/criticality/ports/`,
+>   `GET /api/pipeline/latest/`, `/api/pipeline/runs/?limit=`,
+>   `/api/pipeline/runs/<id>/`.
 
 GET /api/risk-scores/
 Returns latest risk score per corridor
@@ -1584,9 +1649,21 @@ cd backend          # all commands run from here; venv is ../venv
 python manage.py runserver
 python manage.py seed_db                  # load data/*.json into the DB
 python manage.py build_graph              # build graph + print cut summary
-python manage.py test                     # full suite (397 tests)
+python manage.py test                     # full suite (462 tests)
 
-# ---- the pipeline, in order (no orchestrator yet — Phase 6) ----
+# ---- the orchestrated pipeline (Phase 6) ----
+python manage.py run_pipeline             # analysis only on stored scores: free,
+                                          # snapshot-safe, writes one PipelineRun
+python manage.py run_pipeline --full      # WHOLE cycle: rss + gdelt-fallback ingest,
+                                          # extract (PAID), score (MOVES the snapshot)
+python manage.py run_pipeline --ingest rss,gkg --extract --score   # pick stages
+#    --ingest takes rss, gkg, gdelt, gdelt-fallback. gdelt-fallback = one single-shot
+#    DOC request per corridor; on the first 429 it stops hitting DOC and polls GKG
+#    (~280 MB/24h) for ALL corridors. Each corridor's path is reported.
+#    Also: --last-minutes, --max-records, --extract-limit, --crisis,
+#    --duration-days, --include-sanctioned, --no-persist
+
+# ---- the pipeline, stage by stage (the careful path) ----
 
 # 1. INGEST. Poll ONE corridor at a time, minutes apart: GDELT rate-limits
 #    per IP and a full 3-corridor sweep reliably trips it. A blocked corridor
@@ -1635,7 +1712,6 @@ python manage.py run_response --corridor Hormuz --include-sanctioned
 python manage.py backfill_event_timestamps --dry-run   # seendate repair
 
 # ---- NOT IMPLEMENTED (empty stubs) ----
-# python manage.py run_pipeline                  # Phase 6 (LangGraph)
 # python manage.py run_backtest --event "..."    # Phase 7
 # celery -A config worker / beat, redis-server   # out of scope, see above
 ```
@@ -1778,7 +1854,7 @@ triggered by hand with the commands above.
   - [x] **PHASE 4'S HEADLINE FINDING SURVIVES THE CORPUS CHANGE — real external validation.** Re-run on 266 events (77% larger than the 150 it was originally computed on) from a *different ingestion method*: `Cape 2→1 (+1), Hormuz 1→2 (-1), Red Sea 3→3`, identical to the original. The rank-shift mechanism was not an artefact of the DOC corpus. Capacity-weighted centrality also crossed over here (Cape 0.0655 > Hormuz 0.0651, from a static 0.0532 < 0.0756) — **but that crossover is knife-edge and is NOT a citable result; it flips between Hormuz risk 0.85 and 0.895 because betweenness on this graph is a step function. See the Phase 4.5 entry.**
   - [ ] **…BUT THE MAGNITUDES ARE NOW DEGENERATE AND MUST NOT BE QUOTED.** `Hormuz risk-weighted capacity_loss = 0.009 mb/d` (was 0.364) — the model says losing the Strait of Hormuz entirely would cost India nine *thousandths* of a mb/d, on a corridor carrying 2.316 mb/d of its inflow. Mechanically correct (at risk 0.996 there is nothing left to lose) and physically absurd. `risk_flow` fell 2.485 → **2.096**, i.e. **50.4% of deliverability already lost**, and 2.096 ≈ Cape's risk-weighted capacity alone (2.255 × 0.95 = 2.142) — the model has reduced India's whole supply chain to one corridor. **This is the cleanest available demonstration of WHY K needs calibrating: the mechanism is validated, the levels are worthless.** Good material for the write-up as a stated limitation; not a result.
   - [x] ~~**DO NOT PUT IN THE WRITE-UP until recalibrated:** the 0.992/0.987 figures as risk levels; any "Hormuz is riskier than Red Sea" claim (0.005 gap, and the ordering flips with ingestion method); the implied ~99% capacity loss.~~ **RESOLVED IN PHASE 4.5 by changing the formula, not by recalibrating K.** Figures at the time: Hormuz 0.615, Red Sea 0.537, Cape 0.050, 28.1% impairment. **Superseded for citation by the Thesis Snapshot section** (0.875 / 0.722 / 0.050, 42.5%). The "Hormuz > Red Sea" ordering is now backed by a 0.078 gap that is stable across ingestion paths (ratio 1.00x), where the old one rested on 0.005 and flipped with the ingestion method. **Phase 4's rank-shift finding survived all of it** — unchanged under every one of the 8 candidate formulas tested.
-  - [ ] RIPPLE: **zero URL overlap between the 41 GKG rows and the 195 DOC rows** — the two paths found completely disjoint articles, confirming that GKG genuinely adds coverage rather than re-finding what the DOC API already had, and reinforcing that the two corpora are not comparable. After the fixed matcher, a 4h window yields ~15 articles → a 24h window roughly 90, versus the DOC path's hard 50-per-corridor cap; still enough to shift `SATURATION_K` and the Phase 4 rank-shift finding, so re-check both after the first real ingest. Automatic DOC→GKG fallback is NOT wired: `--source gkg` is a deliberate manual choice, since an automatic fallback would trigger a 280 MB download from a throttle. Also observed: some `PAGE_TITLE` values are truncated at source ("Iran's Ghalibaf says", "Turkish FM Fidan says Ankara has") — GDELT's own data, not fixable here, and it degrades headline-similarity dedup for those rows.
+  - [ ] RIPPLE: **zero URL overlap between the 41 GKG rows and the 195 DOC rows** — the two paths found completely disjoint articles, confirming that GKG genuinely adds coverage rather than re-finding what the DOC API already had, and reinforcing that the two corpora are not comparable. After the fixed matcher, a 4h window yields ~15 articles → a 24h window roughly 90, versus the DOC path's hard 50-per-corridor cap; still enough to shift `SATURATION_K` and the Phase 4 rank-shift finding, so re-check both after the first real ingest. Automatic DOC→GKG fallback is NOT wired into `poll_sources`: `--source gkg` is a deliberate manual choice, since an automatic fallback would trigger a 280 MB download from a throttle. [Phase 6 added it ONLY behind an explicit opt-in — `run_pipeline --full` / `--ingest gdelt-fallback` — where the download is requested, not silent.] Also observed: some `PAGE_TITLE` values are truncated at source ("Iran's Ghalibaf says", "Turkish FM Fidan says Ankara has") — GDELT's own data, not fixable here, and it degrades headline-similarity dedup for those rows.
 - [x] Phase 4 — Criticality engine (centrality + max-flow + cascading failure)  ✅ COMPLETE
   - [x] `graph/algorithms.py` — pure NetworkX primitives, no GraphState/DB access (callers choose the graph): `structural_betweenness`, `capacity_weighted_betweenness`, `baseline_max_flow` / `risk_weighted_max_flow`, `degrade_corridor`, `degrade_supply`, `residual_port_criticality`, `corridor_load_bearing_ports`. `degrade_corridor`/`degrade_supply` both return a NEW graph — the input is never mutated (pinned by tests), so a simulation can never corrupt the singleton.
   - [x] **BETWEENNESS WEIGHTING — CLAUDE.md's original formula was semantically backwards and is NOT implemented as written.** The spec said `nx.betweenness_centrality(G, weight='effective_capacity')`, but NetworkX's `weight=` is edge **distance** (lower = more traversable = more central), not edge importance. Taken literally, a corridor becoming *safer* (higher `effective_capacity`) would read as a *longer* path and score as *less* central — the risk signal inverted. Fix: two distinct measures, neither claiming to be "the" centrality. `structural_betweenness` = plain unweighted (the structural/static half of the thesis comparison, and the measure `test_graph.py::test_betweenness_centrality_runs` already asserts — left untouched). `capacity_weighted_betweenness` distance-transforms **every** edge as `1/max(capacity, EPS)` before calling betweenness — uniformly across all layers, not just corridor edges, so the transform can't be accused of being cherry-picked. `test_capacity_weighted_betweenness_direction_is_correct` is the executable proof: throttling Hormuz to 99% must *lower* its weighted betweenness, which is exactly the assertion that would FAIL under the literal spec.
@@ -1869,7 +1945,18 @@ triggered by hand with the commands above.
   - [x] Tests: `test_spr.py` (16, bare `unittest`), `test_reroute.py` (27), `test_gap.py` (16), `test_trigger.py` (23, including 7 command tests). **82 new tests, then 11 more for the per-day gap fix; full suite 397, all passing.** The reroute anchors come from an independent script over the JSON files, not from calling the module, so the pinned tests check the code against the data rather than against itself. The one `patch` targets `run_response.evaluate_graph` to reach the "nothing crossed" branch, which the seeded graph cannot produce: a full Hormuz or Cape cut always exceeds 15%.
   - [ ] RIPPLE (Phase 6): the views are thin wrappers. `/api/reroute/` → `rank_alternatives`, `/api/spr/` → `compute_spr_schedule` (rename `days_of_cover` → `days_until_threshold`), `/api/simulate/` → `estimate_supply_gap` + `rank_alternatives` + `replacement_timeline` + `compute_spr_schedule`, and the orchestrator's threshold node → `evaluate_graph`. **Recommendation persistence is still unbuilt (by decision)**; add the model when the trigger's invocation path is defined. `AlternativeSupplier.route_geometry` is still NULL for every row, so the map cannot draw alternative routes yet.
   - [ ] Still open from earlier phases and unchanged here: `min_run_rate`-aware refinery shutdown (`check_refineries` still raises `NotImplementedError`); a supply shock (`opec_cut`) excludes no alternative on route, and OPEC membership of alternatives is not modelled, so Saudi/UAE/Kuwait/Iraq are offered as replacements for an OPEC cut.
-- [ ] Phase 6 — LangGraph orchestration + all REST API endpoints
+
+- [x] Phase 6 — LangGraph orchestration + all REST API endpoints  ✅ COMPLETE
+  - [x] **Shared plumbing first, so three callers cannot drift.** `response/plan.py::build_response` is the Phase 5 chain (gap → `rank_alternatives` → `replacement_timeline` → `compute_spr_schedule(gap_profile=...)`) lifted out of `run_response.handle()`. `run_response`, `POST /api/simulate/` and the orchestrator's response node all call it. `run_response`'s output is unchanged and its tests still pass. `tests/test_plan.py` checks it against the chain composed by hand, not against itself.
+  - [x] **`graph/updater.py::load_live_graph()` — graph staleness across processes.** The API server holds the singleton while `score_risk` runs in another process, and **`Corridor.updated_at` does NOT move when it does** (verified live: 13:47 vs a 13:53 score, because `score_risk` saves with `update_fields`). So staleness is detected by comparing stored `live_risk_score` to the graph's node scores, and a stale graph is corrected on a COPY and swapped in, so a request holding the old graph never sees half-updated edges. Pinned by `test_stored_risk_change_reaches_the_next_request`.
+  - [x] **`PipelineRun` model** (migration `0004_pipelinerun`, PERMANENT): one row per run, outputs as JSON snapshots (nested and still growing additively, so normalized tables would need a migration per new key). Writing one never touches `live_risk_score`, so persisting a run cannot move the thesis figures. This closes Phase 5's deferred "recommendation persistence".
+  - [x] **Orchestrator (`orchestrator/`), LangGraph 1.2.11 as installed** (not the 0.1 the spec names; `StateGraph` / `add_conditional_edges` / `config["configurable"]` smoke-tested before building). The spec's node order, with the conditional edge after `check_threshold`. Nodes are thin wrappers that **never raise**: a failure appends `{"stage", "error"}` to `errors`, a node missing its input records that instead of computing on nothing, and the run is persisted as `partial`. An orchestrator-level crash still leaves a `failed` row. **Trap hit and fixed:** LangGraph 1.x puts its own `Runtime` object into `config["configurable"]`, which made persisting the options fail, so nodes whitelist `DEFAULT_OPTIONS` keys.
+  - [x] **Stage defaults protect cost and the snapshot.** `ingest` / `extract` (PAID) / `score` (moves the snapshot) are opt-in. A bare `run_pipeline` is analysis only on the stored scores. **Live-verified:** it reproduces the Thesis Snapshot exactly (Cape +1 / Hormuz −1, loss 2.045 / 0.275 / 0.074, triggered Cape with Hormuz crossing on risk alone, Cape gap 2.045, residual 0.745, SPR 57.5%). `--full` warns before paying or re-scoring.
+  - [x] **DOC → GKG fallback (`tasks.poll_gdelt_with_fallback`), reachable ONLY from `run_pipeline --full` / `--ingest gdelt-fallback`.** It makes one single-shot DOC request per corridor (new opt-in `attempts=1` on `gdelt.fetch_corridor`; the default is still 5, so every existing caller is unchanged). On the first unsampled answer it stops hitting DOC, since each blocked request extends the block, and polls GKG for **all** corridors, which keeps them balanced (the Phase 2.5 fairness property) rather than topping up only the ones DOC missed. Every corridor reports its `path` (`doc` / `doc+gkg` / `gkg`) and its `doc_status`. **Mixing paths is safe only because of Phase 4.5:** the top-3 statistic moved 1.00x across ingestion paths, where the old sum inverted the ranking. `poll_sources --source all` still never pulls GKG.
+  - [x] **REST API: 15 routes** (see the REST API Endpoints section for the as-built differences). DRF input serializers validate query params and bodies. Computed dicts are returned as the modules produce them, so an additive key never needs a serializer change. **Live-verified on the real DB via the test client:** every endpoint 0-30 ms after warm-up, and `simulate` Cape at 1.0 reproduces the snapshot (2.045 / 0.745 / 57.5%). **Trap hit and fixed:** `geometry.geojson` goes through GDAL/OGR, which logged a PROJ `proj.db` version mismatch on every call, so the GeoJSON is built from GEOS coords (the SRID is already 4326).
+  - [x] `RiskScore` formula cutover pinned as `risk_scorer.TOP_K_FORMULA_SINCE = 2026-09-26 00:00 UTC`, read off the DB (last summed rows 09-20 15:11, ids ≤ 33; first top-k 09-26 06:26, id 34). `/api/risk-scores/history/` labels every row with it.
+  - [x] Tests: `test_api.py` (33), `test_orchestrator.py` (21), `test_plan.py` (5), and 6 fallback/`attempts` tests in `test_ingestion.py`. **Full suite 462, all passing** (up from 397). Data tasks are mocked on `pipeline.tasks` in every orchestrator test, so no test can reach the network or the paid API. A guard test keeps Celery out of `orchestrator/`.
+  - [ ] RIPPLE (Phase 7): `API_DOCS.md`. `/api/backtest/` is a 501 placeholder. `AlternativeSupplier.route_geometry` is still NULL, so the map cannot draw reroutes. There are no ports/refineries GeoJSON endpoints yet (add them if the dashboard wants them). `RawArticle` 14-day cleanup is still unbuilt.
 - [ ] Phase 7 — Backtest validation + integration testing + API documentation
 
 ---
@@ -1893,7 +1980,7 @@ since each blocked request re-extends the block.
 Fix: poll ONE corridor per run, minutes apart (`--corridor`), and if a corridor
 comes back NOT SAMPLED, wait longer rather than retrying. Nothing is stored on
 a block, so the corpus stays balanced. Do not re-poll while debugging.
-If it refuses even one corridor at a time, use `--source gkg` — the bulk files
+If it refuses even one corridor at a time, use `--source gkg` (or `run_pipeline --ingest gdelt-fallback`, which switches automatically on the first 429) — the bulk files
 have no limiter at all. Costs ~280 MB for 24h and stores rows under
 `source="gdelt_gkg"` (different selection mechanism, see Phase 2.6).
 
