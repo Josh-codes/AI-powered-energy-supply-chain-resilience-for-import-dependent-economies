@@ -118,6 +118,11 @@ class AlternativeSupplier(models.Model):
     api_gravity = models.FloatField()
     sulfur_pct = models.FloatField()
     sanctioned = models.BooleanField(default=False)
+    # Phase 5: corridors this route physically transits (Suez folded into
+    # "Red Sea"). Reroute eligibility reads THIS, not avoids_corridor, which
+    # only ever named Hormuz and so left Cape/Red Sea with no candidates.
+    transits_corridors = models.JSONField(default=list)
+    max_incremental_mbd = models.FloatField(default=0.0)  # spare mb/d redirectable to India (estimate)
     route_geometry = models.LineStringField(null=True, blank=True)
 
     def __str__(self):

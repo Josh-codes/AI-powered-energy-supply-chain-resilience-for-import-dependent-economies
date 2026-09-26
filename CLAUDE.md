@@ -127,11 +127,12 @@ NetworkX algorithms
 └── Cascading failure simulation (10% increments)
 │
 ▼
-[Threshold Trigger]
-condition: criticality_score > 0.65
-AND risk_score > 0.50
-← 0.65 IS UNREACHABLE, see Threshold
-  Trigger Logic section before using
+[Threshold Trigger]  response/trigger.py
+condition: capacity_loss_mbd >
+  15% of risk-weighted baseline flow
+OR live_risk_score > 0.75
+← re-specified in Phase 5; the original
+  centrality>0.65 AND risk>0.50 never fired
 │
 ┌─────────┴──────────┐
 [No] │ │ [Yes]
@@ -143,8 +144,8 @@ AND risk_score > 0.50
 │ │ Returns ranked alternatives
 │ │
 │ └── SPR Drawdown Model
-│ PuLP linear program
-│ Minimizes total drawdown
+│ linear program (scipy HiGHS)
+│ Minimizes unmet gap, then peak shortfall
 │ Subject to physical constraints
 │
 └─────────┬──────────┘
@@ -230,7 +231,7 @@ Recharts — charts + analytics
 │ │ builder.py │ │ engine.py │ │ reroute.py │ │
 │ │ algorithms.py│ │ cascade.py │ │ spr.py │ │
 │ │ updater.py │ │ scenarios.py │ │ gap.py │ │
-│ │ state.py │ │ NetworkX │ │ scipy + PuLP │ │
+│ │ state.py │ │ NetworkX │ │ scipy HiGHS  │ │
 │ │ NetworkX │ │ algorithms │ │ MCDM + LP │ │
 │ └──────────────┘ └──────────────┘ └──────────────────┘ │
 │ │
@@ -494,50 +495,66 @@ core_rawarticle (after processed=True)
 
 ### Threshold Trigger Logic
 
-> **⚠ BLOCKER FOR PHASE 5/6 — `centrality_score > 0.65` CAN NEVER FIRE.**
-> Betweenness centrality is normalized to [0,1], but on a graph of this shape
-> (50 nodes, one dominant SOURCE→…→SINK spine) the corridor values are tiny.
-> Measured on the real graph: **Hormuz 0.0756, Cape 0.0532, Red Sea 0.0238**
-> — the maximum possible is roughly an order of magnitude below the 0.65
-> threshold, so the condition is unreachable and the response layer would
-> never trigger. The spec below is kept for reference but MUST be re-specified
-> before Phase 5 wires up the reroute/SPR trigger. Options: threshold on a
-> normalized *rank* (e.g. the top-ranked corridor), on `capacity_loss_mbd`
-> (a physical unit, which is what `criticality/engine.py` already ranks by),
-> or on centrality rescaled relative to the observed max. Do NOT simply lower
-> 0.65 to 0.07 — that hardcodes a value specific to today's graph shape.
->
-> **The `risk_score > 0.50` half is broken in the opposite direction, and the
-> Phase 4.5 scoring fix did not rescue it.** Post-fix the scored corridors read
-> Hormuz 0.615 and Red Sea 0.537 — both still above 0.50, so that clause always
-> passes while the centrality clause never does, and the `AND` never fires.
-> (Before the fix they were 0.99+, so this is less extreme but unchanged in
-> kind.) Whether 0.50 is even the right level is now a *meaningful* question
-> rather than an artefact one, since the score is bounded and interpretable:
-> 0.50 corresponds to a corridor whose three worst stories average severity 2.5
-> at full confidence. Re-specify BOTH clauses together before Phase 5 wires up
-> the response layer.
+> **RE-SPECIFIED IN PHASE 5 (`response/trigger.py`).** The original condition
+> `centrality_score > 0.65 AND risk_score > 0.50` could never fire, for three
+> measured reasons: (1) corridor betweenness on this graph is 0.02-0.08, an
+> order of magnitude below 0.65; (2) post-Phase-4.5 risk scores (Hormuz 0.615,
+> Red Sea 0.537) always pass 0.50, so that clause discriminates nothing; and
+> (3), found during Phase 5, **any `AND risk > X` gate vetoes the corridor the
+> engine ranks most critical.** Cape loses the most flow precisely *because* it
+> is intact, and it sits at risk 0.050. `test_original_spec_threshold_could_never_fire`
+> and `test_low_risk_corridor_can_still_trigger` pin all of this.
 
-After criticality engine runs:
+As built, a corridor crosses when EITHER clause holds:
 
-for each corridor in criticality_ranking:
-centrality_score = betweenness_centrality[corridor]
-risk_score = latest RiskScore for corridor
+```python
+LOSS_FRACTION_THRESHOLD = 0.15   # of risk-weighted baseline max-flow
+RISK_ALONE_THRESHOLD    = 0.75   # OR-clause, not AND
 
-if centrality_score > 0.65 AND risk_score > 0.50:
-    threshold_crossed = True
-    triggered_corridor = corridor.name
-    break
+loss_fraction = capacity_loss_mbd / risk_weighted_baseline_flow
+crossed = loss_fraction > 0.15  OR  live_risk_score > 0.75
+triggered_corridor = the crossed corridor with the LARGEST loss_fraction
+```
 
-if threshold_crossed:
-→ fire reroute optimizer
-→ fire SPR drawdown model
-→ store recommendations in PostgreSQL
-→ dashboard shows alert + recommendations
+- **A fraction, not an absolute mb/d.** An absolute figure would hardcode
+  today's graph size the same way 0.65 hardcoded today's graph shape. At
+  ~3.04 mb/d, 15% is ~0.46 mb/d, which is roughly a week of SPR drawdown at the
+  1.0 mb/d physical limit. This is a *policy* threshold with a stated physical
+  meaning, not a fitted constant.
+- **Risk is an OR-clause, not a gate.** It is already inside
+  `effective_capacity`, so gating on it double-counts. As an independent
+  clause at a high bar (0.75 is roughly three severity-4 stories at full
+  confidence today) it still lets an emerging crisis on a structurally minor
+  corridor fire.
+- **The choice is made by value, not by input order**, so the trigger does not
+  depend on how the criticality rows happen to be sorted.
 
-if not threshold_crossed:
-→ update dashboard with latest scores only
-→ no recommendations generated
+On the live DB scores (Hormuz 0.875 / Red Sea 0.722 / Cape 0.050, after
+`score_risk` on 2026-09-26), with a risk-weighted baseline of 2.432 mb/d:
+
+| corridor | loss (mb/d) | of flow | risk | crosses |
+|---|---|---|---|---|
+| Cape | 2.045 | 84.1% | 0.050 | **loss clause, triggered** |
+| Hormuz | 0.275 | 11.3% | 0.875 | **risk clause only** |
+| Red Sea | 0.074 | 3.0% | 0.722 | no |
+
+The trigger discriminates: it neither never fires nor always fires. **Both
+clauses are live on real data.** Hormuz is already 87.5% degraded, so cutting it
+removes little *additional* flow and the loss clause misses it. The risk
+OR-clause is what catches it, which is exactly the case it exists for. Note
+Red Sea sits 0.028 below the risk bar (it was 0.012 at the previous day's
+0.738), so a modestly worse week would add it.
+(The test suite uses synthetic Hormuz 0.615 / Red Sea 0.537, under which Cape
+65.2% and Hormuz 27.4% cross on loss. Those are fixture values, not today's.)
+
+`check_threshold(rows, baseline_flow_mbd)` is the pure core. `evaluate_graph(G)`
+runs `compute_criticality` + `risk_weighted_max_flow` and calls it. Its
+`threshold_crossed` / `triggered_corridor` keys are the two PipelineState
+fields Phase 6's orchestrator reads.
+
+**Persistence is still NOT built.** The original spec's "store recommendations
+in PostgreSQL" was deferred by decision: Phase 5 computes on demand, and the
+result model gets added in Phase 6 once it is clear how the trigger is invoked.
 
 
 ---
@@ -641,9 +658,10 @@ criticality/engine.py → main criticality computation
 criticality/cascade.py → cascading failure simulation loop
 criticality/scenarios.py → named scenario definitions + parameters
 
-response/reroute.py → MCDM alternative supplier ranking
-response/spr.py → PuLP SPR linear program
-response/gap.py → supply gap estimation
+response/reroute.py → MCDM alternative supplier ranking + replacement timeline
+response/spr.py → SPR drawdown linear program (scipy HiGHS, NOT PuLP; see Phase 5)
+response/gap.py → supply gap estimation (risk-weighted / cascade baseline)
+response/trigger.py → re-specified threshold trigger (added in Phase 5)
 
 orchestrator/pipeline.py → LangGraph graph + node + edge definitions
 orchestrator/nodes.py → individual node functions
@@ -667,6 +685,7 @@ core/management/commands/score_risk.py → recompute risk + update graph (free)
 core/management/commands/compare_scoring.py → score the stored corpus under every
                                             candidate formula (read-only, no writes)
 core/management/commands/run_criticality.py → Phase 4 static vs risk-weighted
+core/management/commands/run_response.py → Phase 5 trigger → gap → reroute → SPR
 core/management/commands/backfill_event_timestamps.py → seendate repair (one-off)
 core/management/commands/run_pipeline.py → EMPTY STUB, Phase 6
 core/management/commands/run_backtest.py → EMPTY STUB, Phase 7
@@ -764,6 +783,8 @@ energy-resilience/
 │ ├── test_criticality.py
 │ ├── test_reroute.py
 │ ├── test_spr.py
+│ ├── test_gap.py
+│ ├── test_trigger.py
 │ ├── test_extraction.py
 │ └── test_api.py
 │
@@ -808,8 +829,10 @@ energy-resilience/
 - NetworkX 3.2 (knowledge graph + algorithms)
 - numpy 1.26 (risk scoring math)
 - pandas 2.1 (data manipulation, backtest)
-- scipy 1.11 (normalization, optimization utilities)
-- PuLP 2.7 (SPR linear program)
+- scipy 1.18.1 as installed (normalization; **solves the SPR LP via HiGHS**)
+- PuLP 3.3.2 as installed. **Not used.** Its bundled CBC fails on this machine
+  whenever output is redirected (`msg=0` or `logPath`), which is the only mode
+  a server or a test run can use. See Phase 5.
 
 ### Pipeline & Scheduling
 - Celery 5.3 (task queue)
@@ -861,8 +884,9 @@ Everything related to network analysis.
 ### response/
 Everything related to generating recommendations.
 - reroute.py — MCDM alternative supplier ranking
-- spr.py — PuLP SPR drawdown linear program
+- spr.py — SPR drawdown linear program (scipy HiGHS)
 - gap.py — supply gap estimation from cascade results
+- trigger.py — threshold trigger deciding whether reroute/SPR run
 
 ### orchestrator/
 LangGraph pipeline definition only.
@@ -993,6 +1017,8 @@ class AlternativeSupplier(models.Model):
     api_gravity = models.FloatField()
     sulfur_pct = models.FloatField()
     sanctioned = models.BooleanField(default=False)
+    transits_corridors = models.JSONField(default=list)   # Phase 5: eligibility reads THIS
+    max_incremental_mbd = models.FloatField(default=0.0)  # Phase 5: spare mb/d (ESTIMATE)
     route_geometry = models.LineStringField(null=True, blank=True)
 
     def __str__(self):
@@ -1182,6 +1208,20 @@ def score_alternative(alt, all_alts, crisis='normal'):
 ```
 
 ### SPR Linear Program
+
+> **The block below is the original spec, kept for reference. `response/spr.py`
+> differs in three ways.** (1) The spec's LP has no optimization freedom: every
+> variable is pinned, and `sum(release) <= available` is a hard constraint, so
+> whenever the reserve cannot cover the gap the problem is infeasible and every
+> day comes back `None`. The built version adds an `unmet[t]` slack, so it always
+> solves and `insufficient` is a computed result. (2) The objective is *minimize
+> unmet gap, then minimize the peak daily shortfall*. When the reserve binds it
+> spreads the shortfall evenly instead of letting the solver pick an arbitrary
+> vertex. The spec's "minimize total drawdown" term is dropped because it is
+> inert under `release + unmet == gap`. (3) The solver is scipy HiGHS, not
+> PuLP/CBC. The four documented return keys are kept, and `days_of_cover` is
+> what `/api/spr/` calls `days_until_threshold`.
+
 ```python
 from pulp import LpMinimize, LpProblem, LpVariable, lpSum, value, PULP_CBC_CMD
 
@@ -1384,6 +1424,68 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 
 ---
 
+## Thesis Snapshot — the ONE set of figures to cite
+
+> **Every number in the write-up comes from this snapshot.** Figures quoted in
+> the Build Phases changelog below are historical: each was accurate for the
+> corpus and date it was measured on, which is why they differ from this table.
+> Cite them only as history (e.g. "before the Phase 4.5 fix the score read
+> 0.99"), never as current results.
+
+**Snapshot:** `RiskScore` rows **id 40-42**, `computed_at` **2026-09-26
+13:53:49 UTC** (19:23 IST), top-3-story formula (Phase 4.5), corpus **795
+corridor-attributed events** (Hormuz 637 → 158 stories, Red Sea 158 → 82
+stories, Cape 0), both ingestion paths (DOC API + GKG).
+
+**Keeping it reproducible:** `run_criticality` and `run_response` read only
+`Corridor.live_risk_score`, which changes only when `score_risk` runs. **Do not
+run `score_risk` before generating thesis figures.** Scores decay daily
+(Hormuz went 0.895 → 0.875 in one day without new data), so re-scoring silently
+moves every number below. If you do re-score, regenerate ALL figures from the
+new run and update this section, including its row ids and timestamp.
+
+| corridor | top-3 raw (of 5) | risk score | static rank | risk rank | shift | static loss | risk-weighted loss | trigger |
+|---|---|---|---|---|---|---|---|---|
+| Cape | 0.000 | 0.050 (baseline) | 2 | **1** | **+1** | 1.609 | **2.045** | loss clause, 84.1% of flow — TRIGGERED |
+| Hormuz | 4.222 | **0.875** | 1 | **2** | **−1** | 1.784 | 0.275 | risk clause only (loss 11.3%) |
+| Red Sea | 3.363 | **0.722** | 3 | 3 | 0 | 0.202 | 0.074 | none (3.0%; 0.028 below the risk bar) |
+
+- **Max-flow:** static 4.228 → risk-weighted **2.432 mb/d, 42.5% of
+  deliverability impaired.** (Supersedes the 28.1% in the Phase 4.5 entry, which
+  was the smaller pre-ingest corpus.)
+- **Headline finding:** Hormuz remains India's most *structurally* important
+  corridor (static rank 1, centrality 0.0672 > Cape's 0.0634 today), but it is
+  already ~87.5% impaired, so losing it entirely removes only 0.275 mb/d more.
+  Cape, near-intact at baseline risk, carries the load, and losing it removes
+  2.045 mb/d. The centrality ordering is NOT a result (knife-edge, see Phase
+  4.5); cite capacity loss.
+- **Response layer (Phase 5):**
+  - **Cape gap 2.045 mb/d.** Its six eligible alternatives cover 64%, leaving
+    **0.745 mb/d uncovered** even after the last cargo lands on day 16. The SPR
+    covers **57.5%** of the need over 14 days and 71.6% over 30. Over 60 days it
+    **runs dry on day 34**, after which the residual is unmet.
+  - **Hormuz gap 0.275 mb/d.** UAE via Fujairah alone closes it by day 8, and
+    the SPR bridges it (2.20 mb).
+  - **Conclusion:** Cape is not only the corridor India can least afford to
+    lose, it is also the one it can least replace.
+- **Caveats to state alongside these figures:**
+  1. **Direction-blind severity.** The top-weighted Hormuz story is *"Iran Adds
+     Nuclear Inspections to Hormuz **Reopening** Offer"*, rated severity 5,
+     although it is arguably de-escalation news: the extractor scores how
+     serious the topic is, not which way it is moving. Excluding it moves
+     Hormuz 0.875 → ~0.86. A limitation, not a change of conclusion.
+  2. **Risk is treated as a physical closure fraction.**
+     `effective_capacity = volume × (1 − risk)` reads 0.875 as 87.5% of
+     capacity unavailable. This is consistent with the corpus's measured
+     indicator ("tanker transits crash to single digits") but remains an
+     assumption.
+  3. **Cape's rank shift is partly structural.** Cape has 0 events by
+     verified-correct classification (see the Phase 4 caveat).
+  4. **Coverage figures are indicative.** They rest on `max_incremental_mbd`,
+     which is estimated, not reconciled.
+
+---
+
 ## Named Corridors and Baseline Data
 
 3-corridor model (Suez folded into Red Sea). Capacity = global chokepoint throughput (all nations); India flow = FY 2025-26 modelled inflow, reconciled against supplier_to_corridor totals (Σ = 4.926 mb/d).
@@ -1482,7 +1584,7 @@ cd backend          # all commands run from here; venv is ../venv
 python manage.py runserver
 python manage.py seed_db                  # load data/*.json into the DB
 python manage.py build_graph              # build graph + print cut summary
-python manage.py test                     # full suite (248 tests)
+python manage.py test                     # full suite (397 tests)
 
 # ---- the pipeline, in order (no orchestrator yet — Phase 6) ----
 
@@ -1521,6 +1623,13 @@ python manage.py run_criticality --port-view
 python manage.py run_criticality --corridor Hormuz --cascade
 python manage.py run_criticality --scenario hormuz_full
 python manage.py run_criticality --rank-by centrality   # alt ranking key
+
+# 5. RESPONSE — the Phase 5 deliverable. Free, no API calls, writes nothing.
+python manage.py run_response --auto                    # respond to what the trigger picks
+python manage.py run_response --corridor Hormuz --crisis severe
+python manage.py run_response --corridor Cape --duration-days 60   # shows the reserve running dry
+python manage.py run_response --scenario hormuz_full    # or opec_cut (supply shock)
+python manage.py run_response --corridor Hormuz --include-sanctioned
 
 # ---- one-offs ----
 python manage.py backfill_event_timestamps --dry-run   # seendate repair
@@ -1668,7 +1777,7 @@ triggered by hand with the commands above.
   - [x] **RSS confirmed a third time as supplement-only**: 10 events from 27 articles (17 irrelevant, 63%), of which **Hormuz +8, Red Sea +0, Cape +0** and ~2 stored with a NULL corridor. RSS has still never produced a single Cape event.
   - [x] **PHASE 4'S HEADLINE FINDING SURVIVES THE CORPUS CHANGE — real external validation.** Re-run on 266 events (77% larger than the 150 it was originally computed on) from a *different ingestion method*: `Cape 2→1 (+1), Hormuz 1→2 (-1), Red Sea 3→3`, identical to the original. The rank-shift mechanism was not an artefact of the DOC corpus. Capacity-weighted centrality also crossed over here (Cape 0.0655 > Hormuz 0.0651, from a static 0.0532 < 0.0756) — **but that crossover is knife-edge and is NOT a citable result; it flips between Hormuz risk 0.85 and 0.895 because betweenness on this graph is a step function. See the Phase 4.5 entry.**
   - [ ] **…BUT THE MAGNITUDES ARE NOW DEGENERATE AND MUST NOT BE QUOTED.** `Hormuz risk-weighted capacity_loss = 0.009 mb/d` (was 0.364) — the model says losing the Strait of Hormuz entirely would cost India nine *thousandths* of a mb/d, on a corridor carrying 2.316 mb/d of its inflow. Mechanically correct (at risk 0.996 there is nothing left to lose) and physically absurd. `risk_flow` fell 2.485 → **2.096**, i.e. **50.4% of deliverability already lost**, and 2.096 ≈ Cape's risk-weighted capacity alone (2.255 × 0.95 = 2.142) — the model has reduced India's whole supply chain to one corridor. **This is the cleanest available demonstration of WHY K needs calibrating: the mechanism is validated, the levels are worthless.** Good material for the write-up as a stated limitation; not a result.
-  - [x] ~~**DO NOT PUT IN THE WRITE-UP until recalibrated:** the 0.992/0.987 figures as risk levels; any "Hormuz is riskier than Red Sea" claim (0.005 gap, and the ordering flips with ingestion method); the implied ~99% capacity loss.~~ **RESOLVED IN PHASE 4.5 by changing the formula, not by recalibrating K.** Current quotable figures: Hormuz 0.615, Red Sea 0.537, Cape 0.050, 28.1% impairment. The "Hormuz > Red Sea" ordering is now backed by a 0.078 gap that is stable across ingestion paths (ratio 1.00x), where the old one rested on 0.005 and flipped with the ingestion method. **Phase 4's rank-shift finding survived all of it** — unchanged under every one of the 8 candidate formulas tested.
+  - [x] ~~**DO NOT PUT IN THE WRITE-UP until recalibrated:** the 0.992/0.987 figures as risk levels; any "Hormuz is riskier than Red Sea" claim (0.005 gap, and the ordering flips with ingestion method); the implied ~99% capacity loss.~~ **RESOLVED IN PHASE 4.5 by changing the formula, not by recalibrating K.** Figures at the time: Hormuz 0.615, Red Sea 0.537, Cape 0.050, 28.1% impairment. **Superseded for citation by the Thesis Snapshot section** (0.875 / 0.722 / 0.050, 42.5%). The "Hormuz > Red Sea" ordering is now backed by a 0.078 gap that is stable across ingestion paths (ratio 1.00x), where the old one rested on 0.005 and flipped with the ingestion method. **Phase 4's rank-shift finding survived all of it** — unchanged under every one of the 8 candidate formulas tested.
   - [ ] RIPPLE: **zero URL overlap between the 41 GKG rows and the 195 DOC rows** — the two paths found completely disjoint articles, confirming that GKG genuinely adds coverage rather than re-finding what the DOC API already had, and reinforcing that the two corpora are not comparable. After the fixed matcher, a 4h window yields ~15 articles → a 24h window roughly 90, versus the DOC path's hard 50-per-corridor cap; still enough to shift `SATURATION_K` and the Phase 4 rank-shift finding, so re-check both after the first real ingest. Automatic DOC→GKG fallback is NOT wired: `--source gkg` is a deliberate manual choice, since an automatic fallback would trigger a 280 MB download from a throttle. Also observed: some `PAGE_TITLE` values are truncated at source ("Iran's Ghalibaf says", "Turkish FM Fidan says Ankara has") — GDELT's own data, not fixable here, and it degrades headline-similarity dedup for those rows.
 - [x] Phase 4 — Criticality engine (centrality + max-flow + cascading failure)  ✅ COMPLETE
   - [x] `graph/algorithms.py` — pure NetworkX primitives, no GraphState/DB access (callers choose the graph): `structural_betweenness`, `capacity_weighted_betweenness`, `baseline_max_flow` / `risk_weighted_max_flow`, `degrade_corridor`, `degrade_supply`, `residual_port_criticality`, `corridor_load_bearing_ports`. `degrade_corridor`/`degrade_supply` both return a NEW graph — the input is never mutated (pinned by tests), so a simulation can never corrupt the singleton.
@@ -1689,7 +1798,7 @@ triggered by hand with the commands above.
     Mechanism: Hormuz is *already* so degraded by live risk that cutting it removes little **additional** flow (0.364), while near-intact Cape has silently become the load-bearing corridor and its loss would now be the most damaging (2.053). **Phase 2.5 worried that saturated scores made the corridors indistinguishable — that is true of the *risk scores themselves* (Red Sea leads Hormuz by only 0.025, compressed by K from a 14% raw-score gap of 45.1 vs 39.4), but the rank-shift mechanism reads the graph's response to those scores, not the scores' spread, and remains discriminative.** `test_heavily_degraded_corridor_loses_rank` pins the mechanism on synthetic risk so it stays verified independent of the live corpus.
   - [x] **ROBUSTNESS: the finding is not knife-edge on the uncalibrated K.** A sweep of Hormuz risk from 0 to 0.97 (Red Sea and Cape held fixed) flips Cape into rank 1 from **Hormuz risk ≈ 0.10 onward** — so any plausible Phase 7 recalibration preserves it. Confirmed in practice: the seendate correction moved Hormuz 0.970 → 0.835 and Red Sea 0.981 → 0.860, and the ranking was unchanged (only the magnitudes moved, Hormuz's marginal loss 0.066 → 0.364).
   - [ ] **CAVEAT TO STATE IN THE WRITE-UP — the rank shift is partly STRUCTURAL, not purely a response to conditions.** Cape holds 0 extracted events and therefore sits permanently at its 0.050 `baseline_risk`. That is verified-correct (Phase 2.5 checked all 50 Cape-query articles by hand: 28 → Red Sea, 7 → Hormuz, 14 irrelevant, 0 → Cape), because news mentioning "the Cape route" is almost always news about ships *rerouting to avoid* the Red Sea — i.e. it is Red Sea risk by another name. The consequence: Cape can barely ever accumulate risk events, so once Hormuz and Red Sea carry any meaningful risk, Cape will rank 1 close to automatically. The shift is real and correctly computed, but a reviewer will rightly ask why the corridor with no data is ranked most critical; the honest answer is that Cape's criticality is *structural* (2.255 mb/d of India's inflow) and its low risk score is *evidence of quiet*, not absence of sampling — a distinction the Phase 2.5 `sampled` vs `empty` machinery exists specifically to support. **Do not present the +1 shift as a purely dynamic result.**
-  - [x] ~~**Also state plainly: risk-weighted flow of 2.485 vs static 4.228 means the model asserts India has ALREADY lost ~41% of crude deliverability.**~~ **SUPERSEDED BY PHASE 4.5 — the figure is now 28.1% (4.228 → 3.039) and IS quotable**, because the ~41% (later ~50%) reading was an artefact of the summed score saturating, not a modelling claim. The underlying caveat still holds and should still be stated: `effective_capacity = volume × (1 - risk)` treats a *news-derived risk index* as a *literal physical closure fraction*, a strong assumption inherited from the original spec. What changed is that the index feeding it is now bounded and volume-insensitive, so the number is defensible as a model output rather than an artefact of how many articles were ingested.
+  - [x] ~~**Also state plainly: risk-weighted flow of 2.485 vs static 4.228 means the model asserts India has ALREADY lost ~41% of crude deliverability.**~~ **SUPERSEDED BY PHASE 4.5 — the figure became 28.1% (4.228 → 3.039) on that day's corpus; the citable figure is now 42.5% (4.228 → 2.432), see the Thesis Snapshot section**, because the ~41% (later ~50%) reading was an artefact of the summed score saturating, not a modelling claim. The underlying caveat still holds and should still be stated: `effective_capacity = volume × (1 - risk)` treats a *news-derived risk index* as a *literal physical closure fraction*, a strong assumption inherited from the original spec. What changed is that the index feeding it is now bounded and volume-insensitive, so the number is defensible as a model output rather than an artefact of how many articles were ingested.
   - [x] `criticality/cascade.py` — `cascading_failure_simulation(corridor, G=None, step_pct=10)` uses `get_graph_copy()` when `G is None` so the live singleton is never mutated. **Its baseline is deliberately DIFFERENT from engine.py's** and the docstring says so: the cascade starts *from* today's risk-weighted world and asks "what if this corridor degrades further", whereas the engine compares a static world against the risk-weighted one — the two `capacity_loss_mbd` figures are not comparable and must not be conflated in the write-up.
   - [x] `check_refineries` measures each refinery against **its own baseline realized inflow, not its nameplate `capacity_mbd`** — several refineries never run at nameplate even at baseline (grade incompatibility + the oversupply routing already documented in edges.json), so a nameplate comparison would flag them permanently and drown the real signal. `AFFECTED_THRESHOLD_PCT = 0.95` rather than 1.0 is a **numerical-stability** choice, not a modelling one: `nx.maximum_flow`'s solver leaves float dust that at 1.0 flags every refinery at every step (`test_no_refinery_is_flagged_when_nothing_changed` guards this).
   - [x] **`min_run_rate` DEFERRED, deliberately, with a documented landing spot.** A refinery going offline below its min run rate is *discrete* on/off behaviour needing an iterative re-solve (shut → re-run max-flow → re-check → repeat), a different mathematical object from this continuous max-flow model. `min_run_rate` is also still uncalibrated dead data (one hardcoded 0.70 for all 23 refineries). `check_refineries(..., min_run_rate_aware=True)` raises `NotImplementedError` so the extension is additive later rather than a rewrite; `test_min_run_rate_mode_is_explicitly_unimplemented` pins it.
@@ -1718,7 +1827,7 @@ triggered by hand with the commands above.
   - [x] **Why NOT `mean`, despite the healthiest magnitudes (1.268 mb/d):** it **dilutes**, and the dilution is measured, not hypothetical — its ratio is 0.85x/0.69x, i.e. combining ingestion paths *lowered* the score. Adding a harmless article would reduce a corridor's risk. Worse behaviour than the bug being fixed.
   - [x] **Why NOT `log_sat`:** confirmed to cure saturation only, not the count-vs-severity conflation. 70 minor stories → 4.443, 17 catastrophic ones → 4.454. Pinned by `test_log_compression_does_not_separate_them_either`.
   - [x] **PHASE 4'S HEADLINE FINDING IS UNCHANGED, AND NOW ROBUSTLY SO: `rank_shift` is IDENTICAL under all 8 candidates** — `Cape 2→1 (+1), Hormuz 1→2 (-1), Red Sea 3→3`. The mechanism reads the graph's structural response, not the score spread, exactly as Phase 4 claimed. This is the third independent confirmation (different corpus size, different ingestion method, now different scoring formula).
-  - [x] **THE MAGNITUDES ARE NOW QUOTABLE.** New production scores: **Hormuz 2.596/5 → 0.6153, Red Sea 2.277/5 → 0.5372, Cape 0.000 → 0.0500** (baseline, 0 events). Max-flow **4.228 → 3.039 mb/d, 28.1% impaired** — replacing the indefensible 48–50%. Hormuz's risk-weighted `capacity_loss` is **0.833 mb/d** instead of 0.087, against a static 1.784 on a corridor carrying 2.316 mb/d of India's inflow. The previous entries' instruction to keep these out of the write-up is **lifted for the scores and the impairment figure**; the structural caveat on Cape (below) still stands.
+  - [x] **THE MAGNITUDES BECAME QUOTABLE** (i.e. no longer artefacts). *Historical figures below, from the pre-ingest 257-event corpus; cite the Thesis Snapshot section instead.* New production scores: **Hormuz 2.596/5 → 0.6153, Red Sea 2.277/5 → 0.5372, Cape 0.000 → 0.0500** (baseline, 0 events). Max-flow **4.228 → 3.039 mb/d, 28.1% impaired** — replacing the indefensible 48–50%. Hormuz's risk-weighted `capacity_loss` is **0.833 mb/d** instead of 0.087, against a static 1.784 on a corridor carrying 2.316 mb/d of India's inflow. The previous entries' instruction to keep these out of the write-up is **lifted for the scores and the impairment figure**; the structural caveat on Cape (below) still stands.
   - [x] `pipeline/score/candidates.py` — the 8 candidate statistics as pure functions over clustered stories, plus the two normalizers (`saturating`, `linear_in_severity`). No DB, no network. `_top(..., pad=True)` **delegates to production's `top_k_severity`** so the harness's `top3pad` column is by construction the statistic the pipeline scores from, not a re-implementation that could drift.
   - [x] `risk_scorer.py` refactor — `cluster_stories()` / `event_weight()` / `corridor_events()` extracted so the harness and production measure the *same* stories; `top_k_severity()`, `normalize_severity()`, `compute_corridor_severity()` added. `compute_risk_score()` (the sum) and `normalize_score()` (saturating) are **deliberately kept and still tested** — the sum quantifies the syndication effect, and the saturating transform is needed to re-read pre-2026-09-26 `RiskScore.raw_score` rows.
   - [x] **`RiskScore.raw_score` semantics CHANGED — rows are not comparable across 2026-09-26.** Pre-fix rows hold the unbounded sum (tens to hundreds); post-fix rows hold the bounded top-k statistic (0–5). No migration: both are floats and the old rows are real history. **A trend chart or backtest spanning the date must not plot them on one axis** — noted in `compute_all_risk_scores`' docstring.
@@ -1739,10 +1848,27 @@ triggered by hand with the commands above.
   - [x] **Syndication ratio is now 4.03x (Hormuz) vs 1.93x (Red Sea)** — up from the 2.07x/1.89x recorded in Phase 2.6, with one story counted **44 times** and another 14. The **2.1x unevenness between corridors is exactly the condition Phase 3 documented as flipping the ranking under a sum**, and under the top-k statistic it is structurally irrelevant (each cluster contributes once, and only the strongest 3 clusters are read at all). Note for the write-up: this ratio is itself a citable measurement of wire-service syndication in energy news.
   - [ ] **ONE RESIDUAL VOLUME EFFECT, honestly noted: top-k is invariant to adding stories that are not worse, but the EXPECTED top-k of n draws still rises with n** (order statistics — sample 500 articles instead of 80 and you are likelier to catch the severe tail). This is far weaker than a sum's linear growth and is bounded by `MAX_EVENT_WEIGHT`, which today's corpus is already close to (4.34 of 5.0), so there is little headroom for it to inflate further. It is nonetheless the honest limitation to state instead of claiming total volume-independence. Mitigation if it ever matters: hold the ingest window fixed (`--last-minutes 1440`) so n is roughly stationary across runs.
   - [ ] **STILL OPEN — the absolute LEVEL is not calibrated, only its shape is fixed.** Hormuz at 0.615 is a claim that ~62% of its capacity is unavailable, and that still comes from treating a news-derived index as a literal physical closure fraction (the `effective_capacity = volume × (1 - risk)` assumption inherited from the spec). What changed is the *nature* of the remaining question: it is no longer "fit an arbitrary K" but "is the mean of the 3 worst stories the right window, and is `TOP_K_STORIES = 3` right" — both answerable against Phase 7's calm-plus-crisis data, on a scale that is already interpretable. `raw_score` persistence means revisiting it never costs another extraction run.
-  - [ ] **Phase 5's threshold trigger is still broken in BOTH directions and this fix does not rescue it.** `centrality > 0.65` remains unreachable (max observed 0.0756), and `risk_score > 0.50` now fires for Hormuz (0.615) *and* Red Sea (0.537) — so the conjunction never fires while the risk half alone always does. Re-specify before wiring the response layer; see the Threshold Trigger Logic section.
+  - [x] ~~**Phase 5's threshold trigger is still broken in BOTH directions and this fix does not rescue it.**~~ **RESOLVED IN PHASE 5**: re-specified as relative capacity loss, with risk as an OR-clause. See the Threshold Trigger Logic section. `centrality > 0.65` remains unreachable (max observed 0.0756), and `risk_score > 0.50` now fires for Hormuz (0.615) *and* Red Sea (0.537) — so the conjunction never fires while the risk half alone always does. Re-specify before wiring the response layer; see the Threshold Trigger Logic section.
   - [ ] RIPPLE: `manage.py score_risk` now prints the bounded `top3/5` statistic as the score's input with the old sum beside it as a diagnostic. **The user must run `score_risk` for the new scores to reach the DB** — until then `Corridor.live_risk_score` still holds the old saturated values, and `run_criticality` will report the degenerate magnitudes. `SATURATION_K` is now vestigial on the production path but NOT removed (still used by `normalize_score` and the harness).
 
-- [ ] Phase 5 — Response layer (reroute optimizer + SPR drawdown LP)
+- [x] Phase 5 — Response layer (reroute optimizer + SPR drawdown LP)  ✅ COMPLETE
+  - [x] **Three blockers were resolved before anything could be wired:** the threshold trigger could never fire, the reroute data offered nothing for two of the three corridors, and the spec's SPR LP went infeasible exactly when it was needed. Each is pinned by a test named after the defect.
+  - [x] **THRESHOLD RE-SPECIFIED (`response/trigger.py`), and a third defect found.** Beyond the two recorded in Phase 4.5 (centrality unreachable, risk always passing), **any `AND risk > X` gate vetoes the corridor the engine ranks most critical.** Cape loses the most flow *because* it is intact, and it sits at risk 0.050. The new rule is `capacity_loss_mbd / risk-weighted baseline flow > 0.15` **OR** `live_risk_score > 0.75`. On the live DB it fires on **Cape via the loss clause (84.1% of flow) and Hormuz via the risk clause alone (0.875; loss only 11.3%, because it is already 87.5% degraded)**, but not Red Sea (0.722). It picks Cape by value, not by row order. Both clauses fire on real data. The rationale is in the Threshold Trigger Logic section. `test_original_spec_threshold_could_never_fire` sweeps Hormuz and Red Sea risk from 0 to 0.99 on the real graph and shows every corridor's centrality stays below 0.65.
+  - [x] **REROUTE DATA DEFECT: all 10 `alternatives.json` rows said `avoids_corridor: "Hormuz"`**, so Cape (today's rank 1) and Red Sea had no candidates, and Saudi-via-Yanbu would have been offered as a Red Sea replacement even though it sails through Suez. Fixed by adding `transits_corridors` (hand-derived from the existing `route_description` text) and `max_incremental_mbd` (migration `0003_alternativesupplier_transits_and_volume`). Eligibility means *does not transit the disrupted corridor*: **Hormuz 9 candidates, Cape 6, Red Sea 4** (excluding sanctioned). `avoids_corridor` is kept but nothing reads it.
+  - [x] **Two data-fidelity calls, recorded in each row's `note`.** (1) **Russia Urals `sanctioned` changed to `true`**, matching this file's own alternatives table ("Partial"). Left false, the sanction filter was a no-op and the −$3 discount put the geopolitically loaded option at `cost_score` 1.0. It is visible with `--include-sanctioned`. (2) **Kuwait via Shuaiba claims to avoid Hormuz, but Shuaiba is inside the Persian Gulf.** The committed claim is PRESERVED so results stay comparable with the table. Treat its Hormuz eligibility with suspicion.
+  - [ ] **`max_incremental_mbd` is the weakest data in the project**: estimated and cited per row (EIA country analyses, pipeline nameplates), NOT reconciled against a PPAC/IEA balance the way `edges.json` was. The total is 2.45 mb/d (1.95 excluding Russia). The CLI labels coverage as indicative. Reconcile it before quoting any coverage figure.
+  - [x] `response/gap.py`: `estimate_supply_gap(corridor, pct)` / `gap_from_scenario(key)`. **The baseline is stated in every result (`"baseline": "risk_weighted"`)**: the gap is extra flow lost on top of today's risk, which makes it comparable with `cascade.py`'s `capacity_loss_mbd` but NOT with `engine.py`'s `static_capacity_loss_mbd`. It uses a single-point solve (2 max-flows), not the 10-step cascade. `deadband_unattributed_mbd` reports `gap − Σ refinery shortfalls` so the 5% `AFFECTED_THRESHOLD_PCT` deadband is not silently conflated. An unknown corridor (e.g. `"Suez"`) raises instead of returning a zero gap, because `degrade_corridor` silently does nothing on a bad name.
+  - [x] **Cross-validation: two independently written paths agree to 1e-9.** `estimate_supply_gap` matches `cascading_failure_simulation` at every 10% step for every corridor, and on a risk-free graph it reproduces the Phase 1 static cuts (1.784 / 1.609 / 0.202).
+  - [x] `response/reroute.py`: `rank_alternatives(corridor, crisis, gap_mbd, include_sanctioned)` with CLAUDE.md's weights and `normalize` verbatim, and the `/api/reroute/` keys kept exactly (additions only). **`compute_grade_compatibility` is deliberately NOT `builder._grade_compatible`.** That one is a boolean with a default-open fallback for graph construction. This one is the fraction of refinery *nameplate capacity* whose API/sulfur window admits the crude, so Kazakhstan CPC (API 44) scores 0.39 and Kuwait (2.5% S) 0.70. Scores are normalized over the candidate set actually ranked, **so they are not comparable across corridors or across `include_sanctioned`**: adding Russia drops UAE from 1.000 to 0.867 with UAE unchanged, and a test pins this. `replacement_timeline` walks the ranking until the estimated volumes cover the gap and returns the SLOWEST transit needed, which is the SPR's bridge length.
+  - [x] **FINDING: UAE via Fujairah dominates every ranking with a perfect 1.000.** It is the cheapest, fastest and fully grade-compatible option, so it wins on every criterion regardless of weights. **The crisis weighting barely matters on this data**: the Hormuz order is identical under `normal` and `severe`, and for Cape only Kuwait and Libya swap. Both sail 12 days, and once cost weight halves, Kuwait's $1 edge no longer outweighs its poor grade fit. Worth stating in the write-up rather than implying the weights drive the result.
+  - [x] `response/spr.py`: **the spec LP was not buildable as written.** Every variable is pinned (nothing to optimize) and `sum(release) <= available` is a hard constraint, so it is **infeasible exactly when reserves fall short** and returns `None` for every day. The built LP adds `unmet[t]` slack (always feasible, `insufficient` computed) and minimizes **unmet gap first, then peak daily shortfall**. When the reserve binds, the shortfall is spread evenly (5 mb over 10 days → 0.5 released / 0.5 unmet *every* day) rather than landing on an arbitrary solver vertex that could change with the solver version. The spec's "minimize total drawdown" is dropped because it is inert under `release + unmet == gap`. The four documented keys are kept; additions are `unmet_mbd`, `required_mb`, `available_mb`, `bridge_days`, `uncovered_tail_days`, `days_of_cover` (= `/api/spr/`'s `days_until_threshold`) and `status`. Stock-vs-rate units are labelled on every constant.
+  - [x] **SPR GAP IS A PER-DAY PROFILE (fix found by live verification the same day).** The first version, like CLAUDE.md's spec, assumed a constant gap until the SLOWEST replacement cargo landed and zero after. That was wrong in both directions. It **overstated** the need before that day (UAE's 0.30 lands day 8, Saudi's 0.50 day 10, but the gap was held at the full 2.045 until day 16), and it **stopped releasing at day 16 with 13.5 mb still in the reserve** while Cape's 0.745 mb/d residual stayed open for the rest of the horizon. Now `replacement_timeline(..., duration_days)` returns `daily_gap_mbd` (the full gap minus each cargo from its landing day, with the residual kept open), and `compute_spr_schedule(..., gap_profile=...)` covers that profile. Without `gap_profile` the documented constant-gap behaviour is unchanged, and a test pins that equivalence. A stepped profile needed a **third objective term**: once the rate cap forces the peak shortfall on the early days, the peak term no longer constrains the rest and the solver's choice was arbitrary again, so `EARLY_TIE_BREAK` prefers covering earlier days (weight chosen so it can never trade against the peak while `duration_days` < 1,000, which is now validated). New outputs: `daily_gap_mbd`, `gap_at_horizon_end_mbd`, and **`reserve_exhausted_day`**. `uncovered_tail_days` is None in profile mode, since a residual may never close. **Cape, live DB:** 14 days **57.5%** covered (was 48.9%, because the need was overstated at 28.63 mb, actually 24.33); 30 days **71.6%**, still covering the residual after day 16; 60 days, **the reserve runs dry on day 34** with 0.745 mb/d still open.
+  - [x] **SOLVER SWITCHED: scipy HiGHS, not PuLP/CBC. Found by the pre-implementation smoke test, and reproduced outside the sandbox.** PuLP 3.3.2's bundled CBC 2.10.3 solves when its stdout is inherited, but raises `Error while executing …cbc.exe` whenever output is redirected (`msg=0` and `logPath` both fail; `rc == 0`, no solution file). That makes CLAUDE.md's `PULP_CBC_CMD(msg=0)` unusable in a server or test run. `scipy.optimize.linprog(method="highs")` runs in-process (no subprocess, no temp files, thread-safe under Django) and scipy was already a dependency. The formulation does not depend on the solver: `pip install highspy` would let PuLP drive the same HiGHS if PuLP is wanted back.
+  - [x] `core/management/commands/run_response.py`: `--auto | --corridor X | --scenario KEY` (mutually exclusive), `--degradation`, `--crisis`, `--duration-days`, `--include-sanctioned`, `--no-rebuild`, `--ignore-risk`. Prints trigger → gap → ranking with cumulative coverage → SPR. Same graph acquisition and risk push as `run_criticality`. It writes nothing to the DB, but it does rebuild the singleton. Output is ASCII-only, since em-dashes render as `�` on the Windows console.
+  - [x] **END-TO-END RESULT, live DB after `score_risk` on 2026-09-26 (Hormuz 0.875 / Red Sea 0.722 / Cape 0.050; risk-weighted flow 2.432 mb/d):** `--auto` triggers on **Cape** with a gap of **2.045 mb/d**. Its six eligible alternatives cover only 64% even after all of them land, leaving **0.745 mb/d permanently uncovered**. The SPR covers **57.5%** of the need over 14 days, **71.6%** over 30, and over 60 days **runs dry on day 34**, after which the residual is unmet. **Hormuz has a gap of only 0.275 mb/d**, because it is already 87.5% degraded. UAE via Fujairah alone covers it by day 8, and the SPR bridges it at 0.27 mb/d (2.20 mb). Earlier runs on other scores tell the same story; only the magnitudes differ. **This extends the Phase 4 finding into the response layer: the intact corridor is not only the most consequential to lose, it is also the one India can least replace.**
+  - [x] Tests: `test_spr.py` (16, bare `unittest`), `test_reroute.py` (27), `test_gap.py` (16), `test_trigger.py` (23, including 7 command tests). **82 new tests, then 11 more for the per-day gap fix; full suite 397, all passing.** The reroute anchors come from an independent script over the JSON files, not from calling the module, so the pinned tests check the code against the data rather than against itself. The one `patch` targets `run_response.evaluate_graph` to reach the "nothing crossed" branch, which the seeded graph cannot produce: a full Hormuz or Cape cut always exceeds 15%.
+  - [ ] RIPPLE (Phase 6): the views are thin wrappers. `/api/reroute/` → `rank_alternatives`, `/api/spr/` → `compute_spr_schedule` (rename `days_of_cover` → `days_until_threshold`), `/api/simulate/` → `estimate_supply_gap` + `rank_alternatives` + `replacement_timeline` + `compute_spr_schedule`, and the orchestrator's threshold node → `evaluate_graph`. **Recommendation persistence is still unbuilt (by decision)**; add the model when the trigger's invocation path is defined. `AlternativeSupplier.route_geometry` is still NULL for every row, so the map cannot draw alternative routes yet.
+  - [ ] Still open from earlier phases and unchanged here: `min_run_rate`-aware refinery shutdown (`check_refineries` still raises `NotImplementedError`); a supply shock (`opec_cut`) excludes no alternative on route, and OPEC membership of alternatives is not modelled, so Saudi/UAE/Kuwait/Iraq are offered as replacements for an OPEC cut.
 - [ ] Phase 6 — LangGraph orchestration + all REST API endpoints
 - [ ] Phase 7 — Backtest validation + integration testing + API documentation
 

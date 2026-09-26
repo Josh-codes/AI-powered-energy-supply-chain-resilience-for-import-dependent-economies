@@ -182,6 +182,8 @@ class Command(BaseCommand):
                     "api_gravity": row["api_gravity"],
                     "sulfur_pct": row["sulfur_pct"],
                     "sanctioned": row.get("sanctioned", False),
+                    "transits_corridors": row.get("transits_corridors", []),
+                    "max_incremental_mbd": row.get("max_incremental_mbd", 0.0),
                 },
             )
             created, updated = (created + 1, updated) if was_created else (created, updated + 1)

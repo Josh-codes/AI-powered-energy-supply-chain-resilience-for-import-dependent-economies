@@ -8,7 +8,12 @@
     "price_premium_usd": 2.0,
     "api_gravity": 32.0,
     "sulfur_pct": 1.8,
-    "sanctioned": false
+    "sanctioned": false,
+    "transits_corridors": [
+      "Red Sea"
+    ],
+    "max_incremental_mbd": 0.5,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: East-West (Petroline) pipeline bypass capacity ~5-7 mb/d (EIA Saudi Arabia country analysis); India share assumed ~10% of bypass headroom."
   },
   {
     "name": "UAE via Fujairah",
@@ -19,7 +24,10 @@
     "price_premium_usd": 1.0,
     "api_gravity": 38.0,
     "sulfur_pct": 0.7,
-    "sanctioned": false
+    "sanctioned": false,
+    "transits_corridors": [],
+    "max_incremental_mbd": 0.3,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: ADCOP Habshan-Fujairah pipeline nameplate 1.5 mb/d (EIA UAE country analysis); Fujairah loads outside the Strait, so the route transits no modelled corridor."
   },
   {
     "name": "Kuwait via Shuaiba",
@@ -30,7 +38,13 @@
     "price_premium_usd": 3.0,
     "api_gravity": 31.0,
     "sulfur_pct": 2.5,
-    "sanctioned": false
+    "sanctioned": false,
+    "transits_corridors": [
+      "Red Sea"
+    ],
+    "max_incremental_mbd": 0.15,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: Kuwait has no Hormuz bypass pipeline; figure kept small for that reason.",
+    "note": "GEOGRAPHY CAVEAT: Shuaiba is inside the Persian Gulf, so crude loaded there must physically transit Hormuz. The committed claim avoids_corridor=Hormuz is PRESERVED so results stay comparable with CLAUDE.md's alternative table; treat this row's Hormuz eligibility with suspicion."
   },
   {
     "name": "Iraq via Ceyhan",
@@ -41,7 +55,12 @@
     "price_premium_usd": 4.0,
     "api_gravity": 33.0,
     "sulfur_pct": 2.0,
-    "sanctioned": false
+    "sanctioned": false,
+    "transits_corridors": [
+      "Red Sea"
+    ],
+    "max_incremental_mbd": 0.15,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: Kirkuk-Ceyhan pipeline, restarted 2025 at a fraction of its ~0.9 mb/d nameplate (EIA Iraq country analysis)."
   },
   {
     "name": "USA WTI",
@@ -52,7 +71,12 @@
     "price_premium_usd": 9.0,
     "api_gravity": 39.0,
     "sulfur_pct": 0.3,
-    "sanctioned": false
+    "sanctioned": false,
+    "transits_corridors": [
+      "Cape"
+    ],
+    "max_incremental_mbd": 0.4,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: US Gulf Coast export capacity is large; limit is freight/arbitrage economics at a 28-day voyage (EIA US crude exports)."
   },
   {
     "name": "Nigeria Bonny Light",
@@ -63,7 +87,12 @@
     "price_premium_usd": 5.0,
     "api_gravity": 34.0,
     "sulfur_pct": 0.1,
-    "sanctioned": false
+    "sanctioned": false,
+    "transits_corridors": [
+      "Cape"
+    ],
+    "max_incremental_mbd": 0.15,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: West African light sweet cargoes spot-available to Asia (EIA Nigeria country analysis)."
   },
   {
     "name": "Angola Girassol",
@@ -74,7 +103,12 @@
     "price_premium_usd": 6.0,
     "api_gravity": 31.0,
     "sulfur_pct": 0.2,
-    "sanctioned": false
+    "sanctioned": false,
+    "transits_corridors": [
+      "Cape"
+    ],
+    "max_incremental_mbd": 0.1,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: West African spot cargoes; Angola output is in structural decline (EIA Angola country analysis)."
   },
   {
     "name": "Russia Urals",
@@ -85,7 +119,13 @@
     "price_premium_usd": -3.0,
     "api_gravity": 31.0,
     "sulfur_pct": 1.5,
-    "sanctioned": false
+    "sanctioned": true,
+    "transits_corridors": [
+      "Cape"
+    ],
+    "max_incremental_mbd": 0.5,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: Incremental on top of the 1.7 mb/d already modelled in edges.json; constrained by shadow-fleet tanker availability.",
+    "note": "SANCTIONS: flag set true to match CLAUDE.md's alternative table ('Partial' - G7 price cap / EU restrictions). Excluded from reroute by default; visible with include_sanctioned. Negative premium (-$3) would otherwise place it at cost_score 1.0."
   },
   {
     "name": "Kazakhstan CPC Blend",
@@ -96,7 +136,12 @@
     "price_premium_usd": 3.0,
     "api_gravity": 44.0,
     "sulfur_pct": 0.5,
-    "sanctioned": false
+    "sanctioned": false,
+    "transits_corridors": [
+      "Red Sea"
+    ],
+    "max_incremental_mbd": 0.1,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: CPC terminal ~1.5 mb/d, mostly committed to European buyers (EIA Kazakhstan country analysis)."
   },
   {
     "name": "Libya Es Sider",
@@ -107,6 +152,11 @@
     "price_premium_usd": 4.0,
     "api_gravity": 36.0,
     "sulfur_pct": 0.4,
-    "sanctioned": false
+    "sanctioned": false,
+    "transits_corridors": [
+      "Red Sea"
+    ],
+    "max_incremental_mbd": 0.1,
+    "source": "ESTIMATE, not reconciled against a PPAC/IEA balance: Libyan exports volatile under recurrent force majeure (EIA Libya country analysis)."
   }
 ]
