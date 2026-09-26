@@ -4,6 +4,8 @@ No network, no API calls — scoring reads ExtractedEvent rows the tests create
 directly, which is also how the backtest will drive it in Phase 7.
 """
 import math
+import random
+import string
 from datetime import timedelta
 
 import networkx as nx
@@ -15,10 +17,16 @@ from core.models import Corridor, ExtractedEvent, RiskScore
 from graph.updater import update_edge_weights
 from pipeline.score.risk_scorer import (
     LAMBDA_DECAY,
+    MAX_EVENT_WEIGHT,
     SATURATION_K,
+    TOP_K_STORIES,
+    cluster_stories,
     compute_all_risk_scores,
+    compute_corridor_severity,
     compute_risk_score,
+    corridor_events,
     normalize_score,
+    normalize_severity,
 )
 
 BASELINES = {"Hormuz": 0.20, "Red Sea": 0.15, "Cape": 0.05}
@@ -31,6 +39,19 @@ def _make_corridors():
             name=name, geometry=line, capacity_mbd=10.0,
             transit_days=10, baseline_risk=baseline,
         )
+
+
+def _unique_title(seed):
+    """A headline too dissimilar to cluster with any other from this helper.
+
+    Deliberately gibberish. Story clustering merges titles at SequenceMatcher
+    ratio >= 0.60, and realistic-looking generated headlines ("tanker incident
+    1", "tanker incident 2") sail straight past that — which silently collapses
+    a fixture meant to hold N separate stories into one, and was exactly how the
+    first draft of these tests came out wrong.
+    """
+    rng = random.Random(seed)
+    return " ".join("".join(rng.choices(string.ascii_lowercase, k=7)) for _ in range(5))
 
 
 def _event(corridor_name, severity=4, confidence=0.9, days_ago=0, now=None, title=""):
@@ -48,6 +69,11 @@ def _event(corridor_name, severity=4, confidence=0.9, days_ago=0, now=None, titl
 
 
 class RawScoreTests(TestCase):
+    """``compute_risk_score`` — the unbounded sum. SUPERSEDED as the production
+    statistic on 2026-09-26 but kept as a diagnostic, so its arithmetic is still
+    pinned here. What the pipeline actually scores from is
+    ``compute_corridor_severity``; see :class:`TopKSeverityTests`."""
+
     @classmethod
     def setUpTestData(cls):
         _make_corridors()
@@ -184,7 +210,139 @@ class StoryDeduplicationTests(TestCase):
         self.assertEqual(compute_risk_score("Red Sea", now=now), 0.0)
 
 
+class TopKSeverityTests(TestCase):
+    """The production statistic: zero-padded mean of the 3 strongest stories.
+
+    The load-bearing property is
+    :meth:`test_more_coverage_of_the_same_week_does_not_raise_the_score` — the
+    unbounded sum it replaced rose 1.71x on the real corpus purely from adding a
+    second ingestion path, which was enough to invert the corridor ranking.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        _make_corridors()
+
+    def _assert_story_count(self, corridor, expected, now):
+        """Guards the fixture itself: if these events clustered, the arithmetic
+        below would be testing a different corpus than it claims to."""
+        stories = cluster_stories(corridor_events(corridor, now=now), now=now)
+        self.assertEqual(len(stories), expected, "fixture collapsed under clustering")
+
+    def test_no_events_scores_zero(self):
+        self.assertEqual(compute_corridor_severity("Hormuz"), 0.0)
+
+    def test_one_story_is_divided_by_k_not_by_one(self):
+        # Zero-padding: a lone headline must not read like a campaign.
+        now = timezone.now()
+        _event("Hormuz", severity=5, confidence=1.0, now=now, title="Hormuz shut")
+        self.assertAlmostEqual(
+            compute_corridor_severity("Hormuz", now=now),
+            MAX_EVENT_WEIGHT / TOP_K_STORIES,
+            places=6,
+        )
+
+    def test_a_full_campaign_reaches_the_ceiling(self):
+        now = timezone.now()
+        for i in range(TOP_K_STORIES):
+            _event("Hormuz", severity=5, confidence=1.0, now=now, title=_unique_title(i))
+        self._assert_story_count("Hormuz", TOP_K_STORIES, now)
+        self.assertAlmostEqual(
+            compute_corridor_severity("Hormuz", now=now), MAX_EVENT_WEIGHT, places=6
+        )
+
+    def test_only_the_strongest_k_stories_count(self):
+        now = timezone.now()
+        _event("Hormuz", severity=5, confidence=1.0, now=now, title=_unique_title(0))
+        for i in range(1, 21):
+            _event("Hormuz", severity=1, confidence=0.5, now=now, title=_unique_title(i))
+        self._assert_story_count("Hormuz", 21, now)
+        # The one severe story plus two trivial ones — the other 18 are ignored.
+        self.assertAlmostEqual(
+            compute_corridor_severity("Hormuz", now=now),
+            (5.0 + 0.5 + 0.5) / TOP_K_STORIES,
+            places=6,
+        )
+
+    def test_more_coverage_of_the_same_week_does_not_raise_the_score(self):
+        """THE defect fix. Twenty further stories, none worse than what is
+        already there, must leave the score untouched — the superseded sum
+        balloons on the same fixture."""
+        now = timezone.now()
+        for i in range(TOP_K_STORIES):
+            _event("Hormuz", severity=4, confidence=0.9, now=now, title=_unique_title(i))
+        self._assert_story_count("Hormuz", TOP_K_STORIES, now)
+        before = compute_corridor_severity("Hormuz", now=now)
+        before_sum = compute_risk_score("Hormuz", now=now)
+
+        for i in range(TOP_K_STORIES, TOP_K_STORIES + 20):
+            _event("Hormuz", severity=4, confidence=0.9, now=now, title=_unique_title(i))
+        self._assert_story_count("Hormuz", TOP_K_STORIES + 20, now)
+
+        self.assertAlmostEqual(compute_corridor_severity("Hormuz", now=now), before, places=6)
+        # ...while the sum it replaced grows ~7x on exactly this corpus.
+        self.assertGreater(compute_risk_score("Hormuz", now=now), 6 * before_sum)
+
+    def test_a_worse_story_does_raise_the_score(self):
+        now = timezone.now()
+        for i in range(TOP_K_STORIES):
+            _event("Hormuz", severity=2, confidence=0.5, now=now, title=_unique_title(i))
+        before = compute_corridor_severity("Hormuz", now=now)
+
+        _event("Hormuz", severity=5, confidence=1.0, now=now, title=_unique_title(99))
+        self.assertGreater(compute_corridor_severity("Hormuz", now=now), before)
+
+    def test_statistic_is_bounded_by_the_rubric_ceiling(self):
+        now = timezone.now()
+        for i in range(50):
+            _event("Hormuz", severity=5, confidence=1.0, now=now, title=_unique_title(i))
+        self.assertLessEqual(
+            compute_corridor_severity("Hormuz", now=now), MAX_EVENT_WEIGHT + 1e-9
+        )
+
+    def test_syndicated_coverage_still_counts_once(self):
+        # Story clustering happens before the top-k cut, so ten copies of one
+        # wire story cannot occupy all three slots.
+        now = timezone.now()
+        for i in range(10):
+            _event("Red Sea", severity=4, confidence=0.9, now=now,
+                   title="Yemen Houthis capture a Red Sea island in threat to shipping")
+        self.assertAlmostEqual(
+            compute_corridor_severity("Red Sea", now=now), 3.6 / TOP_K_STORIES, places=6
+        )
+
+
+class NormalizeSeverityTests(TestCase):
+    def test_zero_raw_sits_at_baseline(self):
+        self.assertEqual(normalize_severity(0.0, baseline_risk=0.2), 0.2)
+
+    def test_full_ceiling_reads_as_a_closed_corridor(self):
+        self.assertAlmostEqual(normalize_severity(MAX_EVENT_WEIGHT, baseline_risk=0.2), 1.0)
+
+    def test_it_is_linear_between_baseline_and_one(self):
+        # Half the ceiling uses exactly half the headroom — no free constant.
+        self.assertAlmostEqual(
+            normalize_severity(MAX_EVENT_WEIGHT / 2, baseline_risk=0.2), 0.6
+        )
+
+    def test_monotonic_in_raw(self):
+        scores = [normalize_severity(raw, baseline_risk=0.2) for raw in (0.5, 1, 2, 4)]
+        self.assertEqual(scores, sorted(scores))
+
+    def test_never_drops_below_baseline(self):
+        for raw in (0.0, 0.1, 1.0, 5.0):
+            self.assertGreaterEqual(normalize_severity(raw, baseline_risk=0.2), 0.2)
+
+    def test_clamps_rather_than_overshooting_one(self):
+        # A score above 1.0 would make effective_capacity negative, which
+        # nx.maximum_flow raises on instead of modelling a closed corridor.
+        self.assertEqual(normalize_severity(MAX_EVENT_WEIGHT * 4, baseline_risk=0.2), 1.0)
+
+
 class NormalizeTests(TestCase):
+    """The superseded saturating transform, still used to re-read RiskScore rows
+    written before 2026-09-26."""
+
     def test_zero_raw_sits_at_baseline(self):
         self.assertEqual(normalize_score(0.0, baseline_risk=0.2), 0.2)
 
@@ -244,7 +402,10 @@ class ComputeAllRiskScoresTests(TestCase):
 
         self.assertEqual(RiskScore.objects.count(), 3)
         row = RiskScore.objects.get(corridor__name="Hormuz")
-        self.assertAlmostEqual(row.raw_score, 3.6, places=6)
+        # raw_score holds the bounded top-k statistic: one story of weight 3.6
+        # zero-padded over TOP_K_STORIES, NOT the 3.6 sum written before
+        # 2026-09-26.
+        self.assertAlmostEqual(row.raw_score, 3.6 / TOP_K_STORIES, places=6)
         self.assertAlmostEqual(row.score, scores["Hormuz"], places=9)
 
         corridor = Corridor.objects.get(name="Hormuz")
