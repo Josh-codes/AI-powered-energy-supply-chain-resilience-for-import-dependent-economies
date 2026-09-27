@@ -78,12 +78,12 @@ def _unique_title(seed):
     return " ".join("".join(rng.choices(string.ascii_lowercase, k=7)) for _ in range(5))
 
 
-def _event(corridor, when, severity=5, confidence=1.0, seed=0):
+def _event(corridor, when, severity=5, confidence=1.0, seed=0, title=None):
     return ExtractedEvent.objects.create(
         corridor=Corridor.objects.get(name=corridor), actor="Iran",
         event_type="military", severity=severity, confidence=confidence,
         timestamp=when, article_url=f"https://example.com/{seed}",
-        title=_unique_title(seed),
+        title=_unique_title(seed) if title is None else title,
     )
 
 
@@ -314,10 +314,10 @@ class EventDefinitionTests(SimpleTestCase):
     def test_hormuz_window_includes_the_warmup(self):
         ev = runner.BACKTEST_EVENTS["2026_hormuz_closure"]
         days = runner.pull_days(ev)
-        self.assertEqual(days[0], date(2026, 2, 4))
+        self.assertEqual(days[0], date(2025, 12, 25))
         self.assertEqual(days[-1], date(2026, 3, 18))
-        self.assertEqual(len(days), 43)
-        self.assertEqual(len(runner.chart_days(ev)), 36)
+        self.assertEqual(len(days), 84)
+        self.assertEqual(len(runner.chart_days(ev)), 77)
 
     def test_no_window_reaches_the_live_lookback(self):
         # runner's docstring: an end after 2026-03-31 would put backtest events
@@ -453,6 +453,44 @@ class ScoreDayTests(TestCase):
         self.assertEqual(row["scores"]["Hormuz"], BASELINES["Hormuz"])
         self.assertEqual(row["events"]["Hormuz"], 0)
 
+    def test_incremental_series_equals_scoring_each_day_from_scratch(self):
+        # The runner scores every day from ONE pass; score_day re-clusters from
+        # scratch. Includes syndicated repeats, and old events that the 180-day
+        # lookback edge passes DURING the window, so days fall into more than
+        # one group and the grouping logic is exercised.
+        import random as _r
+        rng = _r.Random(11)
+        days = [self.DAY + timedelta(days=i) for i in range(10)]
+        stems = ["tanker seized strait", "navy convoy escorts ships", "iran sets deadline talks",
+                 "insurance premiums soar gulf", "missile hits oil terminal"]
+        seed = 0
+        for d in range(-6, 10):
+            for _ in range(rng.randint(2, 7)):
+                seed += 1
+                title = rng.choice(stems) + rng.choice(["", " again", " report", " update"])
+                _event("Hormuz", self._at(days=d, hh=rng.randint(0, 23)),
+                       severity=rng.randint(2, 5), seed=seed, title=title)
+        # old events near the lookback edge of the first and last days
+        edge = runner._as_of(days[0]) - timedelta(days=180)
+        for i, off in enumerate((-1, 2, 5)):
+            _event("Hormuz", edge + timedelta(days=off), severity=5, seed=900 + i)
+
+        series = runner.corridor_series("Hormuz", BASELINES["Hormuz"], days, with_top=True)
+        # the fixture must really exercise what it claims to: stories merge, and
+        # the lookback edge passes old events mid-window (-> several passes)
+        self.assertTrue(any(c["events"] > c["stories"] for c in series))
+        first_cut = runner._as_of(days[0]) - timedelta(days=180)
+        last_cut = runner._as_of(days[-1]) - timedelta(days=180)
+        self.assertGreaterEqual(ExtractedEvent.objects.filter(
+            timestamp__gte=first_cut, timestamp__lt=last_cut).count(), 2)
+        for k, day in enumerate(days):
+            ref = runner.score_day(day, [("Hormuz", BASELINES["Hormuz"])], focus="Hormuz")
+            cell = series[k]
+            self.assertEqual(cell["score"], ref["scores"]["Hormuz"], day)
+            self.assertEqual(cell["events"], ref["events"]["Hormuz"], day)
+            self.assertEqual(cell["stories"], ref["stories"]["Hormuz"], day)
+            self.assertEqual(cell["top_stories"], ref["top_stories"], day)
+
     def test_scored_at_the_brent_assessment_not_end_of_day(self):
         _event("Hormuz", self._at(hh=16, mm=0), seed=1)     # before 16:30 -> in
         _event("Hormuz", self._at(hh=17, mm=0), seed=2)     # after 16:30  -> out
@@ -514,7 +552,7 @@ class RunBacktestTests(_TempBacktestDir, TestCase):
         self.assertEqual(report["price_spiked_at"], date(2026, 3, 2))
         self.assertEqual(report["lead_time_days"], 3)
         self.assertEqual(report["signal_elevated_days_before"], 3)
-        self.assertEqual(len(report["series"]), 36)
+        self.assertEqual(len(report["series"]), 77)
         first = report["series"][0]["scores"]["Hormuz"]
         self.assertLess(first, validator.SIGNAL_THRESHOLD)       # Sept event did not leak
         self.assertTrue(runner.report_path(self.KEY).exists())
@@ -598,11 +636,11 @@ class CommandTests(_TempBacktestDir, TestCase):
 
     def test_status_on_a_fresh_window_points_at_pull(self):
         out = self._call("--event", "2026_hormuz_closure", "--status")
-        self.assertIn("0 / 43", out)
+        self.assertIn("0 / 84", out)
         self.assertIn("--pull", out)
 
     @patch.object(gdelt_gkg, "fetch_between", side_effect=lambda *a, **k: _window())
     def test_pull_one_day_reports_progress(self, _fetch):
         out = self._call("--event", "2026_hormuz_closure", "--pull", "--day", "2026-02-11")
         self.assertIn("2026-02-11  ok", out)
-        self.assertIn("42 day(s) still missing", out)
+        self.assertIn("83 day(s) still missing", out)

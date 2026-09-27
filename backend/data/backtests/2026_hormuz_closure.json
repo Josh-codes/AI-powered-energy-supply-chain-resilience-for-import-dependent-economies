@@ -1,0 +1,1927 @@
+{
+  "event": "2026_hormuz_closure",
+  "name": "2026 Strait of Hormuz closure",
+  "note": "Onset trough 2026-02-25; first >=5% session 2026-03-02 (+8.30%); ends on the first close above $114. Peak $138.21 on 2026-04-07 is outside the window by design.",
+  "generated_at": "2026-09-27T20:18:23+00:00",
+  "method": {
+    "score_time_utc": "16:30:00",
+    "point_in_time": true,
+    "top_k_stories": 3,
+    "lambda_decay": 0.1,
+    "lookback_days": 180,
+    "warmup_days": 7,
+    "signal_threshold": 0.6,
+    "tolerance_days": 2,
+    "spike_session_pct": 5.0,
+    "price_series": "EIA RBRTE (Europe Brent Spot FOB, daily)"
+  },
+  "window": {
+    "pull_start": "2026-02-04",
+    "chart_start": "2026-02-11",
+    "end": "2026-03-18"
+  },
+  "coverage": {
+    "days_expected": 43,
+    "days_ok": 43,
+    "days_missing": [],
+    "slices_read": 4128,
+    "slices_total": 4128,
+    "articles_stored": 16338,
+    "complete": true
+  },
+  "pending_extraction": 0,
+  "events_in_window": {
+    "Cape": 13,
+    "Hormuz": 14481,
+    "Red Sea": 231
+  },
+  "run_up": {
+    "start": "2026-02-25",
+    "start_usd": 70.69,
+    "peak": "2026-03-18",
+    "peak_usd": 118.09,
+    "days": 21,
+    "pct_change": 67.05333144716367
+  },
+  "corridor": "Hormuz",
+  "signal_threshold": 0.6,
+  "tolerance_days": 2,
+  "spike_session_pct": 5.0,
+  "price_spiked_at": "2026-03-02",
+  "brent_spike_pct": 8.300616937745376,
+  "brent_before_usd": 71.32,
+  "brent_after_usd": 77.24,
+  "signal_elevated_at": "2026-02-15",
+  "lead_time_days": 15,
+  "lead_time_is_lower_bound": false,
+  "score_at_chart_start": 0.7103,
+  "score_at_price_spike": 0.9511,
+  "max_risk_score": 0.9591,
+  "max_risk_at": "2026-03-11",
+  "excursions": [
+    {
+      "start": "2026-02-11",
+      "end": "2026-02-13",
+      "peak": 0.7103,
+      "peak_at": "2026-02-11",
+      "days": 3
+    },
+    {
+      "start": "2026-02-15",
+      "end": "2026-03-18",
+      "peak": 0.9591,
+      "peak_at": "2026-03-11",
+      "days": 32
+    }
+  ],
+  "false_alarms": [
+    {
+      "start": "2026-02-11",
+      "end": "2026-02-13",
+      "peak": 0.7103,
+      "peak_at": "2026-02-11",
+      "days": 3
+    }
+  ],
+  "validation": "PASSED",
+  "reason": "Hormuz risk crossed 0.6 on 2026-02-15, 15 day(s) before Brent's +8.30% session on 2026-03-02",
+  "signal_elevated_days_before": 15,
+  "series": [
+    {
+      "date": "2026-02-11",
+      "as_of": "2026-02-11T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7103,
+        "Red Sea": 0.4312
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.1894,
+        "Red Sea": 1.6542
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 28,
+        "Red Sea": 27
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 60,
+        "Red Sea": 30
+      },
+      "top_stories": [
+        {
+          "title": "US Flags Iranian Boarding and Seizure Threat for Its Ships Transiting Hormuz",
+          "weight": 3.446,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-11T06:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran seals Isfahan tunnels as US issues Hormuz warning",
+          "weight": 3.156,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-10T08:55:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "US Advises Ships to Steer Clear of Iranian Waters in Strait of Hormuz Amid Tensions",
+          "weight": 2.966,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2026-02-10T07:45:00+00:00",
+          "members": 15
+        }
+      ],
+      "brent_usd": 71.52
+    },
+    {
+      "date": "2026-02-12",
+      "as_of": "2026-02-12T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6617,
+        "Red Sea": 0.4045
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.8859,
+        "Red Sea": 1.4968
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 28,
+        "Red Sea": 30
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 60,
+        "Red Sea": 33
+      },
+      "top_stories": [
+        {
+          "title": "US Flags Iranian Boarding and Seizure Threat for Its Ships Transiting Hormuz",
+          "weight": 3.118,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-11T06:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran seals Isfahan tunnels as US issues Hormuz warning",
+          "weight": 2.856,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-10T08:55:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "US Advises Ships to Steer Clear of Iranian Waters in Strait of Hormuz Amid Tensions",
+          "weight": 2.684,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2026-02-10T07:45:00+00:00",
+          "members": 15
+        }
+      ],
+      "brent_usd": 69.8
+    },
+    {
+      "date": "2026-02-13",
+      "as_of": "2026-02-13T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6178,
+        "Red Sea": 0.3915
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.6113,
+        "Red Sea": 1.4206
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 28,
+        "Red Sea": 31
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 60,
+        "Red Sea": 34
+      },
+      "top_stories": [
+        {
+          "title": "US Flags Iranian Boarding and Seizure Threat for Its Ships Transiting Hormuz",
+          "weight": 2.821,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-11T06:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran seals Isfahan tunnels as US issues Hormuz warning",
+          "weight": 2.584,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-10T08:55:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "US Advises Ships to Steer Clear of Iranian Waters in Strait of Hormuz Amid Tensions",
+          "weight": 2.429,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2026-02-10T07:45:00+00:00",
+          "members": 15
+        }
+      ],
+      "brent_usd": 69.96
+    },
+    {
+      "date": "2026-02-14",
+      "as_of": "2026-02-14T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.578,
+        "Red Sea": 0.3785
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.3628,
+        "Red Sea": 1.344
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 28,
+        "Red Sea": 32
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 60,
+        "Red Sea": 35
+      },
+      "top_stories": [
+        {
+          "title": "US Flags Iranian Boarding and Seizure Threat for Its Ships Transiting Hormuz",
+          "weight": 2.553,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-11T06:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran seals Isfahan tunnels as US issues Hormuz warning",
+          "weight": 2.338,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-10T08:55:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "US Advises Ships to Steer Clear of Iranian Waters in Strait of Hormuz Amid Tensions",
+          "weight": 2.197,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2026-02-10T07:45:00+00:00",
+          "members": 15
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-02-15",
+      "as_of": "2026-02-15T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6155,
+        "Red Sea": 0.3567
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.5967,
+        "Red Sea": 1.2161
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 29,
+        "Red Sea": 32
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 61,
+        "Red Sea": 35
+      },
+      "top_stories": [
+        {
+          "title": "US warning on Iranian waters puts global shipping on edge in Strait of Hormuz",
+          "weight": 3.365,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2026-02-15T14:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "US Flags Iranian Boarding and Seizure Threat for Its Ships Transiting Hormuz",
+          "weight": 2.31,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-11T06:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran seals Isfahan tunnels as US issues Hormuz warning",
+          "weight": 2.116,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-10T08:55:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-02-16",
+      "as_of": "2026-02-16T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7705,
+        "Red Sea": 0.3371
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.5654,
+        "Red Sea": 1.1003
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 32
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 99,
+        "Red Sea": 35
+      },
+      "top_stories": [
+        {
+          "title": "IRGC launches military exercises in Strait of Hormuz",
+          "weight": 3.578,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-16T15:00:00+00:00",
+          "members": 14
+        },
+        {
+          "title": "'A chokehold on the world': Iran begins 'smart' military drills in the Strait of Hormuz as tensions boil",
+          "weight": 3.574,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-16T14:45:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Iran holds exercises in Strait of Hormuz after Trump threatens military action",
+          "weight": 3.545,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-16T12:47:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 70.81
+    },
+    {
+      "date": "2026-02-17",
+      "as_of": "2026-02-17T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.9534,
+        "Red Sea": 0.3193
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 4.709,
+        "Red Sea": 0.9956
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 69,
+        "Red Sea": 32
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 277,
+        "Red Sea": 35
+      },
+      "top_stories": [
+        {
+          "title": "Iran temporarily closes Strait of Hormuz",
+          "weight": 4.735,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-17T15:45:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Iran-U.S. talks begin, Strait of Hormuz temporarily closed",
+          "weight": 4.701,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-17T14:00:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Tehran launches missiles at Strait of Hormuz as US-Iran nuclear talks begin in Geneva",
+          "weight": 4.691,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-17T13:30:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": 69.77
+    },
+    {
+      "date": "2026-02-18",
+      "as_of": "2026-02-18T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.9294,
+        "Red Sea": 0.4413
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 4.5588,
+        "Red Sea": 1.7137
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 90,
+        "Red Sea": 34
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 457,
+        "Red Sea": 37
+      },
+      "top_stories": [
+        {
+          "title": "Iran closes key Strait of Hormuz shipping route after ayatollah threatens to sink US warships",
+          "weight": 4.68,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-18T12:57:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran says Strait of Hormuz closed | The Arkansas Democrat-Gazette - Arkansas' Best News Source",
+          "weight": 4.526,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-18T04:53:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran shuts Strait of Hormuz for military drills amid growing US tension",
+          "weight": 4.471,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-18T14:56:00+00:00",
+          "members": 160
+        }
+      ],
+      "brent_usd": 71.78
+    },
+    {
+      "date": "2026-02-19",
+      "as_of": "2026-02-19T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.8912,
+        "Red Sea": 0.4291
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 4.3202,
+        "Red Sea": 1.642
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 101,
+        "Red Sea": 35
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 472,
+        "Red Sea": 38
+      },
+      "top_stories": [
+        {
+          "title": "Iran carries out military drills with Russia days after closing Strait of Hormuz in warning to Trump as world waits to see if the president will unleash war upon the regime",
+          "weight": 4.378,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-19T09:55:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Iran partially closes Strait of Hormuz, a vital oil choke point, as Tehran holds talks with U.S.",
+          "weight": 4.348,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-18T19:15:00+00:00",
+          "members": 45
+        },
+        {
+          "title": "Iran closes key Strait of Hormuz shipping route after ayatollah threatens to sink US warships",
+          "weight": 4.235,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-18T12:57:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 73.17
+    },
+    {
+      "date": "2026-02-20",
+      "as_of": "2026-02-20T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.8403,
+        "Red Sea": 0.545
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 4.0018,
+        "Red Sea": 2.3237
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 105,
+        "Red Sea": 38
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 480,
+        "Red Sea": 41
+      },
+      "top_stories": [
+        {
+          "title": "Iran prepared to close Hormuz Srait amid large-scale drills",
+          "weight": 4.11,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-19T18:45:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Iran carries out military drills with Russia days after closing Strait of Hormuz in warning to Trump as world waits to see if the president will unleash war upon the regime",
+          "weight": 3.962,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-19T09:55:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Iran partially closes Strait of Hormuz, a vital oil choke point, as Tehran holds talks with U.S.",
+          "weight": 3.934,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-18T19:15:00+00:00",
+          "members": 45
+        }
+      ],
+      "brent_usd": 72.75
+    },
+    {
+      "date": "2026-02-21",
+      "as_of": "2026-02-21T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7794,
+        "Red Sea": 0.5601
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.621,
+        "Red Sea": 2.4125
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 108,
+        "Red Sea": 41
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 485,
+        "Red Sea": 44
+      },
+      "top_stories": [
+        {
+          "title": "Iran prepared to close Hormuz Srait amid large-scale drills",
+          "weight": 3.719,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-19T18:45:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Iran carries out military drills with Russia days after closing Strait of Hormuz in warning to Trump as world waits to see if the president will unleash war upon the regime",
+          "weight": 3.585,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-19T09:55:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Iran partially closes Strait of Hormuz, a vital oil choke point, as Tehran holds talks with U.S.",
+          "weight": 3.559,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-18T19:15:00+00:00",
+          "members": 45
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-02-22",
+      "as_of": "2026-02-22T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7242,
+        "Red Sea": 0.5211
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.2764,
+        "Red Sea": 2.1829
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 111,
+        "Red Sea": 41
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 493,
+        "Red Sea": 44
+      },
+      "top_stories": [
+        {
+          "title": "Iran prepared to close Hormuz Srait amid large-scale drills",
+          "weight": 3.365,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-19T18:45:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Iran carries out military drills with Russia days after closing Strait of Hormuz in warning to Trump as world waits to see if the president will unleash war upon the regime",
+          "weight": 3.243,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-19T09:55:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Iran partially closes Strait of Hormuz, a vital oil choke point, as Tehran holds talks with U.S.",
+          "weight": 3.221,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-18T19:15:00+00:00",
+          "members": 45
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-02-23",
+      "as_of": "2026-02-23T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7319,
+        "Red Sea": 0.4858
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.3245,
+        "Red Sea": 1.9752
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 116,
+        "Red Sea": 41
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 500,
+        "Red Sea": 44
+      },
+      "top_stories": [
+        {
+          "title": "Iran-US Tensions: How Strait of Hormuz blockade could ripple through global oil and gas supplies | Explained",
+          "weight": 3.526,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-23T11:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Impact of Iran-US Tensions: Blocking Strait of Hormuz on Oil, LNG",
+          "weight": 3.254,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2026-02-23T06:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Strait of Hormuz Tensions: Impact on Global Oil Markets Amid Iran-US Standoff",
+          "weight": 3.193,
+          "severity": 4,
+          "confidence": 0.8,
+          "timestamp": "2026-02-23T16:00:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 71.9
+    },
+    {
+      "date": "2026-02-24",
+      "as_of": "2026-02-24T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6813,
+        "Red Sea": 0.4637
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.0082,
+        "Red Sea": 1.8455
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 119,
+        "Red Sea": 43
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 503,
+        "Red Sea": 47
+      },
+      "top_stories": [
+        {
+          "title": "Iran-US Tensions: How Strait of Hormuz blockade could ripple through global oil and gas supplies | Explained",
+          "weight": 3.19,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-23T11:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Impact of Iran-US Tensions: Blocking Strait of Hormuz on Oil, LNG",
+          "weight": 2.945,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2026-02-23T06:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Strait of Hormuz Tensions: Impact on Global Oil Markets Amid Iran-US Standoff",
+          "weight": 2.889,
+          "severity": 4,
+          "confidence": 0.8,
+          "timestamp": "2026-02-23T16:00:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 71.21
+    },
+    {
+      "date": "2026-02-25",
+      "as_of": "2026-02-25T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7979,
+        "Red Sea": 0.4339
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.7367,
+        "Red Sea": 1.6698
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 124,
+        "Red Sea": 45
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 509,
+        "Red Sea": 50
+      },
+      "top_stories": [
+        {
+          "title": "How a US-Israeli war on Iran puts global oil and gas supplies in danger",
+          "weight": 4.359,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-25T08:52:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "IRGC jamming roils Hormuz shipping, drives costs and risks worldwide | Hellenic Shipping News Worldwide",
+          "weight": 3.548,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-25T13:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Why Hormuz, not Fordow, is the real centre of gravity in the Iran crisis",
+          "weight": 3.303,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2026-02-25T09:33:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 70.69
+    },
+    {
+      "date": "2026-02-26",
+      "as_of": "2026-02-26T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.741,
+        "Red Sea": 0.4381
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.3811,
+        "Red Sea": 1.6947
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 128,
+        "Red Sea": 47
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 513,
+        "Red Sea": 53
+      },
+      "top_stories": [
+        {
+          "title": "How a US-Israeli war on Iran puts global oil and gas supplies in danger",
+          "weight": 3.944,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-25T08:52:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "IRGC jamming roils Hormuz shipping, drives costs and risks worldwide | Hellenic Shipping News Worldwide",
+          "weight": 3.21,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-25T13:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Why Hormuz, not Fordow, is the real centre of gravity in the Iran crisis",
+          "weight": 2.989,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2026-02-25T09:33:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 71.66
+    },
+    {
+      "date": "2026-02-27",
+      "as_of": "2026-02-27T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7299,
+        "Red Sea": 0.6391
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.3117,
+        "Red Sea": 2.8772
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 131,
+        "Red Sea": 52
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 520,
+        "Red Sea": 59
+      },
+      "top_stories": [
+        {
+          "title": "How a US-Israeli war on Iran puts global oil and gas supplies in danger",
+          "weight": 3.569,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-25T08:52:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "If Trump strikes, Iran's ready to unleash hell on Hormuz",
+          "weight": 3.461,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-27T07:05:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "IRGC jamming roils Hormuz shipping, drives costs and risks worldwide | Hellenic Shipping News Worldwide",
+          "weight": 2.905,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2026-02-25T13:00:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 71.32
+    },
+    {
+      "date": "2026-02-28",
+      "as_of": "2026-02-28T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.9456,
+        "Red Sea": 0.8024
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 4.6598,
+        "Red Sea": 3.8374
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 157,
+        "Red Sea": 59
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 552,
+        "Red Sea": 70
+      },
+      "top_stories": [
+        {
+          "title": "Iran's revolutionary guards tell ships passage through Strait of Hormuz 'not allowed', EU naval mission official says",
+          "weight": 4.745,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-28T16:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran Announces Closure Of Strait Of Hormuz, Bars Vessel Movement: Report",
+          "weight": 4.739,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-02-28T15:57:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Some Oil Majors, Traders Suspend Shipments via Hormuz amid US Attack on Iran",
+          "weight": 4.495,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-02-28T16:15:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-03-01",
+      "as_of": "2026-03-01T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.1827,
+        "Hormuz": 0.958,
+        "Red Sea": 0.8378
+      },
+      "raw": {
+        "Cape": 0.6982,
+        "Hormuz": 4.7377,
+        "Red Sea": 4.0459
+      },
+      "stories": {
+        "Cape": 1,
+        "Hormuz": 261,
+        "Red Sea": 64
+      },
+      "events": {
+        "Cape": 2,
+        "Hormuz": 801,
+        "Red Sea": 76
+      },
+      "top_stories": [
+        {
+          "title": "Strait of Hormuz closed to energy, other traffic: Japan shipping group",
+          "weight": 4.742,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-01T16:07:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Iran Strikes Oil Tanker In Strait Of Hormuz: 15 Indians Among Crew, Four Injured",
+          "weight": 4.74,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-01T16:00:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Shipping Grinds to a Halt Along the Persian Gulf as Iran Imposes Blockade at Strait of Hormuz",
+          "weight": 4.731,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-01T15:31:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-03-02",
+      "as_of": "2026-03-02T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.4063,
+        "Hormuz": 0.9511,
+        "Red Sea": 0.8145
+      },
+      "raw": {
+        "Cape": 1.8754,
+        "Hormuz": 4.6945,
+        "Red Sea": 3.909
+      },
+      "stories": {
+        "Cape": 2,
+        "Hormuz": 410,
+        "Red Sea": 72
+      },
+      "events": {
+        "Cape": 5,
+        "Hormuz": 1174,
+        "Red Sea": 85
+      },
+      "top_stories": [
+        {
+          "title": "FinancialContent - Strait of Hormuz Closure: Global Energy Markets Braced for Massive Shock After Iran Strikes US and UK Vessels",
+          "weight": 4.716,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-02T14:48:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Oil Up 7% After Iran Attacks LNG Port And Tankers Near Strait Of Hormuz",
+          "weight": 4.705,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-02T14:14:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Oil Prices Soar After Iran Attacks Saudi Refinery, Ships In Strait Of Hormuz",
+          "weight": 4.662,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-02T12:00:00+00:00",
+          "members": 11
+        }
+      ],
+      "brent_usd": 77.24
+    },
+    {
+      "date": "2026-03-03",
+      "as_of": "2026-03-03T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.4662,
+        "Hormuz": 0.9579,
+        "Red Sea": 0.79
+      },
+      "raw": {
+        "Cape": 2.1903,
+        "Hormuz": 4.7367,
+        "Red Sea": 3.7647
+      },
+      "stories": {
+        "Cape": 3,
+        "Hormuz": 592,
+        "Red Sea": 78
+      },
+      "events": {
+        "Cape": 7,
+        "Hormuz": 1701,
+        "Red Sea": 95
+      },
+      "top_stories": [
+        {
+          "title": "Iran Conflict Traps 750 Ships, Triggers Shipping Crisis",
+          "weight": 4.75,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-03T16:29:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Dow plunges 1,000 points as oil, gas prices surge after Iran orders Strait of Hormuz closure",
+          "weight": 4.735,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-03T15:45:00+00:00",
+          "members": 13
+        },
+        {
+          "title": "Strait of Hormuz shut, 37 Indian-flagged ships stuck",
+          "weight": 4.725,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-03T15:15:00+00:00",
+          "members": 2
+        }
+      ],
+      "brent_usd": 83.28
+    },
+    {
+      "date": "2026-03-04",
+      "as_of": "2026-03-04T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.4266,
+        "Hormuz": 0.9529,
+        "Red Sea": 0.7291
+      },
+      "raw": {
+        "Cape": 1.9819,
+        "Hormuz": 4.7055,
+        "Red Sea": 3.4065
+      },
+      "stories": {
+        "Cape": 3,
+        "Hormuz": 762,
+        "Red Sea": 85
+      },
+      "events": {
+        "Cape": 7,
+        "Hormuz": 2255,
+        "Red Sea": 106
+      },
+      "top_stories": [
+        {
+          "title": "Strait of Hormuz oil tanker traffic plunges 90% amid Iran\u2013US\u2013Israel conflict",
+          "weight": 4.745,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-04T16:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Hormuz shutdown worsens after US hits Iranian warship; tankers stranded for fifth day",
+          "weight": 4.736,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-04T15:47:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Iran seizes full control of Strait of Hormuz and targets 10 oil tankers",
+          "weight": 4.636,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-04T10:39:00+00:00",
+          "members": 2
+        }
+      ],
+      "brent_usd": 81.56
+    },
+    {
+      "date": "2026-03-05",
+      "as_of": "2026-03-05T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.4495,
+        "Hormuz": 0.9511,
+        "Red Sea": 0.674
+      },
+      "raw": {
+        "Cape": 2.1024,
+        "Hormuz": 4.6945,
+        "Red Sea": 3.0823
+      },
+      "stories": {
+        "Cape": 4,
+        "Hormuz": 892,
+        "Red Sea": 93
+      },
+      "events": {
+        "Cape": 9,
+        "Hormuz": 2652,
+        "Red Sea": 115
+      },
+      "top_stories": [
+        {
+          "title": "Strait of Hormuz grinds to a halt as Iran strikes rattle global energy markets",
+          "weight": 4.74,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-05T16:00:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "US-Iran war live updates: Iran attacks oil tankers in Strait of Hormuz",
+          "weight": 4.721,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-05T15:01:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Iran\u2013Israel War: Strait of Hormuz Shut, US Submarine Sinks Iranian Warship as Middle East Crisis Deepens",
+          "weight": 4.623,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-05T09:59:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 88.59
+    },
+    {
+      "date": "2026-03-06",
+      "as_of": "2026-03-06T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.4652,
+        "Hormuz": 0.948,
+        "Red Sea": 0.7393
+      },
+      "raw": {
+        "Cape": 2.1855,
+        "Hormuz": 4.675,
+        "Red Sea": 3.4664
+      },
+      "stories": {
+        "Cape": 4,
+        "Hormuz": 1008,
+        "Red Sea": 96
+      },
+      "events": {
+        "Cape": 10,
+        "Hormuz": 3014,
+        "Red Sea": 120
+      },
+      "top_stories": [
+        {
+          "title": "JMIC Says Strait of Hormuz Shipping is at Near Total Halt",
+          "weight": 4.74,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-06T16:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Not a single tanker passes through Strait of Hormuz for past 24 hours \u2014 agency",
+          "weight": 4.671,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-06T12:30:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Global Oil Crisis: Iran's Blockade of Strait of Hormuz Shakes Energy Markets",
+          "weight": 4.613,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-06T09:30:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": 95.74
+    },
+    {
+      "date": "2026-03-07",
+      "as_of": "2026-03-07T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.5389,
+        "Hormuz": 0.9388,
+        "Red Sea": 0.6832
+      },
+      "raw": {
+        "Cape": 2.5731,
+        "Hormuz": 4.6177,
+        "Red Sea": 3.1365
+      },
+      "stories": {
+        "Cape": 5,
+        "Hormuz": 1068,
+        "Red Sea": 99
+      },
+      "events": {
+        "Cape": 12,
+        "Hormuz": 3151,
+        "Red Sea": 124
+      },
+      "top_stories": [
+        {
+          "title": "Oil Prices Surge as Middle East Conflict Halts Most Strait of Hormuz Traffic",
+          "weight": 4.749,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-07T16:27:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "IRGC strikes \"Prima\" tanker in Strait of Hormuz with drone",
+          "weight": 4.585,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-07T08:00:00+00:00",
+          "members": 6
+        },
+        {
+          "title": "Strait of Hormuz closed, 3000 vessels, 20,000 seafarers stranded in Middle East \u2013 IMO",
+          "weight": 4.519,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-07T04:33:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-03-08",
+      "as_of": "2026-03-08T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.4924,
+        "Hormuz": 0.9294,
+        "Red Sea": 0.7274
+      },
+      "raw": {
+        "Cape": 2.3282,
+        "Hormuz": 4.5587,
+        "Red Sea": 3.3965
+      },
+      "stories": {
+        "Cape": 5,
+        "Hormuz": 1113,
+        "Red Sea": 107
+      },
+      "events": {
+        "Cape": 12,
+        "Hormuz": 3233,
+        "Red Sea": 137
+      },
+      "top_stories": [
+        {
+          "title": "Iraqi Oil Production Collapses as Hormuz Still Blocked by US-Iran War, Sources Say",
+          "weight": 4.733,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-08T15:38:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Global Oil Supply Crippled As Gulf Attacks, Hormuz Blockade Send Prices Surging - BP (NYSE:BP), Invesco DB Oil Fund (ARCA:DBO)",
+          "weight": 4.508,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-08T03:58:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Oil prices jump about 25% as Hormuz Strait tensions rattle global energy markets",
+          "weight": 4.435,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2026-03-08T13:00:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-03-09",
+      "as_of": "2026-03-09T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.4503,
+        "Hormuz": 0.9318,
+        "Red Sea": 0.6725
+      },
+      "raw": {
+        "Cape": 2.1067,
+        "Hormuz": 4.574,
+        "Red Sea": 3.0733
+      },
+      "stories": {
+        "Cape": 5,
+        "Hormuz": 1214,
+        "Red Sea": 109
+      },
+      "events": {
+        "Cape": 12,
+        "Hormuz": 3490,
+        "Red Sea": 142
+      },
+      "top_stories": [
+        {
+          "title": "Oil Prices Surge Past $100 as Hormuz Shipping Halt Disrupts Global Supply",
+          "weight": 4.647,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-09T11:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Global Energy and Food Chains Fracture as the Strait of Hormuz Grinds to a Halt",
+          "weight": 4.57,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-09T07:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "World faces largest oil supply shock ever as Strait of Hormuz shuts amid West Asia war",
+          "weight": 4.504,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-09T03:45:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 94.35
+    },
+    {
+      "date": "2026-03-10",
+      "as_of": "2026-03-10T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.426,
+        "Hormuz": 0.9513,
+        "Red Sea": 0.7045
+      },
+      "raw": {
+        "Cape": 1.9788,
+        "Hormuz": 4.6954,
+        "Red Sea": 3.2618
+      },
+      "stories": {
+        "Cape": 6,
+        "Hormuz": 1415,
+        "Red Sea": 114
+      },
+      "events": {
+        "Cape": 13,
+        "Hormuz": 4146,
+        "Red Sea": 151
+      },
+      "top_stories": [
+        {
+          "title": "Strait of Hormuz Remains Shut to Almost All Non-Iran-Linked Ships",
+          "weight": 4.74,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-10T16:01:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "As Iran chokes Strait of Hormuz, Macron to send French warships to escort oil tankers",
+          "weight": 4.694,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-10T13:38:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Iran war: Saudi Arabia, Iraq, UAE and Kuwait cut oil output as Hormuz disruption rattles energy markets",
+          "weight": 4.652,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-10T11:30:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 89.84
+    },
+    {
+      "date": "2026-03-11",
+      "as_of": "2026-03-11T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.3902,
+        "Hormuz": 0.9591,
+        "Red Sea": 0.6989
+      },
+      "raw": {
+        "Cape": 1.7905,
+        "Hormuz": 4.7445,
+        "Red Sea": 3.2288
+      },
+      "stories": {
+        "Cape": 6,
+        "Hormuz": 1715,
+        "Red Sea": 119
+      },
+      "events": {
+        "Cape": 13,
+        "Hormuz": 5518,
+        "Red Sea": 157
+      },
+      "top_stories": [
+        {
+          "title": "Iran war has blocked the Strait of Hormuz, a vital oil chokepoint. Reopening it is a big challenge",
+          "weight": 4.75,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-11T16:30:00+00:00",
+          "members": 33
+        },
+        {
+          "title": "Iran is escalating the war by placing explosive mines along the Strait of Hormuz. Here are the risks",
+          "weight": 4.743,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-11T16:10:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "'Prepare for $200/barrel' \u2014 Iran says no oil shipment will pass through Hormuz",
+          "weight": 4.74,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-11T16:00:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 90.98
+    },
+    {
+      "date": "2026-03-12",
+      "as_of": "2026-03-12T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.3578,
+        "Hormuz": 0.959,
+        "Red Sea": 0.706
+      },
+      "raw": {
+        "Cape": 1.6201,
+        "Hormuz": 4.7437,
+        "Red Sea": 3.2705
+      },
+      "stories": {
+        "Cape": 6,
+        "Hormuz": 2008,
+        "Red Sea": 128
+      },
+      "events": {
+        "Cape": 13,
+        "Hormuz": 6957,
+        "Red Sea": 174
+      },
+      "top_stories": [
+        {
+          "title": "Oil tankers are blocked and threatened by Iranian mines in Strait of Hormuz",
+          "weight": 4.75,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-12T16:30:00+00:00",
+          "members": 29
+        },
+        {
+          "title": "Iran escalates war at sea as ships burn in Strait of Hormuz, oil surges past $100",
+          "weight": 4.75,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-12T16:30:00+00:00",
+          "members": 45
+        },
+        {
+          "title": "Oil gains 9% as Iran says Strait of Hormuz closure to continue",
+          "weight": 4.731,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-12T15:33:00+00:00",
+          "members": 2
+        }
+      ],
+      "brent_usd": 102.38
+    },
+    {
+      "date": "2026-03-13",
+      "as_of": "2026-03-13T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.3285,
+        "Hormuz": 0.9436,
+        "Red Sea": 0.7218
+      },
+      "raw": {
+        "Cape": 1.4659,
+        "Hormuz": 4.6477,
+        "Red Sea": 3.3636
+      },
+      "stories": {
+        "Cape": 6,
+        "Hormuz": 2284,
+        "Red Sea": 135
+      },
+      "events": {
+        "Cape": 13,
+        "Hormuz": 8123,
+        "Red Sea": 197
+      },
+      "top_stories": [
+        {
+          "title": "FinancialContent - Oil Surges Past $100 as Iranian Attacks and Strait of Hormuz Closure Rattle Global Markets",
+          "weight": 4.702,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-13T14:03:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iranians Commence Mining in the Strait of Hormuz",
+          "weight": 4.638,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-13T10:45:00+00:00",
+          "members": 39
+        },
+        {
+          "title": "Iran's new Supreme Leader vows revenge, keeps Hormuz closed",
+          "weight": 4.604,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-13T09:00:00+00:00",
+          "members": 56
+        }
+      ],
+      "brent_usd": 103.23
+    },
+    {
+      "date": "2026-03-14",
+      "as_of": "2026-03-14T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.302,
+        "Hormuz": 0.9453,
+        "Red Sea": 0.6674
+      },
+      "raw": {
+        "Cape": 1.3264,
+        "Hormuz": 4.658,
+        "Red Sea": 3.0435
+      },
+      "stories": {
+        "Cape": 6,
+        "Hormuz": 2487,
+        "Red Sea": 140
+      },
+      "events": {
+        "Cape": 13,
+        "Hormuz": 8964,
+        "Red Sea": 202
+      },
+      "top_stories": [
+        {
+          "title": "US bombs military sites on Iranian island as President Trump threatens its oil infrastructure",
+          "weight": 4.715,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-14T14:45:00+00:00",
+          "members": 44
+        },
+        {
+          "title": "Trump strikes Iran's Kharg oil hub, urges reopening of Hormuz",
+          "weight": 4.65,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-14T11:23:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Strait\u2011up chokehold of Hormuz: How Iran turned Middle East war into a global oil supply shock",
+          "weight": 4.609,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-14T09:15:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-03-15",
+      "as_of": "2026-03-15T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.278,
+        "Hormuz": 0.9522,
+        "Red Sea": 0.739
+      },
+      "raw": {
+        "Cape": 1.2002,
+        "Hormuz": 4.701,
+        "Red Sea": 3.4649
+      },
+      "stories": {
+        "Cape": 6,
+        "Hormuz": 2659,
+        "Red Sea": 148
+      },
+      "events": {
+        "Cape": 13,
+        "Hormuz": 9633,
+        "Red Sea": 211
+      },
+      "top_stories": [
+        {
+          "title": "Israel, Iran trade strikes as world seeks to reopen Hormuz Strait",
+          "weight": 4.737,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-15T15:51:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "Iran strikes back at UAE oil depots after US attacks on Kharg Island - as Trump wrestles to take control of Strait of Hormuz and reopen critical shipping lane",
+          "weight": 4.694,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-15T13:40:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Alba cuts 19pc output as Hormuz closure disrupts trade",
+          "weight": 4.671,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-15T12:30:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null
+    },
+    {
+      "date": "2026-03-16",
+      "as_of": "2026-03-16T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.2563,
+        "Hormuz": 0.9528,
+        "Red Sea": 0.7584
+      },
+      "raw": {
+        "Cape": 1.086,
+        "Hormuz": 4.7052,
+        "Red Sea": 3.5789
+      },
+      "stories": {
+        "Cape": 6,
+        "Hormuz": 3097,
+        "Red Sea": 154
+      },
+      "events": {
+        "Cape": 13,
+        "Hormuz": 11721,
+        "Red Sea": 218
+      },
+      "top_stories": [
+        {
+          "title": "Dubai Iran War: 17th Day Sees Strait of Hormuz Closed, Thousands of Strikes Mapped",
+          "weight": 4.73,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-16T15:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Exclusive-UAE crude output falls by more than half as Hormuz closure forces shut-ins",
+          "weight": 4.709,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-16T14:25:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran Attacks UAE's Oil Lifeline: Fujairah Port Hit Again, Massive Fire Breaks Out",
+          "weight": 4.676,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-16T12:45:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 101.04
+    },
+    {
+      "date": "2026-03-17",
+      "as_of": "2026-03-17T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.2367,
+        "Hormuz": 0.949,
+        "Red Sea": 0.7204
+      },
+      "raw": {
+        "Cape": 0.9826,
+        "Hormuz": 4.681,
+        "Red Sea": 3.3553
+      },
+      "stories": {
+        "Cape": 6,
+        "Hormuz": 3450,
+        "Red Sea": 158
+      },
+      "events": {
+        "Cape": 13,
+        "Hormuz": 13223,
+        "Red Sea": 224
+      },
+      "top_stories": [
+        {
+          "title": "West Asia Oil Exports Drops Over 60% As Strait Of Hormuz Closure Disrupts Global Supply",
+          "weight": 4.706,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-17T14:15:00+00:00",
+          "members": 5
+        },
+        {
+          "title": "Oil Jumps 2% as Iran War Shuts Strait of Hormuz",
+          "weight": 4.671,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-17T12:28:00+00:00",
+          "members": 9
+        },
+        {
+          "title": "Middle East Conflict: Straits of Hormuz Transits Remain 95% Down | Hellenic Shipping News Worldwide",
+          "weight": 4.667,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-17T12:15:00+00:00",
+          "members": 4
+        }
+      ],
+      "brent_usd": 108.39
+    },
+    {
+      "date": "2026-03-18",
+      "as_of": "2026-03-18T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.2189,
+        "Hormuz": 0.9419,
+        "Red Sea": 0.6977
+      },
+      "raw": {
+        "Cape": 0.8891,
+        "Hormuz": 4.6368,
+        "Red Sea": 3.222
+      },
+      "stories": {
+        "Cape": 6,
+        "Hormuz": 3715,
+        "Red Sea": 164
+      },
+      "events": {
+        "Cape": 13,
+        "Hormuz": 14483,
+        "Red Sea": 232
+      },
+      "top_stories": [
+        {
+          "title": "Gulf oil producers scramble to bypass Hormuz as Iran locks down the strait",
+          "weight": 4.671,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-18T12:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "US Bombs Iranian Missile Sites Along The Strait Of Hormuz",
+          "weight": 4.64,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-18T10:52:00+00:00",
+          "members": 27
+        },
+        {
+          "title": "Strait of Hormuz Traffic Drops 93%, Disrupting Global Oil Flows",
+          "weight": 4.599,
+          "severity": 5,
+          "confidence": 0.95,
+          "timestamp": "2026-03-18T08:45:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 118.09
+    }
+  ]
+}

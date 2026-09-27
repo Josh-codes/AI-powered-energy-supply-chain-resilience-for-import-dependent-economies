@@ -27,6 +27,7 @@ timestamp, so they never surface in the dashboard feed either.
 import json
 import logging
 import os
+from bisect import bisect_left, bisect_right
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
@@ -46,8 +47,10 @@ from pipeline.score.risk_scorer import (
     DECAY_LOOKBACK_DAYS,
     LAMBDA_DECAY,
     TOP_K_STORIES,
+    StoryClusterer,
     cluster_stories,
     corridor_events,
+    event_weight,
     normalize_severity,
     top_k_severity,
 )
@@ -77,13 +80,23 @@ BACKTEST_EVENTS = {
     "2026_hormuz_closure": {
         "name": "2026 Strait of Hormuz closure",
         "corridor": "Hormuz",
-        "chart_start": date(2026, 2, 11),
+        # WIDENED on 2026-09-28, after the first result, from 2026-02-11. That
+        # window was meant to open on calm and did not: Hormuz already read
+        # 0.710 on its first day, and its PASSED verdict (15-day lead) rested
+        # on a single day's decay dipping 0.022 below the bar. The first report
+        # is archived as data/backtests/2026_hormuz_closure.window_feb11.json.
+        # Jan 15 was the first idea, but Brent climbed 18% from Jan 7 to Jan
+        # 30 ($61.08 -> $72.25), so the flat stretch is mid-Dec to Jan 7.
+        "chart_start": date(2026, 1, 1),
         "end": date(2026, 3, 18),
         # Measured: $70.69 on 2026-02-25 -> $118.09 on 2026-03-18, 21 days.
         "run_up_usd": (69.0, 114.0),
         "note": "Onset trough 2026-02-25; first >=5% session 2026-03-02 "
                 "(+8.30%); ends on the first close above $114. Peak "
-                "$138.21 on 2026-04-07 is outside the window by design.",
+                "$138.21 on 2026-04-07 is outside the window by design. "
+                "Chart widened from 2026-02-11 to 2026-01-01 after the first "
+                "run (see runner.py); January itself holds a gradual +18% "
+                "Brent climb with no single >=5% session.",
     },
     "2025_iran_standoff": {
         "name": "2025 US-Iran standoff",
@@ -318,29 +331,103 @@ def _story_row(story):
     }
 
 
-def score_day(day, corridors, focus=None):
-    """Point-in-time scores for every corridor on *day*.
+def _summarize(stories, as_of, baseline, n_events, with_top):
+    """One corridor-day from its stories, weighted as of *as_of*."""
+    weighted = [
+        s._replace(weight=event_weight(s.severity, s.confidence, s.timestamp, as_of,
+                                       LAMBDA_DECAY))
+        for s in stories
+    ]
+    raw = top_k_severity(weighted, k=TOP_K_STORIES)
+    out = {
+        "raw": round(raw, 4),
+        "score": round(normalize_severity(raw, baseline_risk=baseline), 4),
+        "events": n_events,
+        "stories": len(weighted),
+    }
+    if with_top:
+        top = sorted(weighted, key=lambda s: s.weight, reverse=True)[:TOP_K_STORIES]
+        out["top_stories"] = [_story_row(s) for s in top]
+    return out
 
-    Composes the SAME production functions ``compute_corridor_severity`` does
-    (a test pins equality), unrolled only so the focus corridor's top stories
-    can be reported: "why did the signal cross on this day" should be
-    answerable from the report without re-running anything.
+
+def _row(day, per_corridor, focus):
+    row = {"date": day, "as_of": _as_of(day).isoformat(),
+           "scores": {}, "raw": {}, "stories": {}, "events": {}}
+    for name, cell in per_corridor.items():
+        row["scores"][name] = cell["score"]
+        row["raw"][name] = cell["raw"]
+        row["stories"][name] = cell["stories"]
+        row["events"][name] = cell["events"]
+        if name == focus:
+            row["top_stories"] = cell["top_stories"]
+    return row
+
+
+def score_day(day, corridors, focus=None):
+    """Point-in-time scores for every corridor on *day*, computed from scratch.
+
+    Composes exactly what ``compute_corridor_severity`` does (a test pins
+    equality). The runner does not call this per day any more — see
+    :func:`corridor_series` — but it is the independent reference the
+    incremental series is tested against, and the simplest statement of what
+    each charted day means.
     """
     as_of = _as_of(day)
-    row = {"date": day, "as_of": as_of.isoformat(), "scores": {}, "raw": {},
-           "stories": {}, "events": {}}
+    cells = {}
     for name, baseline in corridors:
         events = corridor_events(name, now=as_of, exclude_future=True)
         stories = cluster_stories(events, now=as_of, lambda_decay=LAMBDA_DECAY)
-        raw = top_k_severity(stories, k=TOP_K_STORIES)
-        row["raw"][name] = round(raw, 4)
-        row["scores"][name] = round(normalize_severity(raw, baseline_risk=baseline), 4)
-        row["events"][name] = len(events)
-        row["stories"][name] = len(stories)
-        if name == focus:
-            top = sorted(stories, key=lambda s: s.weight, reverse=True)[:TOP_K_STORIES]
-            row["top_stories"] = [_story_row(s) for s in top]
-    return row
+        cells[name] = _summarize(stories, as_of, baseline, len(events), name == focus)
+    return _row(day, cells, focus)
+
+
+def corridor_series(name, baseline, days, with_top=False):
+    """Point-in-time scores for one corridor on every one of *days*, in one
+    incremental pass instead of one clustering per day.
+
+    Exact, not an approximation. Production scores day D from the events in
+    ``[as_of - 180 days, as_of]``, in date order (``corridor_events``), and
+    clustering a date-ordered list is the same as clustering its prefix and
+    carrying on. So while the lookback's START stays put, day D+1's clusters
+    are day D's plus that day's events. The start moves only when the 180-day
+    edge passes an event, so days are grouped by where their window starts and
+    each group gets one pass — in practice one or a handful, not 36.
+
+    One pass matters: re-clustering the Hormuz window from scratch per day was
+    measured at 112 s for 2026-03-05 alone (2,652 events), growing roughly
+    quadratically to 14,483 events by 03-18.
+
+    Each cluster's strongest member is chosen with weights as of the group's
+    last day; for events not after it, that choice is the same as-of any
+    earlier day (see ``StoryClusterer``). Weights are then recomputed as of
+    each day before the top-3 is taken.
+    """
+    if not days:
+        return []
+    as_ofs = [_as_of(d) for d in days]
+    span = (as_ofs[-1] - as_ofs[0]).days
+    events = corridor_events(
+        name, now=as_ofs[-1], lookback_days=DECAY_LOOKBACK_DAYS + span,
+        exclude_future=True,
+    )
+    times = [e[2] for e in events]
+    lookback = timedelta(days=DECAY_LOOKBACK_DAYS)
+    starts = [bisect_left(times, a - lookback) for a in as_ofs]
+    ends = [bisect_right(times, a) for a in as_ofs]
+
+    cells = [None] * len(days)
+    for start in sorted(set(starts)):
+        group = [k for k in range(len(days)) if starts[k] == start]
+        clusterer = StoryClusterer(now=as_ofs[group[-1]], lambda_decay=LAMBDA_DECAY)
+        i = start
+        for k in group:
+            while i < ends[k]:
+                clusterer.add(*events[i])
+                i += 1
+            cells[k] = _summarize(clusterer.stories(), as_ofs[k], baseline,
+                                  ends[k] - start, with_top)
+    return cells
 
 
 def score_series(key, on_day=None):
@@ -348,9 +435,15 @@ def score_series(key, on_day=None):
     corridors = list(Corridor.objects.order_by("name").values_list("name", "baseline_risk"))
     if not corridors:
         raise ValueError("no corridors in the database - run `manage.py seed_db`")
+    days = chart_days(event)
+    focus = event["corridor"]
+    by_corridor = {
+        name: corridor_series(name, baseline, days, with_top=(name == focus))
+        for name, baseline in corridors
+    }
     series = []
-    for day in chart_days(event):
-        row = score_day(day, corridors, focus=event["corridor"])
+    for k, day in enumerate(days):
+        row = _row(day, {name: cells[k] for name, cells in by_corridor.items()}, focus)
         series.append(row)
         if on_day:
             on_day(row)

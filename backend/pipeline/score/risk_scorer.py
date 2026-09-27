@@ -48,10 +48,11 @@ plus ``manage.py compare_scoring`` hold the full comparison this choice came out
 of; ``RiskScore.raw_score`` persists the untransformed statistic so the choice
 can be revisited without paying for extraction again.
 """
+import heapq
 import logging
 import math
 import re
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
 
@@ -163,6 +164,16 @@ def corridor_events(corridor_name, now=None, lookback_days=DECAY_LOOKBACK_DAYS,
     )
     if exclude_future:
         rows = rows.filter(timestamp__lte=now)
+    # Date order, not whatever order PostgreSQL returns rows in. Clustering is
+    # greedy (an event joins the FIRST matching story), so the same events in
+    # a different order can cluster differently: on the live corpus of
+    # 2026-09-28, storage order vs date order changed the story count by one
+    # per corridor (Hormuz 224 vs 223, Red Sea 88 vs 89), though the top-3
+    # statistic was bit-identical. Storage order is not stable across a
+    # dump/restore, so without this a restored database could score
+    # differently. Date order is also what lets the backtest snapshot one
+    # incremental pass per day (see StoryClusterer).
+    rows = rows.order_by("timestamp", "id")
     return list(rows.values_list("severity", "confidence", "timestamp", "title"))
 
 
@@ -176,31 +187,162 @@ def cluster_stories(events, now=None, lambda_decay=LAMBDA_DECAY):
 
     Exposed (rather than inlined into :func:`compute_risk_score`) so alternative
     scoring formulas measure the same stories the production formula does; a
-    second clustering implementation would be free to drift from this one.
+    second clustering implementation would be free to drift from this one. The
+    backtest does not have a second one either: it drives the same
+    :class:`StoryClusterer` incrementally.
     """
-    now = now or datetime.now(timezone.utc)
-
-    clusters = []  # [rep_title, rep_time, best Story]
+    clusterer = StoryClusterer(now=now, lambda_decay=lambda_decay)
     for severity, confidence, timestamp, title in events:
+        clusterer.add(severity, confidence, timestamp, title)
+    return clusterer.stories()
+
+
+class _Rep:
+    """A cluster's fixed representative, with everything precomputed that the
+    per-comparison tests would otherwise rebuild."""
+    __slots__ = ("time", "length", "masks", "full", "matcher")
+
+    def __init__(self, time, norm):
+        self.time = time
+        self.length = len(norm)
+        masks = {}
+        for i, ch in enumerate(norm):
+            masks[ch] = masks.get(ch, 0) | (1 << i)
+        self.masks = masks
+        self.full = (1 << len(norm)) - 1
+        # difflib caches its analysis of seq2, so the rep goes there once and
+        # only seq1 is swapped per comparison. Same arguments as the original
+        # SequenceMatcher(None, event_title, rep_title), so same autojunk.
+        self.matcher = SequenceMatcher(None, "", norm)
+
+
+def _lcs_length(a, rep):
+    """Longest common subsequence of *a* and the rep's title, bit-parallel
+    (Hyyro 2004): one pass over *a*, a few integer operations per character."""
+    v = rep.full
+    masks = rep.masks
+    for ch in a:
+        u = v & masks.get(ch, 0)
+        v = ((v + u) | (v - u)) & rep.full
+    return rep.length - v.bit_count()
+
+
+class StoryClusterer:
+    """Incremental story clustering: :func:`cluster_stories` one event at a time.
+
+    Makes exactly the decisions of the original loop — every event tested
+    against every existing cluster in creation order with :func:`_same_story`,
+    joining the first that matches — which ``tests/test_scoring.py`` keeps as a
+    reference implementation and compares against on random input. That loop
+    took 112 s for the 2,652 Hormuz events of 2026-03-05 and grew
+    quadratically; the backtest needed 14,483. Four savings, none of which can
+    change a decision:
+
+    * **Day index.** Only a cluster whose rep lies within STORY_WINDOW_DAYS can
+      match, so clusters are bucketed by day and only nearby buckets are
+      scanned, merged back into creation order.
+    * **LCS bound.** difflib's matching blocks appear in the same order in both
+      strings, so together they form a common subsequence: ``ratio() <= 2 *
+      LCS / (len(a) + len(b))``. A pair failing that bound cannot match.
+      Measured on 90,109 real in-window headline pairs: 0 violations, 70% of
+      pairs rejected at 25 us instead of difflib's 157 us. It stands in for
+      ``quick_ratio()``, which it dominates (LCS <= character multiset
+      overlap) and which rejected only 1.6% of the same pairs, since any two
+      English headlines of similar length share most letters.
+    * **Cached rep.** A rep never changes, so its SequenceMatcher and LCS masks
+      are built once.
+    * **Repeat headline.** While events arrive in date order, a headline seen
+      before whose story is still within the window joins that story directly.
+      Exact: every older cluster still in the window was already tested
+      against this very headline and failed, and ratio is deterministic. Out of
+      date order the shortcut disables itself for the rest of the run.
+
+    ``now`` fixes the weights used to pick each cluster's strongest member. For
+    events not after ``now`` that choice does not depend on ``now`` (every
+    weight shares the factor exp(-lambda * now)), which is what lets the
+    backtest cluster once and re-weight each day's snapshot.
+    """
+
+    def __init__(self, now=None, lambda_decay=LAMBDA_DECAY):
+        self.now = now or datetime.now(timezone.utc)
+        self.lambda_decay = lambda_decay
+        self._bests = []                  # best Story per cluster, creation order
+        self._reps = []                   # _Rep per cluster; None if untitled
+        self._by_day = defaultdict(list)  # day bucket -> ascending cluster indices
+        self._latest = {}                 # headline -> cluster its last copy joined
+        self._last_time = None
+        self._in_order = True
+
+    def __len__(self):
+        return len(self._bests)
+
+    def stories(self):
+        return list(self._bests)
+
+    def add(self, severity, confidence, timestamp, title):
         norm = _normalize_title(title)
         story = Story(
-            weight=event_weight(severity, confidence, timestamp, now, lambda_decay),
+            weight=event_weight(severity, confidence, timestamp, self.now, self.lambda_decay),
             severity=severity,
             confidence=confidence,
             timestamp=timestamp,
             title=title,
             members=1,
         )
-        for cluster in clusters:
-            rep_title, rep_time, best = cluster
-            if _same_story(norm, timestamp, rep_title, rep_time):
-                winner = story if story.weight > best.weight else best
-                cluster[2] = winner._replace(members=best.members + 1)
-                break
-        else:
-            clusters.append([norm, timestamp, story])
+        if self._last_time is not None and timestamp < self._last_time:
+            self._in_order = False
+            self._latest.clear()
+        if self._last_time is None or timestamp > self._last_time:
+            self._last_time = timestamp
 
-    return [best for _rep_title, _rep_time, best in clusters]
+        match = self._find(norm, timestamp) if norm else None
+        if match is not None:
+            best = self._bests[match]
+            winner = story if story.weight > best.weight else best
+            self._bests[match] = winner._replace(members=best.members + 1)
+        else:
+            match = len(self._bests)
+            self._bests.append(story)
+            if norm:
+                self._reps.append(_Rep(timestamp, norm))
+                self._by_day[_day_bucket(timestamp)].append(match)
+            else:
+                self._reps.append(None)  # an untitled rep can never be matched
+        if norm and self._in_order:
+            self._latest[norm] = match
+
+    def _find(self, norm, timestamp):
+        window = STORY_WINDOW_DAYS * 86400
+        if self._in_order:
+            seen = self._latest.get(norm)
+            if seen is not None and abs(
+                (timestamp - self._reps[seen].time).total_seconds()
+            ) <= window:
+                return seen
+
+        length = len(norm)
+        day = _day_bucket(timestamp)
+        reach = STORY_WINDOW_DAYS + 1
+        nearby = [self._by_day[d] for d in range(day - reach, day + reach + 1)
+                  if d in self._by_day]
+        for idx in heapq.merge(*nearby):
+            rep = self._reps[idx]
+            if abs((timestamp - rep.time).total_seconds()) > window:
+                continue
+            total = length + rep.length
+            # == SequenceMatcher.real_quick_ratio(), without building anything
+            if 2.0 * min(length, rep.length) / total < STORY_SIMILARITY:
+                continue
+            if 2.0 * _lcs_length(norm, rep) / total < STORY_SIMILARITY:
+                continue
+            rep.matcher.set_seq1(norm)
+            if rep.matcher.ratio() >= STORY_SIMILARITY:
+                return idx
+        return None
+
+
+def _day_bucket(moment):
+    return math.floor(moment.timestamp() / 86400)
 
 
 def compute_risk_score(corridor_name, lambda_decay=LAMBDA_DECAY, now=None,

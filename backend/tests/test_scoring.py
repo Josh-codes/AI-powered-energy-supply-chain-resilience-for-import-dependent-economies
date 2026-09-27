@@ -116,6 +116,161 @@ class RawScoreTests(TestCase):
         self.assertAlmostEqual(compute_risk_score("Hormuz", now=now), 4.0, places=6)
 
 
+def _reference_cluster_stories(events, now, lambda_decay=LAMBDA_DECAY):
+    """The ORIGINAL clustering loop, verbatim: every event against every
+    cluster, in creation order, with _same_story. StoryClusterer's
+    optimizations must reproduce this exactly; this is what they are held to."""
+    from pipeline.score.risk_scorer import Story, _normalize_title, _same_story, event_weight
+    clusters = []
+    for severity, confidence, timestamp, title in events:
+        norm = _normalize_title(title)
+        story = Story(
+            weight=event_weight(severity, confidence, timestamp, now, lambda_decay),
+            severity=severity, confidence=confidence, timestamp=timestamp,
+            title=title, members=1,
+        )
+        for cluster in clusters:
+            rep_title, rep_time, best = cluster
+            if _same_story(norm, timestamp, rep_title, rep_time):
+                winner = story if story.weight > best.weight else best
+                cluster[2] = winner._replace(members=best.members + 1)
+                break
+        else:
+            clusters.append([norm, timestamp, story])
+    return [best for _t, _r, best in clusters]
+
+
+_WORDS = ("iran tanker strait hormuz navy seized closed oil price talks "
+          "missile drone shipping insurance reopen deadline houthi").split()
+
+
+def _random_corpus(rng, n, days=10):
+    """Headlines built from a small vocabulary with random edits, so similarity
+    ratios straddle STORY_SIMILARITY and clusters actually form, plus exact
+    repeats (syndication), untitled rows, and times spread across day
+    boundaries."""
+    from datetime import datetime, timezone
+    base = datetime(2026, 3, 1, tzinfo=timezone.utc)
+    stems = [" ".join(rng.choices(_WORDS, k=rng.randint(4, 9))) for _ in range(max(3, n // 6))]
+    corpus = []
+    for _ in range(n):
+        roll = rng.random()
+        if roll < 0.05:
+            title = ""
+        elif roll < 0.35 and corpus:
+            title = rng.choice(corpus)[3]                       # verbatim repeat
+        else:
+            words = rng.choice(stems).split()
+            for _ in range(rng.randint(0, 3)):                  # light edits
+                op = rng.random()
+                i = rng.randrange(len(words))
+                if op < 0.4:
+                    words[i] = rng.choice(_WORDS)
+                elif op < 0.7 and len(words) > 2:
+                    del words[i]
+                else:
+                    words.insert(i, rng.choice(_WORDS))
+            title = " ".join(words).title() + rng.choice(["", "!", " - Reuters"])
+        ts = base + timedelta(minutes=rng.randint(0, days * 1440))
+        corpus.append((rng.randint(1, 5), rng.choice([0.5, 0.8, 0.9, 1.0]), ts, title))
+    return corpus
+
+
+class ClusteringEquivalenceTests(TestCase):
+    """StoryClusterer (day index, LCS bound, cached reps, repeat-headline
+    shortcut) must make exactly the original loop's decisions."""
+
+    NOW = None
+
+    def setUp(self):
+        from datetime import datetime, timezone
+        self.now = datetime(2026, 3, 20, tzinfo=timezone.utc)
+
+    def _assert_same(self, events):
+        self.assertEqual(cluster_stories(events, now=self.now),
+                         _reference_cluster_stories(events, self.now))
+
+    def test_date_ordered_input(self):
+        rng = random.Random(1)
+        for seed in range(40):
+            corpus = sorted(_random_corpus(random.Random(seed), rng.randint(5, 120)),
+                            key=lambda e: e[2])
+            self._assert_same(corpus)
+
+    def test_arbitrary_order_input(self):
+        # The repeat-headline shortcut is only exact in date order; out of
+        # order it must switch itself off rather than change the answer.
+        rng = random.Random(2)
+        for seed in range(40):
+            corpus = _random_corpus(random.Random(100 + seed), rng.randint(5, 120))
+            self._assert_same(corpus)
+
+    def test_input_that_goes_out_of_order_midway(self):
+        corpus = sorted(_random_corpus(random.Random(7), 150), key=lambda e: e[2])
+        corpus = corpus[:100] + corpus[:20] + corpus[100:]
+        self._assert_same(corpus)
+
+    def test_clusters_actually_form_in_these_fixtures(self):
+        # Guard against a fixture that never merges, which would make the
+        # equivalence tests vacuous.
+        corpus = sorted(_random_corpus(random.Random(3), 120), key=lambda e: e[2])
+        stories = cluster_stories(corpus, now=self.now)
+        self.assertLess(len(stories), len(corpus) * 0.8)
+        self.assertTrue(any(s.members > 1 for s in stories))
+
+    def test_same_headline_beyond_the_window_starts_a_new_story(self):
+        from datetime import datetime, timezone
+        t0 = datetime(2026, 3, 1, tzinfo=timezone.utc)
+        events = [(4, 1.0, t0, "Tanker seized in Hormuz"),
+                  (4, 1.0, t0 + timedelta(days=4), "Tanker seized in Hormuz")]
+        self._assert_same(events)
+        self.assertEqual(len(cluster_stories(events, now=self.now)), 2)
+
+    def test_lcs_matches_dynamic_programming(self):
+        from pipeline.score.risk_scorer import _lcs_length, _Rep
+
+        def dp(a, b):
+            prev = [0] * (len(b) + 1)
+            for ca in a:
+                cur = [0]
+                for j, cb in enumerate(b):
+                    cur.append(prev[j] + 1 if ca == cb else max(prev[j + 1], cur[j]))
+                prev = cur
+            return prev[-1]
+
+        rng = random.Random(5)
+        for _ in range(500):
+            a = "".join(rng.choices("ab c", k=rng.randint(0, 30)))
+            b = "".join(rng.choices("ab c", k=rng.randint(1, 30)))
+            self.assertEqual(_lcs_length(a, _Rep(None, b)), dp(a, b), (a, b))
+
+    def test_lcs_bound_never_rejects_a_real_match(self):
+        from difflib import SequenceMatcher
+        from pipeline.score.risk_scorer import _lcs_length, _normalize_title, _Rep
+        rng = random.Random(6)
+        titles = [_normalize_title(e[3]) for e in _random_corpus(rng, 300) if e[3]]
+        for _ in range(3000):
+            a, b = rng.choice(titles), rng.choice(titles)
+            if not a or not b:
+                continue
+            bound = 2.0 * _lcs_length(a, _Rep(None, b)) / (len(a) + len(b))
+            self.assertLessEqual(SequenceMatcher(None, a, b).ratio(), bound)
+
+
+class CorridorEventOrderTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        _make_corridors()
+
+    def test_events_come_back_in_date_order_regardless_of_insert_order(self):
+        now = timezone.now()
+        for days_ago in (1, 5, 3, 0, 4):
+            _event("Hormuz", days_ago=days_ago, now=now, title=_unique_title(days_ago))
+        stamps = [e[2] for e in corridor_events("Hormuz", now=now)]
+        self.assertEqual(stamps, sorted(stamps))
+
+
 class PointInTimeTests(TestCase):
     """``exclude_future`` — what makes scoring a PAST date honest.
 
