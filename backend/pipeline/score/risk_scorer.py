@@ -139,17 +139,31 @@ def _same_story(a_title, a_time, b_title, b_time):
     return matcher.ratio() >= STORY_SIMILARITY
 
 
-def corridor_events(corridor_name, now=None, lookback_days=DECAY_LOOKBACK_DAYS):
+def corridor_events(corridor_name, now=None, lookback_days=DECAY_LOOKBACK_DAYS,
+                    exclude_future=False):
     """``(severity, confidence, timestamp, title)`` tuples inside the decay
     window, in the shape :func:`cluster_stories` and the candidate formulas in
-    ``pipeline/score/candidates.py`` both expect."""
+    ``pipeline/score/candidates.py`` both expect.
+
+    ``exclude_future`` makes the query POINT-IN-TIME: events dated after
+    ``now`` are dropped. The backtest must pass it. Without it, scoring a past
+    date admits every later event, and :func:`event_weight`'s clamp then gives
+    each one FULL undecayed weight — scoring 2026-02-11 would read the whole
+    March crisis and September's corpus as if they had just happened.
+
+    It defaults off because live scoring legitimately sees slightly-future
+    events: 1 of the first 1,642 was dated 2 hours after its own extraction
+    (a publisher timestamp error), which is exactly what the clamp absorbs.
+    Turning the filter on globally would silently change live scores.
+    """
     now = now or datetime.now(timezone.utc)
     cutoff = now - timedelta(days=lookback_days)
-    return list(
-        ExtractedEvent.objects.filter(
-            corridor__name=corridor_name, timestamp__gte=cutoff
-        ).values_list("severity", "confidence", "timestamp", "title")
+    rows = ExtractedEvent.objects.filter(
+        corridor__name=corridor_name, timestamp__gte=cutoff
     )
+    if exclude_future:
+        rows = rows.filter(timestamp__lte=now)
+    return list(rows.values_list("severity", "confidence", "timestamp", "title"))
 
 
 def cluster_stories(events, now=None, lambda_decay=LAMBDA_DECAY):
@@ -259,11 +273,15 @@ def normalize_score(raw_score, baseline_risk=0.0, k=SATURATION_K):
 
 
 def compute_corridor_severity(corridor_name, now=None, lambda_decay=LAMBDA_DECAY,
-                              k=TOP_K_STORIES):
+                              k=TOP_K_STORIES, exclude_future=False):
     """The corridor's production raw score, end to end: events -> stories ->
-    zero-padded top-k mean weight. Bounded by :data:`MAX_EVENT_WEIGHT`."""
+    zero-padded top-k mean weight. Bounded by :data:`MAX_EVENT_WEIGHT`.
+
+    Pass ``exclude_future=True`` whenever ``now`` is in the past; see
+    :func:`corridor_events`.
+    """
     now = now or datetime.now(timezone.utc)
-    events = corridor_events(corridor_name, now=now)
+    events = corridor_events(corridor_name, now=now, exclude_future=exclude_future)
     stories = cluster_stories(events, now=now, lambda_decay=lambda_decay)
     return top_k_severity(stories, k=k)
 

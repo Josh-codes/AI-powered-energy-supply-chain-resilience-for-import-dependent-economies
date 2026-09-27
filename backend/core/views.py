@@ -21,8 +21,10 @@ from rest_framework.decorators import api_view
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
+from backtest.runner import BACKTEST_EVENTS, load_report
 from core.models import Corridor, ExtractedEvent, PipelineRun, RiskScore
 from core.serializers import (
+    BacktestQuery,
     CascadeQuery,
     CriticalityQuery,
     EventsQuery,
@@ -268,7 +270,29 @@ def pipeline_run_detail(request, pk):
 
 @endpoint(["GET"])
 def backtest(request):
-    return Response(
-        {"error": "backtest is not implemented yet (Phase 7)"},
-        status=status.HTTP_501_NOT_IMPLEMENTED,
-    )
+    """Serve the report ``manage.py run_backtest`` wrote. Never computes one:
+    scoring a window re-clusters thousands of events per day, which is a
+    command-line job, not a request."""
+    q = _validated(BacktestQuery, request.query_params)
+    key = q.get("event")
+    if not key:
+        out = []
+        for k, ev in BACKTEST_EVENTS.items():
+            report = load_report(k)
+            out.append({
+                "event": k, "name": ev["name"], "corridor": ev["corridor"],
+                "chart_start": ev["chart_start"], "end": ev["end"],
+                "validation": report["validation"] if report else None,
+            })
+        return Response(out)
+
+    report = load_report(key)  # unknown key -> ValueError -> 400
+    if report is None:
+        return Response(
+            {"error": f"backtest {key!r} has not been run - "
+                      f"`manage.py run_backtest --event {key}`"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    if not q["series"]:
+        report = {k: v for k, v in report.items() if k != "series"}
+    return Response(report)

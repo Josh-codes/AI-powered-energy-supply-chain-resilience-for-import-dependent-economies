@@ -2,7 +2,7 @@
   "series": "RBRTE",
   "description": "Europe Brent Spot Price FOB, daily, USD/barrel",
   "source": "U.S. Energy Information Administration, api.eia.gov v2",
-  "cached_at": "2026-09-27T19:26:58",
+  "cached_at": "2026-09-27T19:35:41",
   "covered_start": "2025-01-01",
   "covered_end": "2026-09-22",
   "prices": [

@@ -338,3 +338,118 @@ class ExtractPendingEventsTests(TestCase):
         counts = extractor.extract_pending_events()
         self.assertEqual(counts["articles"], 0)
         call_llm.assert_not_called()
+
+
+def _answer_by_content(prompt):
+    """Answer keyed on the article text, since concurrent calls complete in
+    no fixed order and an ordered side_effect list would be meaningless."""
+    if "IRRELEVANT" in prompt:
+        return _response(is_relevant=False)
+    if "FAILS" in prompt:
+        return None
+    if "GARBAGE" in prompt:
+        return "I cannot help with that."
+    if "CRASHES" in prompt:
+        raise RuntimeError("boom")
+    return _response()
+
+
+class ConcurrentExtractionTests(TestCase):
+    """``workers > 1``: same outcomes as serial, calls genuinely overlap, and
+    every database write still happens on the main thread."""
+
+    @classmethod
+    def setUpTestData(cls):
+        line = LineString((56.0, 26.0), (57.0, 27.0))
+        for name, baseline in (("Hormuz", 0.20), ("Red Sea", 0.15), ("Cape", 0.05)):
+            Corridor.objects.create(
+                name=name, geometry=line, capacity_mbd=10.0,
+                transit_days=10, baseline_risk=baseline,
+            )
+
+    def _mixed_batch(self):
+        texts = {"ok1": "Hormuz ok", "ok2": "Hormuz ok again", "irr": "IRRELEVANT story",
+                 "fail": "FAILS to answer", "junk": "GARBAGE answer", "boom": "CRASHES"}
+        return {key: _article(url=f"https://example.com/{key}", text=t)
+                for key, t in texts.items()}
+
+    @patch("pipeline.extract.extractor._call_llm", side_effect=_answer_by_content)
+    def test_outcomes_match_the_serial_contract(self, _call):
+        articles = self._mixed_batch()
+        counts = extractor.extract_pending_events(workers=4)
+        self.assertEqual(counts, {
+            "articles": 6, "events": 2, "irrelevant": 1,
+            "unparseable": 1, "call_failed": 2,
+        })
+        processed = {k: RawArticle.objects.get(pk=a.pk).processed for k, a in articles.items()}
+        # transient failures stay pending for a retry; answered ones are done
+        self.assertEqual(processed, {"ok1": True, "ok2": True, "irr": True,
+                                     "junk": True, "fail": False, "boom": False})
+
+    @patch("pipeline.extract.extractor._call_llm", side_effect=lambda p: _response())
+    def test_every_article_is_called_exactly_once(self, call_llm):
+        for i in range(23):
+            _article(url=f"https://example.com/{i}")
+        counts = extractor.extract_pending_events(workers=4)
+        self.assertEqual(call_llm.call_count, 23)
+        self.assertEqual(counts["events"], 23)
+        self.assertEqual(ExtractedEvent.objects.count(), 23)
+        self.assertEqual(len(set(ExtractedEvent.objects.values_list("article_url", flat=True))), 23)
+
+    def test_calls_actually_run_concurrently(self):
+        # Each call blocks until 4 are waiting at once. Serial execution can
+        # never get there: the barrier times out, the call "fails", and the
+        # assertions below catch it.
+        import threading
+        barrier = threading.Barrier(4, timeout=5)
+
+        def gated(prompt):
+            barrier.wait()
+            return _response()
+
+        for i in range(8):
+            _article(url=f"https://example.com/{i}")
+        with patch("pipeline.extract.extractor._call_llm", side_effect=gated):
+            counts = extractor.extract_pending_events(workers=4)
+        self.assertEqual(counts["call_failed"], 0)
+        self.assertEqual(counts["events"], 8)
+
+    @patch("pipeline.extract.extractor._call_llm", side_effect=lambda p: _response())
+    def test_progress_reports_periodically_and_at_the_end(self, _call):
+        for i in range(5):
+            _article(url=f"https://example.com/{i}")
+        seen = []
+        extractor.extract_pending_events(
+            workers=2, progress_every=2,
+            on_progress=lambda counts, total: seen.append((counts["articles"], total)),
+        )
+        self.assertEqual(seen, [(2, 5), (4, 5), (5, 5)])
+
+    @patch("pipeline.extract.extractor._call_llm", side_effect=lambda p: _response())
+    def test_progress_is_not_repeated_when_total_is_a_multiple(self, _call):
+        for i in range(4):
+            _article(url=f"https://example.com/{i}")
+        seen = []
+        extractor.extract_pending_events(
+            progress_every=2, on_progress=lambda counts, total: seen.append(counts["articles"]),
+        )
+        self.assertEqual(seen, [2, 4])
+
+
+class ExtractEventsCommandTests(TestCase):
+
+    @patch("core.management.commands.extract_events.extract_events")
+    def test_workers_reach_the_task(self, task):
+        from io import StringIO
+        from django.core.management import call_command
+        task.return_value = {"articles": 0, "events": 0, "irrelevant": 0,
+                             "unparseable": 0, "call_failed": 0}
+        call_command("extract_events", "--workers", "6", stdout=StringIO())
+        self.assertEqual(task.call_args.kwargs["workers"], 6)
+
+    def test_zero_workers_is_rejected(self):
+        from io import StringIO
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+        with self.assertRaises(CommandError):
+            call_command("extract_events", "--workers", "0", stdout=StringIO())

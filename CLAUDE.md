@@ -579,8 +579,25 @@ the result lands in `PipelineRun.threshold` / `.response`.
 
 Historical validation against two events:
 
-2025 US-Iran standoff (Brent +8% in single session)
-2026 Hormuz closure (Brent $69 → $114/barrel)
+2025 US-Iran standoff (Brent **+7.28%** in one session, 2025-06-13 — "+8%" was approximate)
+2026 Hormuz closure (Brent $70.69 on 2026-02-25 → $118.09 on 2026-03-18, 21 days;
+  first ≥5% session 2026-03-02, +8.30%; peak $138.21 on 2026-04-07)
+
+> **As built (Phase 7): `backtest/runner.py` + `validator.py` + `eia.py`,
+> `manage.py run_backtest`.** All dates above are read off the committed EIA
+> series (`data/brent_cache.json`), not memory, and pinned by
+> `DocumentedDatesTests`. Differences from the steps below: (a) each charted
+> day is scored **point-in-time at 16:30 UTC** (≈ Brent's London assessment)
+> with `exclude_future=True` — without it the scorer admitted every later
+> event at full weight and scored Hormuz **0.947 on 2026-02-11** from
+> September news; (b) the price event is the first session ≥ **5%** in the
+> window, found from prices alone so lead time is not circular; (c) the
+> verdict is PASSED / FAILED / **INCONCLUSIVE** (already above 0.6 on the first
+> charted day) / NO_PRICE_EVENT, downgraded to **INCOMPLETE** while any pull day
+> is unsampled or any in-scope article unextracted; (d) early excursions above
+> 0.6 that fall back before the price moves are reported as **false alarms**, not
+> credited as lead. Backtest scoring writes NO `RiskScore` rows and never touches
+> `live_risk_score`.
 
 For each event:
 1. Reconstruct historical GDELT data for event period
@@ -689,9 +706,11 @@ orchestrator/state.py → PipelineState TypedDict + DEFAULT_OPTIONS
 graph/updater.py::load_live_graph → singleton + stored risk, auto-refreshed (on a
                    copy, then swapped) when score_risk ran in another process
 
-backtest/runner.py → backtest execution controller
-backtest/validator.py → signal vs price comparison
-backtest/eia.py → EIA API historical price fetcher
+backtest/runner.py → BACKTEST_EVENTS, resumable day-by-day GKG pull + ledger,
+                      point-in-time scoring, report → data/backtests/<event>.json
+backtest/validator.py → signal vs price comparison (pure; excursions, verdicts)
+backtest/eia.py → EIA v2 Brent (RBRTE) fetcher + committed cache
+                  (data/brent_cache.json) + price-event locators
 
 NOTE: commands live in core/management/commands/ — Django discovers them
 per-app, so the top-level management/ shown in the original spec does not exist.
@@ -710,7 +729,7 @@ core/management/commands/run_criticality.py → Phase 4 static vs risk-weighted
 core/management/commands/run_response.py → Phase 5 trigger → gap → reroute → SPR
 core/management/commands/backfill_event_timestamps.py → seendate repair (one-off)
 core/management/commands/run_pipeline.py → Phase 6 orchestrator (analysis-only by default)
-core/management/commands/run_backtest.py → EMPTY STUB, Phase 7
+core/management/commands/run_backtest.py → Phase 7: --list | --status | --pull | score
 
 ---
 
@@ -1090,7 +1109,10 @@ class PipelineRun(models.Model):                 # Phase 6 — PERMANENT
 >   + `capacity_unlimited: true`.
 > - `/api/scenarios/` rows carry `key` and both `degradation_pct` and the spec's
 >   `degradation` fraction (null for `opec_cut`).
-> - `/api/backtest/` returns **501** until Phase 7.
+> - `/api/backtest/` (Phase 7): no `event` → list of defined events with their
+>   verdicts; `?event=KEY` → the report `run_backtest` wrote (404 if not yet
+>   run, 400 for an unknown key); `&series=false` drops the daily series. It
+>   serves the file and never computes one.
 > - NEW: `GET /api/risk-scores/history/?corridor=&days=` (each row labelled
 >   `formula`: `top3pad` from 2026-09-26, `sum_saturating` before; never plot
 >   both on one axis), `GET /api/criticality/ports/`,
@@ -1766,7 +1788,7 @@ cd backend          # all commands run from here; venv is ../venv
 python manage.py runserver
 python manage.py seed_db                  # load data/*.json into the DB
 python manage.py build_graph              # build graph + print cut summary
-python manage.py test                     # full suite (462 tests)
+python manage.py test                     # full suite (554 tests)
 
 # ---- the orchestrated pipeline (Phase 6) ----
 python manage.py run_pipeline             # analysis only on stored scores: free,
@@ -1804,7 +1826,11 @@ python manage.py poll_sources --source gkg --last-minutes 240
 
 # 2. EXTRACT. THE ONLY STEP THAT COSTS MONEY (OpenRouter).
 #    Do NOT run until all three corridors are sampled, or the corpus skews.
-python manage.py extract_events [--limit N]
+python manage.py extract_events [--limit N] [--workers N]
+#    --workers (default 4) = concurrent LLM calls. Same cost, ~4x less wall
+#    time (serial measured 2.9 s/article). Rising "call failures" means the
+#    provider is rate-limiting: re-run with fewer workers; failed articles are
+#    left unprocessed, so a re-run retries only those. Safe to Ctrl+C.
 python manage.py test_extraction --url "<url already in RawArticle>"  # 1 call
 
 # 3. SCORE. Free, no API calls, safe to re-run.
@@ -1814,7 +1840,12 @@ python manage.py score_risk
 #    normalized scores, and what Phase 4's criticality does under each.
 python manage.py compare_scoring
 python manage.py compare_scoring --scanned-per-day 61000   # true GPR denominator
-python manage.py compare_scoring --as-of 2026-09-20T12:00:00Z  # reproduce old figures
+python manage.py compare_scoring --as-of 2026-09-20T12:00:00Z  # decay as of a date
+#    ⚠ --as-of does NOT reproduce old figures: it still admits every event dated
+#    after the as-of time, at full weight (the lookahead defect Phase 7 fixed in
+#    risk_scorer via exclude_future, but NOT in this harness). Not fixed here
+#    because "reproduce" needs created_at <= as_of (what the corpus held then),
+#    not timestamp <= as_of (what a backtest wants) — decide which before fixing.
 
 # 4. CRITICALITY — the Phase 4 deliverable.
 python manage.py run_criticality --port-view
@@ -1832,8 +1863,17 @@ python manage.py run_response --corridor Hormuz --include-sanctioned
 # ---- one-offs ----
 python manage.py backfill_event_timestamps --dry-run   # seendate repair
 
-# ---- NOT IMPLEMENTED (empty stubs) ----
-# python manage.py run_backtest --event "..."    # Phase 7
+# ---- BACKTEST (Phase 7). Pull and score are free; only extract_events pays ----
+python manage.py run_backtest --list
+python manage.py run_backtest --event 2026_hormuz_closure --status
+python manage.py run_backtest --event 2026_hormuz_closure --pull   # ~12 GB, ~1 h,
+#    resumable: re-run to retry only days not yet sampled. --day YYYY-MM-DD for
+#    one day, --workers N (default 4), --force to re-pull ok days.
+python manage.py extract_events                                     # PAID
+python manage.py run_backtest --event 2026_hormuz_closure           # score + verdict
+#    Writes data/backtests/<event>.json (commit it). No RiskScore rows.
+
+# ---- NOT IMPLEMENTED ----
 # celery -A config worker / beat, redis-server   # out of scope, see above
 ```
 
@@ -2080,15 +2120,23 @@ triggered by hand with the commands above.
   - [x] **REST API: 15 routes** (see the REST API Endpoints section for the as-built differences). DRF input serializers validate query params and bodies. Computed dicts are returned as the modules produce them, so an additive key never needs a serializer change. **Live-verified on the real DB via the test client:** every endpoint 0-30 ms after warm-up, and `simulate` Cape at 1.0 reproduced that day's snapshot (2.045 / 0.745 / 57.5%; the 2026-09-27 snapshot reads 2.048 / 0.748 / 57.4%). **Trap hit and fixed:** `geometry.geojson` goes through GDAL/OGR, which logged a PROJ `proj.db` version mismatch on every call, so the GeoJSON is built from GEOS coords (the SRID is already 4326).
   - [x] `RiskScore` formula cutover pinned as `risk_scorer.TOP_K_FORMULA_SINCE = 2026-09-26 00:00 UTC`, read off the DB (last summed rows 09-20 15:11, ids ≤ 33; first top-k 09-26 06:26, id 34). `/api/risk-scores/history/` labels every row with it.
   - [x] Tests: `test_api.py` (33), `test_orchestrator.py` (21), `test_plan.py` (5), and 6 fallback/`attempts` tests in `test_ingestion.py`. **Full suite 462, all passing** (up from 397). Data tasks are mocked on `pipeline.tasks` in every orchestrator test, so no test can reach the network or the paid API. A guard test keeps Celery out of `orchestrator/`.
-  - [ ] RIPPLE (Phase 7): `API_DOCS.md`. `/api/backtest/` is a 501 placeholder. `AlternativeSupplier.route_geometry` is still NULL, so the map cannot draw reroutes. There are no ports/refineries GeoJSON endpoints yet (add them if the dashboard wants them). `RawArticle` 14-day cleanup is still unbuilt.
+  - [ ] RIPPLE (Phase 7): `API_DOCS.md`. ~~`/api/backtest/` is a 501 placeholder.~~ [DONE in Phase 7 — serves the written report.] `AlternativeSupplier.route_geometry` is still NULL, so the map cannot draw reroutes. There are no ports/refineries GeoJSON endpoints yet (add them if the dashboard wants them). `RawArticle` 14-day cleanup is still unbuilt.
+
+
 - [ ] Phase 7 — Backtest validation + integration testing + API documentation
+  - [x] **Backtest machinery built (2026-09-27); data not yet pulled.** `backtest/eia.py`, `runner.py`, `validator.py`, `run_backtest`, `/api/backtest/`. `gdelt_gkg.fetch_between(start, end, workers)` adds explicit historical windows with bounded parallel downloads (measured 2.5 → 0.9 s/slice at 4 workers; `fetch_by_corridor` unchanged). **57 new tests, full suite 547.**
+  - [x] **Concurrent extraction** (`extract_pending_events(workers=N)`, `extract_events --workers`, default 4 on the command, 1 everywhere else so `run_pipeline` and the ordered test mocks are unchanged). Serial throughput measured from Run 3: **830 articles in 39.7 min = 2.9 s/article**, almost all network wait, so a 5-10k-article backtest would have taken 4-8 h. Worker threads only make the HTTP call; every DB write stays on the main thread (Django connections are per-thread), and each answer is persisted as it completes, so Ctrl+C loses at most the calls in flight. `test_calls_actually_run_concurrently` proves overlap with a barrier that serial execution cannot pass. **7 new tests, full suite 554.**
+  - [x] **LOOKAHEAD DEFECT FOUND AND FIXED before any backtest ran.** `corridor_events` had no `timestamp <= now` bound, and `event_weight` clamps negative age to 0, so scoring a past date admitted every later event at FULL weight. Measured on the real DB: **Hormuz on 2026-02-11 scored 0.947** from September news; with the fix, 0.200 (baseline). The filter is opt-in (`exclude_future=True`) because live scoring legitimately sees skew — **1 of 1,642 real events was dated 2 h after its own extraction** — and turning it on globally would silently change live scores. `test_default_still_admits_future_events` pins live behaviour unchanged. `compare_scoring --as-of` still has the defect; see its note in Development Commands.
+  - [x] **Event dates read off EIA, not memory.** Hormuz: onset 2026-02-25 ($70.69), first ≥5% session **2026-03-02 (+8.30%)**, first close above $114 on 2026-03-18. 2025: **2025-06-13, +7.28%** (not +8%). The 5% session threshold is 2.6σ of Brent's 2025 daily returns (σ = 1.92%); only 2 sessions in all of 2025 cleared it.
+  - [x] **Window: pull 2026-02-04 → 03-18 (43 days), chart 02-11 → 03-18.** The 7-day warm-up is so the first charted scores have decayed history behind them; without it the "calm baseline" would read low for want of data. Every window must end on or before 2026-03-31, or its events enter the 180-day lookback of a live score computed on 2026-09-27 (`test_no_window_reaches_the_live_lookback`).
+  - [ ] **Run it:** `run_backtest --event 2026_hormuz_closure --pull` (~12 GB, ~1 h) → `extract_events` (PAID, several hours) → `run_backtest --event 2026_hormuz_closure`. Commit `data/brent_cache.json` and `data/backtests/*.json`. Pre-flight on one real slice found a Hormuz story on 2026-02-11 ("US Flags Iranian Boarding and Seizure Threat…"), so the calm period is not news-silent — an INCONCLUSIVE verdict is a real possibility and would be an honest result.
   - [ ] **The risk-score time series is a Phase 7 deliverable in its own right**, not just backtest scaffolding. Every `--full` appends to `RiskScore` and `PipelineRun`, so the sequence of runs is a live record of the system tracking a real crisis — which is the claim the thesis makes and a single snapshot cannot demonstrate. Plot it from `GET /api/risk-scores/history/?corridor=&days=`, **from 2026-09-26 onward only** (`TOP_K_FORMULA_SINCE`; rows before it hold the superseded sum and the endpoint labels each row's `formula`). The Red Sea margin narrowing toward the 0.75 trigger bar across runs (0.012 → 0.028 → 0.009 below) is the most citable thing in the series so far.
   - [ ] **Also open, from the 2026-09-27 snapshot:** `TOP_K_STORIES = 3 vs 5` needs the calm-plus-crisis sensitivity check (`top5pad` separated marginally better — gap 0.159 vs 0.147 — and sits further from the ceiling, 4.206 vs 4.298); semantic story clustering, now that lexical duplicates are demonstrably reaching the production top 3 (Thesis Snapshot caveat 2); and the Phase 2.6 maritime-gate question, which is now the binding constraint on Red Sea's 88-story base rather than a footnote.
   - [ ] **FRONTEND HANDOFF — deferred here by decision (2026-09-27), bundled with `API_DOCS.md` because they are the same work from two angles.** `frontend/` is empty (0 files); the teammate builds it and **Rule 2 stands — never write inside it.** Deliverables:
     - [ ] **Capture each endpoint's real response to JSON** (suggested home `backend/data/api_samples/`, since Rule 1 keeps work inside `backend/`). Write `API_DOCS.md` *from* the samples: a real payload per route is an unambiguous contract that cannot drift from the code, and the prose then only has to cover what samples can't show — status codes, `degradation` (0-1, `/api/simulate/`) vs `degradation_pct` (0-100, `/api/cascade/`), and the `formula` label on history rows. Use `django.test.Client` rather than curl so no server has to be running. **Read-only: capturing writes nothing and cannot move the snapshot.**
     - [ ] **Commit a fixture so the DB is reproducible off this machine** — right now the cited snapshot exists only in one local Postgres instance, which is a submission risk independent of the frontend: `python manage.py dumpdata core --exclude core.RawArticle --natural-foreign --indent 2 -o data/fixtures/snapshot.json`. Excluding `RawArticle` keeps it small and loses nothing the API serves, since `ExtractedEvent` already carries its own `title` and `timestamp`. Setup then becomes `seed_db` → `loaddata`.
     - [ ] **⚠ THE TRAP TO WARN HIM ABOUT — `seed_db` alone produces a silently wrong world.** It loads the 58 static node rows and sets `baseline_risk`, but **never sets `live_risk_score`**, which stays at the model default `0.0`. `/api/risk-scores/` reads that field directly, so a fresh clone returns `{"Hormuz": 0.0, "Red Sea": 0.0, "Cape": 0.0}` — every corridor green — and `/api/criticality/` returns `rank_shift: 0` everywhere, i.e. a dashboard built against a world where the thesis finding does not exist. **No warning fires:** `_warn_if_risk_never_reached_the_edges` only triggers when a corridor has *nonzero* risk that failed to reach its edges, and a genuinely riskless graph is a legal thing to analyse. The fixture above is what fixes it, because `dumpdata` captures the column.
-    - [ ] Tell him: **don't run `score_risk` or `--full`** (both write new scores; bare `run_pipeline` is free and snapshot-safe); `"Red Sea"` needs URL encoding (`Red%20Sea`); `/api/backtest/` returns **501** until this phase lands; `AlternativeSupplier.route_geometry` is NULL for every row, so the map cannot draw reroute lines yet; and there are no ports/refineries GeoJSON endpoints — add them if the dashboard wants them.
+    - [ ] Tell him: **don't run `score_risk` or `--full`** (both write new scores; bare `run_pipeline` is free and snapshot-safe); `"Red Sea"` needs URL encoding (`Red%20Sea`); `/api/backtest/` returns **404** per event until `run_backtest` has written its report; `AlternativeSupplier.route_geometry` is NULL for every row, so the map cannot draw reroute lines yet; and there are no ports/refineries GeoJSON endpoints — add them if the dashboard wants them.
     - [ ] Optional, cheap: only `PipelineRun` is registered in `core/admin.py`. Four more `admin.site.register` lines would give him a read-only browser over `Corridor` / `ExtractedEvent` / `RiskScore` / `AlternativeSupplier`.
     - [ ] **Standing blocker if he starts before this lands:** the models are `django.contrib.gis`, so there is no SQLite fallback — he needs Postgres + PostGIS + the GDAL/GEOS wheels before `runserver` will boot, and `.env.example` still hardcodes this machine's DLL paths (`C:/Joshua/energy-resilience/venv/...`). The captured samples exist precisely so he needs none of that.
 

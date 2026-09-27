@@ -116,6 +116,58 @@ class RawScoreTests(TestCase):
         self.assertAlmostEqual(compute_risk_score("Hormuz", now=now), 4.0, places=6)
 
 
+class PointInTimeTests(TestCase):
+    """``exclude_future`` — what makes scoring a PAST date honest.
+
+    Without it, every event dated after ``now`` is admitted and the clamp in
+    ``event_weight`` gives it full weight: scoring 2026-02-11 would see the
+    whole March crisis. Live scoring keeps the old behaviour on purpose (1 of
+    the first 1,642 real events was dated 2h after its own extraction).
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        _make_corridors()
+
+    def test_default_still_admits_future_events(self):
+        # Pins live behaviour as unchanged by the backtest fix.
+        now = timezone.now()
+        _event("Hormuz", days_ago=-30, now=now)
+        self.assertEqual(len(corridor_events("Hormuz", now=now)), 1)
+
+    def test_exclude_future_drops_later_events(self):
+        now = timezone.now()
+        _event("Hormuz", days_ago=-30, now=now)
+        _event("Hormuz", days_ago=2, now=now, title=_unique_title(1))
+        events = corridor_events("Hormuz", now=now, exclude_future=True)
+        self.assertEqual(len(events), 1)
+        self.assertLessEqual(events[0][2], now)
+
+    def test_event_exactly_at_now_is_included(self):
+        now = timezone.now()
+        _event("Hormuz", days_ago=0, now=now)
+        self.assertEqual(len(corridor_events("Hormuz", now=now, exclude_future=True)), 1)
+
+    def test_lookahead_regression_on_a_past_date(self):
+        # The exact defect: a severity-5 event a month after the scored date
+        # reads as a full-strength story today without the flag.
+        past = timezone.now() - timedelta(days=200)
+        _event("Hormuz", severity=5, confidence=1.0, days_ago=-30, now=past)
+        leaked = compute_corridor_severity("Hormuz", now=past)
+        honest = compute_corridor_severity("Hormuz", now=past, exclude_future=True)
+        self.assertAlmostEqual(leaked, 5.0 / TOP_K_STORIES, places=6)
+        self.assertEqual(honest, 0.0)
+
+    def test_flag_is_inert_when_nothing_is_in_the_future(self):
+        now = timezone.now()
+        for i in range(4):
+            _event("Hormuz", severity=3 + (i % 3), days_ago=i, now=now, title=_unique_title(i))
+        self.assertEqual(
+            compute_corridor_severity("Hormuz", now=now),
+            compute_corridor_severity("Hormuz", now=now, exclude_future=True),
+        )
+
+
 class StoryDeduplicationTests(TestCase):
     """One wire story syndicated across outlets must not out-score a real crisis.
 

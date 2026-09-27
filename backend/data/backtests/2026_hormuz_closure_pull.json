@@ -1,0 +1,521 @@
+{
+  "event": "2026_hormuz_closure",
+  "days": {
+    "2026-02-04": {
+      "pulled_at": "2026-09-27T14:21:39+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 6,
+        "Red Sea": 12,
+        "Cape": 0
+      },
+      "stored": 18,
+      "status": "ok"
+    },
+    "2026-02-05": {
+      "pulled_at": "2026-09-27T14:23:25+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 6,
+        "Red Sea": 8,
+        "Cape": 0
+      },
+      "stored": 14,
+      "status": "ok"
+    },
+    "2026-02-06": {
+      "pulled_at": "2026-09-27T14:25:04+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 9,
+        "Red Sea": 3,
+        "Cape": 0
+      },
+      "stored": 12,
+      "status": "ok"
+    },
+    "2026-02-07": {
+      "pulled_at": "2026-09-27T14:26:41+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 0,
+        "Red Sea": 2,
+        "Cape": 0
+      },
+      "stored": 2,
+      "status": "ok"
+    },
+    "2026-02-08": {
+      "pulled_at": "2026-09-27T14:27:55+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 0,
+        "Red Sea": 4,
+        "Cape": 0
+      },
+      "stored": 4,
+      "status": "ok"
+    },
+    "2026-02-09": {
+      "pulled_at": "2026-09-27T14:29:05+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 14,
+        "Red Sea": 9,
+        "Cape": 0
+      },
+      "stored": 23,
+      "status": "ok"
+    },
+    "2026-02-10": {
+      "pulled_at": "2026-09-27T14:30:47+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 26,
+        "Red Sea": 6,
+        "Cape": 0
+      },
+      "stored": 32,
+      "status": "ok"
+    },
+    "2026-02-11": {
+      "pulled_at": "2026-09-27T14:32:44+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 3,
+        "Red Sea": 4,
+        "Cape": 1
+      },
+      "stored": 8,
+      "status": "ok"
+    },
+    "2026-02-12": {
+      "pulled_at": "2026-09-27T14:34:38+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 0,
+        "Red Sea": 4,
+        "Cape": 0
+      },
+      "stored": 4,
+      "status": "ok"
+    },
+    "2026-02-13": {
+      "pulled_at": "2026-09-27T14:36:26+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 0,
+        "Red Sea": 1,
+        "Cape": 0
+      },
+      "stored": 1,
+      "status": "ok"
+    },
+    "2026-02-14": {
+      "pulled_at": "2026-09-27T14:38:05+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 0,
+        "Red Sea": 2,
+        "Cape": 0
+      },
+      "stored": 2,
+      "status": "ok"
+    },
+    "2026-02-15": {
+      "pulled_at": "2026-09-27T14:39:25+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 1,
+        "Red Sea": 2,
+        "Cape": 0
+      },
+      "stored": 3,
+      "status": "ok"
+    },
+    "2026-02-16": {
+      "pulled_at": "2026-09-27T14:40:40+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 59,
+        "Red Sea": 3,
+        "Cape": 0
+      },
+      "stored": 62,
+      "status": "ok"
+    },
+    "2026-02-17": {
+      "pulled_at": "2026-09-27T14:42:30+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 295,
+        "Red Sea": 4,
+        "Cape": 0
+      },
+      "stored": 299,
+      "status": "ok"
+    },
+    "2026-02-18": {
+      "pulled_at": "2026-09-27T14:44:24+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 56,
+        "Red Sea": 3,
+        "Cape": 1
+      },
+      "stored": 60,
+      "status": "ok"
+    },
+    "2026-02-19": {
+      "pulled_at": "2026-09-27T14:46:12+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 11,
+        "Red Sea": 5,
+        "Cape": 0
+      },
+      "stored": 16,
+      "status": "ok"
+    },
+    "2026-02-20": {
+      "pulled_at": "2026-09-27T14:48:08+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 8,
+        "Red Sea": 6,
+        "Cape": 0
+      },
+      "stored": 14,
+      "status": "ok"
+    },
+    "2026-02-21": {
+      "pulled_at": "2026-09-27T14:50:01+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 8,
+        "Red Sea": 6,
+        "Cape": 0
+      },
+      "stored": 14,
+      "status": "ok"
+    },
+    "2026-02-22": {
+      "pulled_at": "2026-09-27T14:51:31+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 9,
+        "Red Sea": 5,
+        "Cape": 0
+      },
+      "stored": 14,
+      "status": "ok"
+    },
+    "2026-02-23": {
+      "pulled_at": "2026-09-27T14:52:53+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 7,
+        "Red Sea": 3,
+        "Cape": 0
+      },
+      "stored": 10,
+      "status": "ok"
+    },
+    "2026-02-24": {
+      "pulled_at": "2026-09-27T14:54:28+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 3,
+        "Red Sea": 5,
+        "Cape": 0
+      },
+      "stored": 8,
+      "status": "ok"
+    },
+    "2026-02-25": {
+      "pulled_at": "2026-09-27T14:55:52+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 5,
+        "Red Sea": 7,
+        "Cape": 0
+      },
+      "stored": 12,
+      "status": "ok"
+    },
+    "2026-02-26": {
+      "pulled_at": "2026-09-27T14:57:16+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 3,
+        "Red Sea": 6,
+        "Cape": 0
+      },
+      "stored": 9,
+      "status": "ok"
+    },
+    "2026-02-27": {
+      "pulled_at": "2026-09-27T14:58:39+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 8,
+        "Red Sea": 7,
+        "Cape": 0
+      },
+      "stored": 15,
+      "status": "ok"
+    },
+    "2026-02-28": {
+      "pulled_at": "2026-09-27T15:00:05+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 87,
+        "Red Sea": 10,
+        "Cape": 0
+      },
+      "stored": 97,
+      "status": "ok"
+    },
+    "2026-03-01": {
+      "pulled_at": "2026-09-27T15:01:18+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 272,
+        "Red Sea": 6,
+        "Cape": 2
+      },
+      "stored": 280,
+      "status": "ok"
+    },
+    "2026-03-02": {
+      "pulled_at": "2026-09-27T15:02:19+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 548,
+        "Red Sea": 10,
+        "Cape": 4
+      },
+      "stored": 562,
+      "status": "ok"
+    },
+    "2026-03-03": {
+      "pulled_at": "2026-09-27T15:03:42+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 563,
+        "Red Sea": 5,
+        "Cape": 0
+      },
+      "stored": 568,
+      "status": "ok"
+    },
+    "2026-03-04": {
+      "pulled_at": "2026-09-27T15:05:12+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 519,
+        "Red Sea": 10,
+        "Cape": 0
+      },
+      "stored": 529,
+      "status": "ok"
+    },
+    "2026-03-05": {
+      "pulled_at": "2026-09-27T15:06:37+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 523,
+        "Red Sea": 11,
+        "Cape": 2
+      },
+      "stored": 536,
+      "status": "ok"
+    },
+    "2026-03-06": {
+      "pulled_at": "2026-09-27T15:08:06+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 290,
+        "Red Sea": 5,
+        "Cape": 1
+      },
+      "stored": 296,
+      "status": "ok"
+    },
+    "2026-03-07": {
+      "pulled_at": "2026-09-27T15:09:31+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 110,
+        "Red Sea": 11,
+        "Cape": 2
+      },
+      "stored": 123,
+      "status": "ok"
+    },
+    "2026-03-08": {
+      "pulled_at": "2026-09-27T15:10:37+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 205,
+        "Red Sea": 9,
+        "Cape": 0
+      },
+      "stored": 214,
+      "status": "ok"
+    },
+    "2026-03-09": {
+      "pulled_at": "2026-09-27T15:11:40+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 422,
+        "Red Sea": 12,
+        "Cape": 0
+      },
+      "stored": 434,
+      "status": "ok"
+    },
+    "2026-03-10": {
+      "pulled_at": "2026-09-27T15:13:03+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 713,
+        "Red Sea": 5,
+        "Cape": 1
+      },
+      "stored": 719,
+      "status": "ok"
+    },
+    "2026-03-11": {
+      "pulled_at": "2026-09-27T15:14:29+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 1492,
+        "Red Sea": 9,
+        "Cape": 0
+      },
+      "stored": 1501,
+      "status": "ok"
+    },
+    "2026-03-12": {
+      "pulled_at": "2026-09-27T15:15:57+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 1867,
+        "Red Sea": 33,
+        "Cape": 1
+      },
+      "stored": 1901,
+      "status": "ok"
+    },
+    "2026-03-13": {
+      "pulled_at": "2026-09-27T15:17:23+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 1009,
+        "Red Sea": 47,
+        "Cape": 0
+      },
+      "stored": 1056,
+      "status": "ok"
+    },
+    "2026-03-14": {
+      "pulled_at": "2026-09-27T15:18:51+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 874,
+        "Red Sea": 4,
+        "Cape": 0
+      },
+      "stored": 878,
+      "status": "ok"
+    },
+    "2026-03-15": {
+      "pulled_at": "2026-09-27T15:19:55+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 762,
+        "Red Sea": 5,
+        "Cape": 0
+      },
+      "stored": 767,
+      "status": "ok"
+    },
+    "2026-03-16": {
+      "pulled_at": "2026-09-27T15:20:59+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 2623,
+        "Red Sea": 9,
+        "Cape": 0
+      },
+      "stored": 2632,
+      "status": "ok"
+    },
+    "2026-03-17": {
+      "pulled_at": "2026-09-27T15:22:25+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 1301,
+        "Red Sea": 8,
+        "Cape": 0
+      },
+      "stored": 1309,
+      "status": "ok"
+    },
+    "2026-03-18": {
+      "pulled_at": "2026-09-27T15:23:56+00:00",
+      "slices_read": 96,
+      "slices_total": 96,
+      "matched": {
+        "Hormuz": 1268,
+        "Red Sea": 12,
+        "Cape": 0
+      },
+      "stored": 1280,
+      "status": "ok"
+    }
+  }
+}

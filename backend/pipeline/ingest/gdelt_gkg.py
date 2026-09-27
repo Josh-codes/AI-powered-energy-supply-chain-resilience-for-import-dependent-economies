@@ -42,6 +42,8 @@ import logging
 import re
 import time
 import zipfile
+from collections import namedtuple
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -162,6 +164,11 @@ _RETRY_BASE_SECONDS = 2
 #: Below this fraction of a window's slices, the window is treated as not
 #: sampled at all rather than reported as thin coverage.
 _MIN_COVERAGE = 0.5
+
+#: A window's per-corridor results plus how much of it could actually be read.
+#: ``corridors`` is the ``{corridor: CorridorFetch}`` dict fetch_by_corridor
+#: returns; the slice counts are what the backtest's pull ledger records.
+WindowFetch = namedtuple("WindowFetch", "corridors slices_read slices_total")
 
 
 def slice_timestamps(last_minutes=None, now=None):
@@ -312,13 +319,69 @@ def fetch_by_corridor(last_minutes=None, now=None, timeout=60):
     if not stamps:
         logger.error("GKG window resolved to zero slices — check last_minutes")
         return {c: CorridorFetch(c, [], FETCH_ERROR) for c in CORRIDOR_KEYWORDS}
+    return _fetch_stamps(stamps, timeout=timeout).corridors
 
+
+def slices_between(start, end):
+    """Slice timestamps in the half-open interval ``[start, end)``, oldest first.
+
+    For historical windows, where "now" and the publication lag are irrelevant:
+    ``slices_between(Feb 11 00:00, Feb 12 00:00)`` is exactly that day's 96
+    files, with no overlap into the next day's pull.
+    """
+    stamps = []
+    current = _floor_to_slice(start)
+    if current < start:
+        current += timedelta(minutes=SLICE_MINUTES)
+    while current < end:
+        stamps.append(current)
+        current += timedelta(minutes=SLICE_MINUTES)
+    return stamps
+
+
+def fetch_between(start, end, timeout=60, workers=1):
+    """Read the slices in ``[start, end)`` — the historical-window counterpart
+    of :func:`fetch_by_corridor`, used by the backtest.
+
+    Returns a :data:`WindowFetch` so the caller can record coverage, with the
+    same sampled/not-sampled contract: under 50% of slices readable reports
+    :data:`FETCH_ERROR` for every corridor. ``workers > 1`` downloads slices
+    concurrently (they are static CDN files with no limiter); results are
+    still processed in slice order, so dedup is identical to a serial read.
+    """
+    stamps = slices_between(start, end)
+    if not stamps:
+        logger.error("GKG window %s..%s resolved to zero slices", start, end)
+        return WindowFetch(
+            {c: CorridorFetch(c, [], FETCH_ERROR) for c in CORRIDOR_KEYWORDS}, 0, 0
+        )
+    return _fetch_stamps(stamps, timeout=timeout, workers=workers)
+
+
+def _iter_slices(stamps, timeout, workers):
+    """Yield ``fetch_slice`` results IN STAMP ORDER.
+
+    Concurrency is bounded to one batch of ``workers`` slices at a time, so at
+    most that many parsed slices are ever held in memory (a slice is ~1,000
+    records with long theme strings; a whole day at once would be ~100,000).
+    """
+    if workers <= 1:
+        for stamp in stamps:
+            yield fetch_slice(stamp, timeout=timeout)
+        return
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        for i in range(0, len(stamps), workers):
+            batch = stamps[i:i + workers]
+            yield from pool.map(lambda s: fetch_slice(s, timeout=timeout), batch)
+
+
+def _fetch_stamps(stamps, timeout=60, workers=1):
+    """Download, match and bucket a list of slices. Returns a WindowFetch."""
     by_corridor = {corridor: [] for corridor in CORRIDOR_KEYWORDS}
     seen_urls = set()
     read = 0
 
-    for stamp in stamps:
-        records = fetch_slice(stamp, timeout=timeout)
+    for records in _iter_slices(stamps, timeout, workers):
         if records is None:
             continue
         read += 1
@@ -345,7 +408,10 @@ def fetch_by_corridor(last_minutes=None, now=None, timeout=60):
             "sampled; corridor risk scores from this run are not comparable",
             read, len(stamps), coverage * 100,
         )
-        return {c: CorridorFetch(c, [], FETCH_ERROR) for c in CORRIDOR_KEYWORDS}
+        return WindowFetch(
+            {c: CorridorFetch(c, [], FETCH_ERROR) for c in CORRIDOR_KEYWORDS},
+            read, len(stamps),
+        )
 
     if read < len(stamps):
         logger.warning(
@@ -355,12 +421,15 @@ def fetch_by_corridor(last_minutes=None, now=None, timeout=60):
             len(stamps) - read, len(stamps),
         )
 
-    return {
-        corridor: CorridorFetch(
-            corridor, articles, FETCH_OK if articles else FETCH_EMPTY
-        )
-        for corridor, articles in by_corridor.items()
-    }
+    return WindowFetch(
+        {
+            corridor: CorridorFetch(
+                corridor, articles, FETCH_OK if articles else FETCH_EMPTY
+            )
+            for corridor, articles in by_corridor.items()
+        },
+        read, len(stamps),
+    )
 
 
 def store_gkg_articles(articles):

@@ -14,6 +14,8 @@ The two failure modes are treated differently on purpose:
 import json
 import logging
 import re
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from itertools import islice
 
 from django.conf import settings
 
@@ -151,12 +153,63 @@ def extract_event(article):
     return None if text is None else parse_extraction(text)
 
 
-def extract_pending_events(limit=None):
+def _safe_call(article):
+    """One article's LLM call, never raising — safe to run in a worker thread.
+
+    Touches no database: ``article`` is already loaded, and the answer goes back
+    to the main thread, which does every write. Django connections are
+    per-thread, so a worker that queried would open one it never closes.
+    """
+    try:
+        return _call_llm(build_prompt(article.raw_text or article.title))
+    except Exception:
+        logger.exception("extraction crashed for %s", article.url)
+        return None
+
+
+def _answers(articles, workers):
+    """Yield ``(article, response_text_or_None)``.
+
+    Serial when ``workers <= 1`` (the default, so existing callers and the
+    ordered mocks in the test suite are unaffected). Otherwise keeps up to
+    ``2 * workers`` calls in flight and yields each as it COMPLETES, not in
+    submission order: articles are independent, and waiting on the slowest
+    call of a batch before starting the next would waste most of the gain.
+    """
+    if workers <= 1:
+        for article in articles:
+            yield article, _safe_call(article)
+        return
+
+    queue = iter(articles)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        in_flight = {pool.submit(_safe_call, a): a for a in islice(queue, workers * 2)}
+        while in_flight:
+            done, _ = wait(in_flight, return_when=FIRST_COMPLETED)
+            for future in done:
+                article = in_flight.pop(future)
+                nxt = next(queue, None)
+                if nxt is not None:
+                    in_flight[pool.submit(_safe_call, nxt)] = nxt
+                yield article, future.result()
+
+
+def extract_pending_events(limit=None, workers=1, on_progress=None, progress_every=50):
     """Extract every unprocessed RawArticle and store the relevant ones.
 
     Returns {"articles": n, "events": n, "irrelevant": n, "unparseable": n,
     "call_failed": n}. ``limit`` caps how many articles are sent to the API in
     one run; None means all of them.
+
+    ``workers > 1`` sends that many calls concurrently. The cost is identical
+    (same calls, same tokens); only wall time changes — measured 2.9 s per
+    article serially on 2026-09-27 (830 articles in 39.7 min), almost all of it
+    network wait. Each article is still persisted the moment its answer
+    arrives, so an interrupted run loses at most the calls in flight, and those
+    articles stay ``processed=False`` for the next run.
+
+    ``on_progress(counts, total)`` is called every ``progress_every`` articles
+    and once at the end, for long runs that should not be silent for an hour.
     """
     counts = {"articles": 0, "events": 0, "irrelevant": 0, "unparseable": 0, "call_failed": 0}
 
@@ -169,15 +222,12 @@ def extract_pending_events(limit=None):
         return counts
 
     corridors = {c.name: c for c in Corridor.objects.all()}
+    total = len(articles)
 
-    for article in articles:
+    for article, text in _answers(articles, workers):
         counts["articles"] += 1
-        try:
-            text = _call_llm(build_prompt(article.raw_text or article.title))
-        except Exception:
-            logger.exception("extraction crashed for %s", article.url)
-            counts["call_failed"] += 1
-            continue
+        if on_progress and counts["articles"] % progress_every == 0:
+            on_progress(dict(counts), total)
 
         if text is None:
             # The call itself failed — leave the article unprocessed so the next
@@ -216,6 +266,8 @@ def extract_pending_events(limit=None):
         article.processed = True
         article.save(update_fields=["processed"])
 
+    if on_progress and counts["articles"] % progress_every:
+        on_progress(dict(counts), total)
     logger.info(
         "extraction: %d articles -> %d events (%d irrelevant, %d unparseable, %d call failures)",
         counts["articles"], counts["events"], counts["irrelevant"],

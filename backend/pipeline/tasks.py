@@ -250,11 +250,12 @@ def download_ofac():
         return 0
 
 
-def extract_events(limit=None):
+def extract_events(limit=None, workers=1, on_progress=None):
     """Turn unprocessed RawArticles into ExtractedEvents. Returns the counts
-    dict from extract_pending_events."""
+    dict from extract_pending_events. ``workers`` > 1 runs the (paid) LLM calls
+    concurrently: same cost, less wall time."""
     try:
-        return extract_pending_events(limit=limit)
+        return extract_pending_events(limit=limit, workers=workers, on_progress=on_progress)
     except Exception:
         logger.exception("extract_events failed")
         return {"articles": 0, "events": 0, "irrelevant": 0, "unparseable": 0, "call_failed": 0}

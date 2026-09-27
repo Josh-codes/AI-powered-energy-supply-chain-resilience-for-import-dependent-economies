@@ -301,8 +301,53 @@ class PipelineRunEndpointTests(ApiTestBase):
 
 
 class CrossCuttingTests(ApiTestBase):
-    def test_backtest_is_explicitly_not_implemented(self):
-        self.assertIn("Phase 7", self.get_json("/api/backtest/", status=501)["error"])
+    def _backtest_dir(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        patcher = patch("backtest.runner.BACKTEST_DIR", Path(tmp.name))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return Path(tmp.name)
+
+    def test_backtest_lists_events_when_none_given(self):
+        self._backtest_dir()
+        rows = self.get_json("/api/backtest/")
+        keys = {r["event"] for r in rows}
+        self.assertIn("2026_hormuz_closure", keys)
+        self.assertTrue(all(r["validation"] is None for r in rows))
+
+    def test_backtest_unknown_event_is_400(self):
+        self._backtest_dir()
+        self.assertIn("unknown backtest event",
+                      self.get_json("/api/backtest/", {"event": "suez_1956"}, status=400)["error"])
+
+    def test_backtest_not_yet_run_is_404(self):
+        self._backtest_dir()
+        body = self.get_json("/api/backtest/", {"event": "2026_hormuz_closure"}, status=404)
+        self.assertIn("run_backtest", body["error"])
+
+    def test_backtest_serves_the_written_report(self):
+        path = self._backtest_dir() / "2026_hormuz_closure.json"
+        report = {
+            "event": "2026_hormuz_closure", "validation": "PASSED",
+            "signal_elevated_days_before": 3, "max_risk_score": 0.81,
+            "brent_spike_pct": 8.3, "series": [{"date": "2026-02-11"}],
+        }
+        path.write_text(json.dumps(report))
+        body = self.get_json("/api/backtest/", {"event": "2026_hormuz_closure"})
+        # CLAUDE.md's documented /api/backtest/ keys
+        for key in ("event", "signal_elevated_days_before", "max_risk_score", "brent_spike_pct"):
+            self.assertIn(key, body)
+        self.assertEqual(body["series"], report["series"])
+        slim = self.get_json("/api/backtest/", {"event": "2026_hormuz_closure", "series": "false"})
+        self.assertNotIn("series", slim)
+        listing = self.get_json("/api/backtest/")
+        self.assertEqual(
+            next(r for r in listing if r["event"] == "2026_hormuz_closure")["validation"], "PASSED"
+        )
 
     def test_cors_allows_the_dashboard_origin(self):
         r = self.client.get("/api/risk-scores/", HTTP_ORIGIN="http://localhost:3000")

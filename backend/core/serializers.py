@@ -56,6 +56,13 @@ class RunsQuery(serializers.Serializer):
     limit = serializers.IntegerField(min_value=1, max_value=200, default=20)
 
 
+class BacktestQuery(serializers.Serializer):
+    """No ``event`` lists the defined events; ``series=false`` drops the
+    day-by-day series (the bulk of the payload) for a verdict-only read."""
+    event = serializers.CharField(required=False)
+    series = serializers.BooleanField(default=True)
+
+
 class SimulateInput(serializers.Serializer):
     """``degradation`` is a FRACTION (0-1], as the dashboard slider sends it;
     the modules underneath take a percentage."""
