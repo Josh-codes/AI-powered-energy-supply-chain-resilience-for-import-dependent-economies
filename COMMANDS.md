@@ -416,6 +416,7 @@ that time, so it does **not** reproduce historical figures.
 | `loaddata` fails on duplicate names | You ran `seed_db` first. Start from an empty database: `migrate`, then `loaddata` |
 | Backtest verdict `INCOMPLETE` | Run `--status`. Either days are missing (re-run `--pull`) or articles are unextracted (`extract_events`). For `2025_iran_standoff` it is permanent: GDELT has no data for 15 Jun – 1 Jul 2025 |
 | `Activate.ps1 cannot be loaded` | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
+| `createdb` / `psql` / `dropdb` "not recognized" | PostgreSQL's tools are not on PATH. For the current window: `$env:Path += ";C:\Program Files\PostgreSQL\16\bin"` (adjust `16` to your version) |
 
 ---
 
