@@ -79,4 +79,8 @@ htmlcov/
 # Jupyter
 .ipynb_checkpoints/
 
+.claude/
 
+
+docs/Energy_Resilience_Research_Paper.docx
+docs/~$ergy_Resilience_Research_Paper.docx

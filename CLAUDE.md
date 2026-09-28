@@ -275,6 +275,8 @@ python manage.py capture_api_samples [--run-id 3]     # read-only; writes data/a
 ```
 
 Full reference with every flag: [docs/claude/operations.md](docs/claude/operations.md).
+Human-facing version (PowerShell, tagged by cost/effect, for Joshua and the teammate):
+[COMMANDS.md](COMMANDS.md). Keep it in step when a command or flag changes.
 
 ---
 
