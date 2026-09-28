@@ -81,6 +81,7 @@ htmlcov/
 
 .claude/
 
-
+node_modules/
+frontend/.env.local
 docs/Energy_Resilience_Research_Paper.docx
 docs/~$ergy_Resilience_Research_Paper.docx
