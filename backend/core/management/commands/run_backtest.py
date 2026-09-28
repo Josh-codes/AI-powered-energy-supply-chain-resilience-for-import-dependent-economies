@@ -180,6 +180,10 @@ class Command(BaseCommand):
                 marks.append("<- PRICE EVENT")
             if row["date"] == report.get("signal_elevated_at"):
                 marks.append(f"<- SIGNAL > {SIGNAL_THRESHOLD}")
+            if not row.get("day_sampled", True):
+                marks.append("[no data: decay only]")
+            elif row.get("unsampled_days_in_lookback"):
+                marks.append("[lower bound]")
             w(f"  {row['date']}  {brent}  {s.get('Cape', 0):6.3f}  {s.get('Hormuz', 0):6.3f}"
               f"  {s.get('Red Sea', 0):6.3f}  {row['stories'].get(focus, 0):>15}  {' '.join(marks)}")
 
@@ -203,6 +207,9 @@ class Command(BaseCommand):
             ru = report["run_up"]
             w(f"  run-up        {ru['start']} ${ru['start_usd']:.2f} -> {ru['peak']}"
               f" ${ru['peak_usd']:.2f}  ({ru['pct_change']:+.1f}% in {ru['days']} days)")
+        for gap in report.get("gaps", []):
+            w(warn(f"  source gap    {gap['start']}..{gap['end']} ({gap['days']} day(s) unsampled)"
+                   f" - scores there are decay only; later scores are lower bounds"))
         if verdict == runner.VERDICT_INCOMPLETE:
             w(warn(f"  run `python manage.py run_backtest --event {key} --status` for what is missing"))
         if write:

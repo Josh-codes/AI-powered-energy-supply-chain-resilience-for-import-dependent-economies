@@ -102,11 +102,23 @@ BACKTEST_EVENTS = {
         "name": "2025 US-Iran standoff",
         "corridor": "Hormuz",
         "chart_start": date(2025, 5, 30),
-        "end": date(2025, 6, 27),
+        # EXTENDED on 2026-09-28, BEFORE any pull, from 2025-06-27. The price
+        # faded with the ceasefire (Jun 23 -5.58%, Jun 24 -7.01%), and at
+        # 0.1/day decay a score near 0.95 needs ~6.4 story-free days to reach
+        # 0.6, so a window ending Jun 27 could not show the signal falling
+        # back whatever the news did. Jul 11 is 17 days after the ceasefire.
+        # The price event is unchanged: Jul 2 (+4.69%) is below 5%.
+        "end": date(2025, 7, 11),
         "run_up_usd": None,
         "note": "Largest 2025 session: 2025-06-13, +7.28% (CLAUDE.md's '+8%' "
-                "was approximate). The move faded within weeks, so this "
-                "window also tests whether the signal falls back.",
+                "was approximate). The move faded with the Jun 24 ceasefire, "
+                "so this window also tests whether the signal falls back; "
+                "the end was extended to 2025-07-11 before the pull to leave "
+                "room for that. GDELT publishes NO GKG files for 2025-06-15.."
+                "07-01 (Jun 14 and Jul 2 are partial), which covers the US "
+                "strikes, the Hormuz closure vote and the ceasefire, so the "
+                "verdict stays INCOMPLETE and scores in and after the gap "
+                "are decay-only / lower bounds (see each row's flags).",
     },
 }
 
@@ -450,6 +462,39 @@ def score_series(key, on_day=None):
     return series
 
 
+def gap_ranges(days_missing):
+    """Contiguous runs of unsampled pull days, as ``{start, end, days}``."""
+    missing = sorted(date.fromisoformat(d) if isinstance(d, str) else d
+                     for d in days_missing)
+    ranges = []
+    for day in missing:
+        if ranges and day - ranges[-1]["end"] == timedelta(days=1):
+            ranges[-1]["end"] = day
+            ranges[-1]["days"] += 1
+        else:
+            ranges.append({"start": day, "end": day, "days": 1})
+    return ranges
+
+
+def flag_gaps(series, days_missing):
+    """Mark each row with what the pull failed to see. Mutates *series*.
+
+    ``day_sampled`` is False when the charted day itself was never read: its
+    score is decay of older stories only, and a run of such days draws a
+    smooth decline that looks exactly like a signal falling back (2025-06-15
+    to 07-01, a GDELT-side gap, did precisely that). ``unsampled_days_in_
+    lookback`` counts unsampled pull days on or before the row. When it is
+    nonzero the score is a lower bound: missing days can only have added
+    stories, and a score is its strongest three.
+    """
+    missing = {date.fromisoformat(d) if isinstance(d, str) else d
+               for d in days_missing}
+    for row in series:
+        row["day_sampled"] = row["date"] not in missing
+        row["unsampled_days_in_lookback"] = sum(1 for d in missing if d <= row["date"])
+    return series
+
+
 def _price_window(event):
     """Brent from a week before the pull starts, so the first charted day's
     session return is computable."""
@@ -478,6 +523,7 @@ def run_backtest(key, write=True, on_day=None):
         row["brent_usd"] = session["price_usd"] if session else None
 
     cov = coverage(key)
+    flag_gaps(series, cov["days_missing"])
     pending = pending_in_scope(event)
 
     if prices:
@@ -530,6 +576,7 @@ def run_backtest(key, write=True, on_day=None):
             "end": event["end"],
         },
         "coverage": cov,
+        "gaps": gap_ranges(cov["days_missing"]),
         "pending_extraction": pending,
         "events_in_window": event_counts(event),
         "run_up": run_up,

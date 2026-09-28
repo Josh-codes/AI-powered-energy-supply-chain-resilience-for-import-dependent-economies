@@ -222,6 +222,28 @@ CACHE = Path(settings.BASE_DIR) / "data" / "brent_cache.json"
 
 
 @skipUnless(CACHE.exists(), "committed Brent cache not present")
+class GapTests(SimpleTestCase):
+    def test_gap_ranges_merge_consecutive_days_only(self):
+        ranges = runner.gap_ranges(["2025-06-16", "2025-06-15", "2025-06-18"])
+        self.assertEqual(ranges, [
+            {"start": date(2025, 6, 15), "end": date(2025, 6, 16), "days": 2},
+            {"start": date(2025, 6, 18), "end": date(2025, 6, 18), "days": 1},
+        ])
+
+    def test_no_missing_days_means_no_gaps_and_no_flags(self):
+        series = [{"date": date(2025, 6, 1)}, {"date": date(2025, 6, 2)}]
+        runner.flag_gaps(series, [])
+        self.assertEqual(runner.gap_ranges([]), [])
+        self.assertTrue(all(r["day_sampled"] for r in series))
+        self.assertTrue(all(r["unsampled_days_in_lookback"] == 0 for r in series))
+
+    def test_a_day_after_the_gap_is_sampled_but_a_lower_bound(self):
+        series = [{"date": date(2025, 6, d)} for d in (14, 15, 16)]
+        runner.flag_gaps(series, ["2025-06-15"])
+        self.assertEqual([r["day_sampled"] for r in series], [True, False, True])
+        self.assertEqual([r["unsampled_days_in_lookback"] for r in series], [0, 1, 1])
+
+
 class DocumentedDatesTests(SimpleTestCase):
     """The event dates in runner.BACKTEST_EVENTS and the docstrings are read
     off the committed EIA series; this pins them to it."""
@@ -248,6 +270,16 @@ class DocumentedDatesTests(SimpleTestCase):
         move = self._event_date("2025_iran_standoff")
         self.assertEqual(move["date"], date(2025, 6, 13))
         self.assertAlmostEqual(move["pct_change"], 7.28, places=2)
+
+    def test_2025_window_leaves_room_for_the_signal_to_fall_back(self):
+        # The fall-back half of the 2025 test needs the window to outlast the
+        # ceasefire crash by more than the ~6.4 days pure decay takes to bring
+        # a ~0.95 score under 0.6 (see runner.BACKTEST_EVENTS).
+        ev = runner.BACKTEST_EVENTS["2025_iran_standoff"]
+        ceasefire = date(2025, 6, 24)
+        crash = next(r for r in self.prices if r["date"] == ceasefire)
+        self.assertAlmostEqual(crash["price_usd"], 69.13, places=2)
+        self.assertGreaterEqual((ev["end"] - ceasefire).days, 14)
 
 
 # ---------------------------------------------------------------------------
@@ -575,6 +607,24 @@ class RunBacktestTests(_TempBacktestDir, TestCase):
         self.assertEqual(report["validation"], runner.VERDICT_INCOMPLETE)
         self.assertEqual(report["validation_if_complete"], validator.PASSED)
         self.assertIn("2026-02-20", report["coverage"]["days_missing"])
+
+    def test_rows_are_flagged_for_the_gap_they_sit_in_or_after(self):
+        self._complete_ledger()
+        ledger = runner.load_ledger(self.KEY)
+        for d in ("2026-02-20", "2026-02-21"):
+            ledger["days"][d]["status"] = runner.DAY_NOT_SAMPLED
+        runner.save_ledger(self.KEY, ledger)
+        with patch.object(runner.eia, "fetch_brent_prices", return_value=self._prices()):
+            report = runner.run_backtest(self.KEY)
+        rows = {r["date"]: r for r in report["series"]}
+        self.assertTrue(rows[date(2026, 2, 19)]["day_sampled"])
+        self.assertEqual(rows[date(2026, 2, 19)]["unsampled_days_in_lookback"], 0)
+        self.assertFalse(rows[date(2026, 2, 21)]["day_sampled"])
+        self.assertTrue(rows[date(2026, 3, 1)]["day_sampled"])
+        self.assertEqual(rows[date(2026, 3, 1)]["unsampled_days_in_lookback"], 2)
+        self.assertEqual(report["gaps"], [
+            {"start": date(2026, 2, 20), "end": date(2026, 2, 21), "days": 2},
+        ])
 
     def test_pending_extraction_downgrades_to_incomplete(self):
         self._complete_ledger()
