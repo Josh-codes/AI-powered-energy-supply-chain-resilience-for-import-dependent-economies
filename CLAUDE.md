@@ -322,9 +322,10 @@ Human-facing version (PowerShell, tagged by cost/effect, for Joshua and the team
   `docs/claude/phase-7-backtest.md`). Re-dump with `python -X utf8 manage.py dumpdata core
   --exclude core.RawArticle --indent 2 -o data/fixtures/snapshot.json.gz` whenever the
   thesis is re-based.
-- `README.md` is stale (Django 4.2, gpt-4o-mini, Celery/Redis 4-terminal setup, `seed_db`
-  setup, top-level `management/`). `requirements.txt` is unpinned and lists unused
-  packages (PuLP, celery, redis, django-celery-beat, langchain).
+- `requirements.txt` is unpinned and lists unused packages (PuLP, redis,
+  django-celery-beat, langchain). Keep `celery`: `config/celery.py` imports it at startup.
+  Suggested: `pip freeze > requirements.lock.txt`. (`README.md` was rewritten 2026-09-28 to
+  the as-built system; the research paper docx is git-ignored, so README does not link it.)
 - `AlternativeSupplier.route_geometry` is NULL everywhere (map cannot draw reroutes); no
   ports/refineries GeoJSON endpoints.
 - `max_incremental_mbd` is estimated, not reconciled: coverage figures are indicative.
