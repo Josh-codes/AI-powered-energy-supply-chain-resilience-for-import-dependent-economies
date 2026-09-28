@@ -1,0 +1,131 @@
+{
+  "name": "risk_scores_history_hormuz",
+  "description": "RiskScore rows oldest-first; each row labelled with its formula.",
+  "request": {
+    "method": "GET",
+    "url": "/api/risk-scores/history/?corridor=Hormuz"
+  },
+  "status": 200,
+  "response": [
+    {
+      "id": 1,
+      "corridor": "Hormuz",
+      "score": 0.2,
+      "raw_score": 0.0,
+      "computed_at": "2026-09-13T06:44:41.378536Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 6,
+      "corridor": "Hormuz",
+      "score": 0.4915038619322273,
+      "raw_score": 11.328852674044889,
+      "computed_at": "2026-09-13T07:21:07.805352Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 9,
+      "corridor": "Hormuz",
+      "score": 0.8087611306067461,
+      "raw_score": 35.77721139764712,
+      "computed_at": "2026-09-13T07:31:46.503753Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 12,
+      "corridor": "Hormuz",
+      "score": 0.7407167228728948,
+      "raw_score": 28.16726323945631,
+      "computed_at": "2026-09-13T07:47:09.802359Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 15,
+      "corridor": "Hormuz",
+      "score": 0.7407133583005054,
+      "raw_score": 28.166938830705686,
+      "computed_at": "2026-09-13T07:47:19.939559Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 18,
+      "corridor": "Hormuz",
+      "score": 0.7406830550825214,
+      "raw_score": 28.16401721400263,
+      "computed_at": "2026-09-13T07:48:49.421381Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 21,
+      "corridor": "Hormuz",
+      "score": 0.7406743630249715,
+      "raw_score": 28.163179251805328,
+      "computed_at": "2026-09-13T07:49:15.124858Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 24,
+      "corridor": "Hormuz",
+      "score": 0.9702507354343961,
+      "raw_score": 82.29518291164368,
+      "computed_at": "2026-09-13T08:13:01.767290Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 26,
+      "corridor": "Hormuz",
+      "score": 0.8348534173866247,
+      "raw_score": 39.44445671669593,
+      "computed_at": "2026-09-20T07:25:57.135130Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 29,
+      "corridor": "Hormuz",
+      "score": 0.9921418574426479,
+      "raw_score": 115.5765366253075,
+      "computed_at": "2026-09-20T15:01:25.107638Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 32,
+      "corridor": "Hormuz",
+      "score": 0.9959522729403987,
+      "raw_score": 132.16140559859502,
+      "computed_at": "2026-09-20T15:11:34.815624Z",
+      "formula": "sum_saturating"
+    },
+    {
+      "id": 35,
+      "corridor": "Hormuz",
+      "score": 0.6151891658680613,
+      "raw_score": 2.5949322866753826,
+      "computed_at": "2026-09-26T06:26:17.803591Z",
+      "formula": "top3pad"
+    },
+    {
+      "id": 38,
+      "corridor": "Hormuz",
+      "score": 0.894630787456852,
+      "raw_score": 4.341442421605325,
+      "computed_at": "2026-09-26T07:10:31.035174Z",
+      "formula": "top3pad"
+    },
+    {
+      "id": 40,
+      "corridor": "Hormuz",
+      "score": 0.8754455851872305,
+      "raw_score": 4.22153490742019,
+      "computed_at": "2026-09-26T13:53:49.814366Z",
+      "formula": "top3pad"
+    },
+    {
+      "id": 44,
+      "corridor": "Hormuz",
+      "score": 0.8879447437925696,
+      "raw_score": 4.29965464870356,
+      "computed_at": "2026-09-27T07:01:09.791988Z",
+      "formula": "top3pad"
+    }
+  ]
+}

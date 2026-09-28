@@ -1,0 +1,111 @@
+{
+  "name": "reroute_cape",
+  "description": "Ranked alternative suppliers for a corridor.",
+  "request": {
+    "method": "GET",
+    "url": "/api/reroute/?corridor=Cape&crisis=normal"
+  },
+  "status": 200,
+  "response": [
+    {
+      "source": "UAE via Fujairah",
+      "score": 1.0,
+      "cost_score": 1.0,
+      "transit_score": 1.0,
+      "compat_score": 1.0,
+      "transit_days": 8,
+      "price_premium": 1.0,
+      "country": "UAE",
+      "route_description": "Fujairah terminal → direct Indian Ocean",
+      "transits_corridors": [],
+      "sanctioned": false,
+      "max_incremental_mbd": 0.3,
+      "crisis": "normal"
+    },
+    {
+      "source": "Saudi Arabia via Yanbu",
+      "score": 0.778514168530947,
+      "cost_score": 0.6666666666666667,
+      "transit_score": 0.75,
+      "compat_score": 0.9973900074571215,
+      "transit_days": 10,
+      "price_premium": 2.0,
+      "country": "Saudi Arabia",
+      "route_description": "Yanbu port → Suez Canal → Indian Ocean",
+      "transits_corridors": [
+        "Red Sea"
+      ],
+      "sanctioned": false,
+      "max_incremental_mbd": 0.5,
+      "crisis": "normal"
+    },
+    {
+      "source": "Kuwait via Shuaiba",
+      "score": 0.48296979865771816,
+      "cost_score": 0.33333333333333337,
+      "transit_score": 0.5,
+      "compat_score": 0.6985458612975392,
+      "transit_days": 12,
+      "price_premium": 3.0,
+      "country": "Kuwait",
+      "route_description": "Shuaiba port → Suez Canal → Indian Ocean",
+      "transits_corridors": [
+        "Red Sea"
+      ],
+      "sanctioned": false,
+      "max_incremental_mbd": 0.15,
+      "crisis": "normal"
+    },
+    {
+      "source": "Libya Es Sider",
+      "score": 0.425,
+      "cost_score": 0.0,
+      "transit_score": 0.5,
+      "compat_score": 1.0,
+      "transit_days": 12,
+      "price_premium": 4.0,
+      "country": "Libya",
+      "route_description": "Es Sider terminal → Mediterranean → Suez → Indian Ocean",
+      "transits_corridors": [
+        "Red Sea"
+      ],
+      "sanctioned": false,
+      "max_incremental_mbd": 0.1,
+      "crisis": "normal"
+    },
+    {
+      "source": "Iraq via Ceyhan",
+      "score": 0.33684750186428036,
+      "cost_score": 0.0,
+      "transit_score": 0.25,
+      "compat_score": 0.9973900074571215,
+      "transit_days": 14,
+      "price_premium": 4.0,
+      "country": "Iraq",
+      "route_description": "Kirkuk-Ceyhan pipeline → Turkey → Mediterranean → Suez",
+      "transits_corridors": [
+        "Red Sea"
+      ],
+      "sanctioned": false,
+      "max_incremental_mbd": 0.15,
+      "crisis": "normal"
+    },
+    {
+      "source": "Kazakhstan CPC Blend",
+      "score": 0.22994966442953024,
+      "cost_score": 0.33333333333333337,
+      "transit_score": 0.0,
+      "compat_score": 0.3864653243847875,
+      "transit_days": 16,
+      "price_premium": 3.0,
+      "country": "Kazakhstan",
+      "route_description": "CPC pipeline → Black Sea → Bosphorus → Suez → Indian Ocean",
+      "transits_corridors": [
+        "Red Sea"
+      ],
+      "sanctioned": false,
+      "max_incremental_mbd": 0.1,
+      "crisis": "normal"
+    }
+  ]
+}

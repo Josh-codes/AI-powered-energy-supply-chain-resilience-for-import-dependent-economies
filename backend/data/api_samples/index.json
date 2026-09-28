@@ -1,0 +1,216 @@
+{
+  "captured_at": "2026-09-28T13:14:34+00:00",
+  "live_risk_scores": {
+    "Cape": 0.05,
+    "Hormuz": 0.8879447437925696,
+    "Red Sea": 0.7413651916920864
+  },
+  "latest_pipeline_run": 5,
+  "snapshot_run_id": 3,
+  "samples": [
+    {
+      "name": "risk_scores",
+      "method": "GET",
+      "url": "/api/risk-scores/",
+      "status": 200,
+      "expected_status": 200,
+      "file": "risk_scores.json"
+    },
+    {
+      "name": "risk_scores_history_hormuz",
+      "method": "GET",
+      "url": "/api/risk-scores/history/?corridor=Hormuz",
+      "status": 200,
+      "expected_status": 200,
+      "file": "risk_scores_history_hormuz.json"
+    },
+    {
+      "name": "criticality",
+      "method": "GET",
+      "url": "/api/criticality/",
+      "status": 200,
+      "expected_status": 200,
+      "file": "criticality.json"
+    },
+    {
+      "name": "criticality_by_centrality",
+      "method": "GET",
+      "url": "/api/criticality/?rank_by=centrality",
+      "status": 200,
+      "expected_status": 200,
+      "file": "criticality_by_centrality.json"
+    },
+    {
+      "name": "criticality_ports",
+      "method": "GET",
+      "url": "/api/criticality/ports/",
+      "status": 200,
+      "expected_status": 200,
+      "file": "criticality_ports.json"
+    },
+    {
+      "name": "cascade_hormuz",
+      "method": "GET",
+      "url": "/api/cascade/?corridor=Hormuz&degradation=100",
+      "status": 200,
+      "expected_status": 200,
+      "file": "cascade_hormuz.json"
+    },
+    {
+      "name": "scenarios",
+      "method": "GET",
+      "url": "/api/scenarios/",
+      "status": 200,
+      "expected_status": 200,
+      "file": "scenarios.json"
+    },
+    {
+      "name": "reroute_cape",
+      "method": "GET",
+      "url": "/api/reroute/?corridor=Cape&crisis=normal",
+      "status": 200,
+      "expected_status": 200,
+      "file": "reroute_cape.json"
+    },
+    {
+      "name": "spr",
+      "method": "GET",
+      "url": "/api/spr/?gap_mbd=2.0&duration_days=14&transit_days=10",
+      "status": 200,
+      "expected_status": 200,
+      "file": "spr.json"
+    },
+    {
+      "name": "simulate_cape_full",
+      "method": "POST",
+      "url": "/api/simulate/",
+      "body": {
+        "corridor": "Cape",
+        "degradation": 1.0,
+        "duration_days": 14
+      },
+      "status": 200,
+      "expected_status": 200,
+      "file": "simulate_cape_full.json"
+    },
+    {
+      "name": "simulate_scenario_hormuz_30",
+      "method": "POST",
+      "url": "/api/simulate/",
+      "body": {
+        "scenario": "hormuz_30"
+      },
+      "status": 200,
+      "expected_status": 200,
+      "file": "simulate_scenario_hormuz_30.json"
+    },
+    {
+      "name": "corridors_geojson",
+      "method": "GET",
+      "url": "/api/corridors/geojson/",
+      "status": 200,
+      "expected_status": 200,
+      "file": "corridors_geojson.json"
+    },
+    {
+      "name": "events_live",
+      "method": "GET",
+      "url": "/api/events/live/?limit=5",
+      "status": 200,
+      "expected_status": 200,
+      "file": "events_live.json"
+    },
+    {
+      "name": "pipeline_latest",
+      "method": "GET",
+      "url": "/api/pipeline/latest/",
+      "status": 200,
+      "expected_status": 200,
+      "file": "pipeline_latest.json"
+    },
+    {
+      "name": "pipeline_runs",
+      "method": "GET",
+      "url": "/api/pipeline/runs/?limit=10",
+      "status": 200,
+      "expected_status": 200,
+      "file": "pipeline_runs.json"
+    },
+    {
+      "name": "pipeline_run_snapshot",
+      "method": "GET",
+      "url": "/api/pipeline/runs/3/",
+      "status": 200,
+      "expected_status": 200,
+      "file": "pipeline_run_snapshot.json"
+    },
+    {
+      "name": "backtest_list",
+      "method": "GET",
+      "url": "/api/backtest/",
+      "status": 200,
+      "expected_status": 200,
+      "file": "backtest_list.json"
+    },
+    {
+      "name": "backtest_2026_verdict",
+      "method": "GET",
+      "url": "/api/backtest/?event=2026_hormuz_closure&series=false",
+      "status": 200,
+      "expected_status": 200,
+      "file": "backtest_2026_verdict.json"
+    },
+    {
+      "name": "backtest_2026_full",
+      "method": "GET",
+      "url": "/api/backtest/?event=2026_hormuz_closure",
+      "status": 200,
+      "expected_status": 200,
+      "file": "backtest_2026_full.json"
+    },
+    {
+      "name": "backtest_2025_full",
+      "method": "GET",
+      "url": "/api/backtest/?event=2025_iran_standoff",
+      "status": 200,
+      "expected_status": 200,
+      "file": "backtest_2025_full.json"
+    },
+    {
+      "name": "error_simulate_suez",
+      "method": "POST",
+      "url": "/api/simulate/",
+      "body": {
+        "corridor": "Suez",
+        "degradation": 0.5
+      },
+      "status": 400,
+      "expected_status": 400,
+      "file": "error_simulate_suez.json"
+    },
+    {
+      "name": "error_cascade_missing_corridor",
+      "method": "GET",
+      "url": "/api/cascade/",
+      "status": 400,
+      "expected_status": 400,
+      "file": "error_cascade_missing_corridor.json"
+    },
+    {
+      "name": "error_backtest_unknown_event",
+      "method": "GET",
+      "url": "/api/backtest/?event=no_such_event",
+      "status": 400,
+      "expected_status": 400,
+      "file": "error_backtest_unknown_event.json"
+    },
+    {
+      "name": "error_pipeline_run_missing",
+      "method": "GET",
+      "url": "/api/pipeline/runs/999999/",
+      "status": 404,
+      "expected_status": 404,
+      "file": "error_pipeline_run_missing.json"
+    }
+  ]
+}

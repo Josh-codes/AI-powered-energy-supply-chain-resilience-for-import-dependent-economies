@@ -1,0 +1,55 @@
+{
+  "name": "scenarios",
+  "description": "Named scenario definitions.",
+  "request": {
+    "method": "GET",
+    "url": "/api/scenarios/"
+  },
+  "status": 200,
+  "response": [
+    {
+      "key": "hormuz_30",
+      "name": "Hormuz 30% Disruption",
+      "mechanism": "corridor",
+      "corridor": "Hormuz",
+      "degradation_pct": 30,
+      "price_impact_usd": 20,
+      "affected_volume_mbd": 5.1,
+      "source": "IEA Chokepoints 2023",
+      "degradation": 0.3
+    },
+    {
+      "key": "hormuz_full",
+      "name": "Hormuz Full Closure",
+      "mechanism": "corridor",
+      "corridor": "Hormuz",
+      "degradation_pct": 100,
+      "price_impact_usd": 65,
+      "affected_volume_mbd": 17.0,
+      "source": "IEA Chokepoints 2023",
+      "degradation": 1.0
+    },
+    {
+      "key": "red_sea",
+      "name": "Red Sea Suspension",
+      "mechanism": "corridor",
+      "corridor": "Red Sea",
+      "degradation_pct": 80,
+      "price_impact_usd": 5,
+      "transit_day_increase": 14,
+      "source": "IEA Red Sea Assessment 2024",
+      "degradation": 0.8
+    },
+    {
+      "key": "opec_cut",
+      "name": "OPEC+ Emergency Cut",
+      "mechanism": "supply",
+      "corridor": null,
+      "supply_reduction_mbd": 2.0,
+      "india_impact_mbd": 0.8,
+      "price_impact_usd": 15,
+      "source": "IEA Oil Market Report 2024",
+      "degradation": null
+    }
+  ]
+}

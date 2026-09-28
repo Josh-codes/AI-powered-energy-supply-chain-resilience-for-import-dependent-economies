@@ -1,0 +1,12 @@
+{
+  "name": "error_pipeline_run_missing",
+  "description": "Missing run -> 404 {\"error\": ...}.",
+  "request": {
+    "method": "GET",
+    "url": "/api/pipeline/runs/999999/"
+  },
+  "status": 404,
+  "response": {
+    "error": "no pipeline run 999999"
+  }
+}

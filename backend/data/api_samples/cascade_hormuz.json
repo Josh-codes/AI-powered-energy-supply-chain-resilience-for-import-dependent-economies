@@ -1,0 +1,560 @@
+{
+  "name": "cascade_hormuz",
+  "description": "Cascade curve, 10% steps up to degradation (a PERCENT, 1-100).",
+  "request": {
+    "method": "GET",
+    "url": "/api/cascade/?corridor=Hormuz&degradation=100"
+  },
+  "status": 200,
+  "response": [
+    {
+      "degradation_pct": 10,
+      "flow_after_mbd": 2.3748222144147237,
+      "capacity_loss_mbd": 0.024730595044979875,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0.052376519651617603,
+          "pct_of_baseline": 0.8453655492347822,
+          "shortfall_mbd": 0.00958072440573532
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.06521570717980926,
+          "pct_of_baseline": 0.9406816886403818,
+          "shortfall_mbd": 0.004112427902812632
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0.012303667131575857,
+          "pct_of_baseline": 0.9,
+          "shortfall_mbd": 0.001367074125730651
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0.01109347036453561,
+          "pct_of_baseline": 0.9,
+          "shortfall_mbd": 0.0012326078182817342
+        }
+      ],
+      "affected_count": 4
+    },
+    {
+      "degradation_pct": 20,
+      "flow_after_mbd": 2.350091619369744,
+      "capacity_loss_mbd": 0.04946119008995975,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0.042795795245882395,
+          "pct_of_baseline": 0.6907310984695664,
+          "shortfall_mbd": 0.019161448811470527
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.06110327927699663,
+          "pct_of_baseline": 0.8813633772807637,
+          "shortfall_mbd": 0.008224855805625264
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0.010936593005845208,
+          "pct_of_baseline": 0.8000000000000002,
+          "shortfall_mbd": 0.0027341482514613
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0.009860862546253875,
+          "pct_of_baseline": 0.8,
+          "shortfall_mbd": 0.0024652156365634684
+        },
+        {
+          "refinery": "IOC Haldia",
+          "baseline_mbd": 0.023499458794787192,
+          "current_mbd": 0.021437642080570474,
+          "pct_of_baseline": 0.9122610979162599,
+          "shortfall_mbd": 0.002061816714216718
+        }
+      ],
+      "affected_count": 5
+    },
+    {
+      "degradation_pct": 30,
+      "flow_after_mbd": 2.3253610243247644,
+      "capacity_loss_mbd": 0.07419178513493918,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0.033215070840147076,
+          "pct_of_baseline": 0.5360966477043486,
+          "shortfall_mbd": 0.028742173217205846
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.05699085137418383,
+          "pct_of_baseline": 0.8220450659211431,
+          "shortfall_mbd": 0.012337283708438063
+        },
+        {
+          "refinery": "HPCL Mumbai",
+          "baseline_mbd": 0.12370353777082044,
+          "current_mbd": 0.11546747643957433,
+          "pct_of_baseline": 0.9334209717873659,
+          "shortfall_mbd": 0.008236061331246103
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0.009569518880114555,
+          "pct_of_baseline": 0.7,
+          "shortfall_mbd": 0.004101222377191953
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0.00862825472797214,
+          "pct_of_baseline": 0.7,
+          "shortfall_mbd": 0.0036978234548452043
+        },
+        {
+          "refinery": "IOC Haldia",
+          "baseline_mbd": 0.023499458794787192,
+          "current_mbd": 0.020406733723462113,
+          "pct_of_baseline": 0.8683916468743899,
+          "shortfall_mbd": 0.003092725071325079
+        }
+      ],
+      "affected_count": 6
+    },
+    {
+      "degradation_pct": 40,
+      "flow_after_mbd": 2.300630429279784,
+      "capacity_loss_mbd": 0.0989223801799195,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0.023634346434411757,
+          "pct_of_baseline": 0.38146219693913086,
+          "shortfall_mbd": 0.038322897622941166
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.05287842347137109,
+          "pct_of_baseline": 0.7627267545615234,
+          "shortfall_mbd": 0.016449711611250806
+        },
+        {
+          "refinery": "HPCL Mumbai",
+          "baseline_mbd": 0.12370353777082044,
+          "current_mbd": 0.11272212266249226,
+          "pct_of_baseline": 0.9112279623831542,
+          "shortfall_mbd": 0.010981415108328174
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0.008202444754383904,
+          "pct_of_baseline": 0.6,
+          "shortfall_mbd": 0.005468296502922604
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0.007395646909690406,
+          "pct_of_baseline": 0.6,
+          "shortfall_mbd": 0.004930431273126938
+        },
+        {
+          "refinery": "IOC Haldia",
+          "baseline_mbd": 0.023499458794787192,
+          "current_mbd": 0.019375825366353752,
+          "pct_of_baseline": 0.8245221958325197,
+          "shortfall_mbd": 0.00412363342843344
+        }
+      ],
+      "affected_count": 6
+    },
+    {
+      "degradation_pct": 50,
+      "flow_after_mbd": 2.2758998342348042,
+      "capacity_loss_mbd": 0.12365297522489938,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0.014053622028676438,
+          "pct_of_baseline": 0.22682774617391316,
+          "shortfall_mbd": 0.047903622028676485
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.04876599556855846,
+          "pct_of_baseline": 0.7034084432019052,
+          "shortfall_mbd": 0.020562139514063438
+        },
+        {
+          "refinery": "HPCL Mumbai",
+          "baseline_mbd": 0.12370353777082044,
+          "current_mbd": 0.10997676888541025,
+          "pct_of_baseline": 0.889034952978943,
+          "shortfall_mbd": 0.01372676888541019
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0.006835370628653254,
+          "pct_of_baseline": 0.5,
+          "shortfall_mbd": 0.006835370628653254
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0.006163039091408672,
+          "pct_of_baseline": 0.5,
+          "shortfall_mbd": 0.006163039091408672
+        },
+        {
+          "refinery": "IOC Haldia",
+          "baseline_mbd": 0.023499458794787192,
+          "current_mbd": 0.01834491700924539,
+          "pct_of_baseline": 0.7806527447906496,
+          "shortfall_mbd": 0.0051545417855418
+        }
+      ],
+      "affected_count": 6
+    },
+    {
+      "degradation_pct": 60,
+      "flow_after_mbd": 2.2511692391898244,
+      "capacity_loss_mbd": 0.14838357026987925,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0.004472897622941119,
+          "pct_of_baseline": 0.07219329540869543,
+          "shortfall_mbd": 0.057484346434411804
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.044653567665745714,
+          "pct_of_baseline": 0.6440901318422855,
+          "shortfall_mbd": 0.02467456741687618
+        },
+        {
+          "refinery": "HPCL Mumbai",
+          "baseline_mbd": 0.12370353777082044,
+          "current_mbd": 0.10723141510832818,
+          "pct_of_baseline": 0.8668419435747313,
+          "shortfall_mbd": 0.01647212266249226
+        },
+        {
+          "refinery": "IOC Koyali",
+          "baseline_mbd": 0.19214445419973683,
+          "current_mbd": 0.18185778167989472,
+          "pct_of_baseline": 0.9464638593776484,
+          "shortfall_mbd": 0.01028667251984211
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0.005468296502922604,
+          "pct_of_baseline": 0.4000000000000001,
+          "shortfall_mbd": 0.008202444754383904
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0.004930431273126938,
+          "pct_of_baseline": 0.4,
+          "shortfall_mbd": 0.007395646909690406
+        },
+        {
+          "refinery": "IOC Haldia",
+          "baseline_mbd": 0.023499458794787192,
+          "current_mbd": 0.017314008652137034,
+          "pct_of_baseline": 0.7367832937487796,
+          "shortfall_mbd": 0.006185450142650158
+        }
+      ],
+      "affected_count": 7
+    },
+    {
+      "degradation_pct": 70,
+      "flow_after_mbd": 2.2264386441448445,
+      "capacity_loss_mbd": 0.17311416531485913,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.06195724405735292
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.04054113976293308,
+          "pct_of_baseline": 0.5847718204826673,
+          "shortfall_mbd": 0.028786995319688813
+        },
+        {
+          "refinery": "HPCL Mumbai",
+          "baseline_mbd": 0.12370353777082044,
+          "current_mbd": 0.10448606133124616,
+          "pct_of_baseline": 0.8446489341705201,
+          "shortfall_mbd": 0.019217476439574277
+        },
+        {
+          "refinery": "IOC Koyali",
+          "baseline_mbd": 0.19214445419973683,
+          "current_mbd": 0.18014333625992104,
+          "pct_of_baseline": 0.9375411692739232,
+          "shortfall_mbd": 0.012001117939815786
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0.004101222377191953,
+          "pct_of_baseline": 0.30000000000000004,
+          "shortfall_mbd": 0.009569518880114555
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0.0036978234548452034,
+          "pct_of_baseline": 0.30000000000000004,
+          "shortfall_mbd": 0.00862825472797214
+        },
+        {
+          "refinery": "IOC Haldia",
+          "baseline_mbd": 0.023499458794787192,
+          "current_mbd": 0.016283100295028673,
+          "pct_of_baseline": 0.6929138427069095,
+          "shortfall_mbd": 0.007216358499758518
+        }
+      ],
+      "affected_count": 7
+    },
+    {
+      "degradation_pct": 80,
+      "flow_after_mbd": 2.201708049099865,
+      "capacity_loss_mbd": 0.19784476035983856,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.06195724405735292
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.03642871186012034,
+          "pct_of_baseline": 0.5254535091230476,
+          "shortfall_mbd": 0.032899423222501556
+        },
+        {
+          "refinery": "HPCL Mumbai",
+          "baseline_mbd": 0.12370353777082044,
+          "current_mbd": 0.10174070755416409,
+          "pct_of_baseline": 0.8224559247663085,
+          "shortfall_mbd": 0.02196283021665635
+        },
+        {
+          "refinery": "IOC Paradip",
+          "baseline_mbd": 0.2626470819314433,
+          "current_mbd": 0.24893151857165383,
+          "pct_of_baseline": 0.9477794946019253,
+          "shortfall_mbd": 0.01371556335978949
+        },
+        {
+          "refinery": "IOC Koyali",
+          "baseline_mbd": 0.19214445419973683,
+          "current_mbd": 0.17842889083994737,
+          "pct_of_baseline": 0.9286184791701979,
+          "shortfall_mbd": 0.013715563359789462
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0.002734148251461301,
+          "pct_of_baseline": 0.19999999999999996,
+          "shortfall_mbd": 0.010936593005845208
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0.0024652156365634684,
+          "pct_of_baseline": 0.19999999999999998,
+          "shortfall_mbd": 0.009860862546253875
+        },
+        {
+          "refinery": "IOC Haldia",
+          "baseline_mbd": 0.023499458794787192,
+          "current_mbd": 0.015252191937920313,
+          "pct_of_baseline": 0.6490443916650394,
+          "shortfall_mbd": 0.00824726685686688
+        }
+      ],
+      "affected_count": 8
+    },
+    {
+      "degradation_pct": 90,
+      "flow_after_mbd": 2.176977454054885,
+      "capacity_loss_mbd": 0.22257535540481843,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.06195724405735292
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.03231628395730771,
+          "pct_of_baseline": 0.46613519776342943,
+          "shortfall_mbd": 0.03701185112531419
+        },
+        {
+          "refinery": "HPCL Mumbai",
+          "baseline_mbd": 0.12370353777082044,
+          "current_mbd": 0.09899535377708207,
+          "pct_of_baseline": 0.8002629153620973,
+          "shortfall_mbd": 0.024708183993738364
+        },
+        {
+          "refinery": "IOC Paradip",
+          "baseline_mbd": 0.2626470819314433,
+          "current_mbd": 0.24721707315168012,
+          "pct_of_baseline": 0.9412519314271659,
+          "shortfall_mbd": 0.015430008779763194
+        },
+        {
+          "refinery": "IOC Koyali",
+          "baseline_mbd": 0.19214445419973683,
+          "current_mbd": 0.17671444541997366,
+          "pct_of_baseline": 0.9196957890664725,
+          "shortfall_mbd": 0.015430008779763166
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0.0013670741257306505,
+          "pct_of_baseline": 0.09999999999999998,
+          "shortfall_mbd": 0.012303667131575857
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0.0012326078182817342,
+          "pct_of_baseline": 0.09999999999999999,
+          "shortfall_mbd": 0.01109347036453561
+        },
+        {
+          "refinery": "IOC Haldia",
+          "baseline_mbd": 0.023499458794787192,
+          "current_mbd": 0.014221283580811954,
+          "pct_of_baseline": 0.6051749406231693,
+          "shortfall_mbd": 0.009278175213975238
+        }
+      ],
+      "affected_count": 8
+    },
+    {
+      "degradation_pct": 100,
+      "flow_after_mbd": 2.152246859009905,
+      "capacity_loss_mbd": 0.24730595044979875,
+      "affected_refineries": [
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.06195724405735292
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0.028203856054494963,
+          "pct_of_baseline": 0.4068168864038097,
+          "shortfall_mbd": 0.04112427902812693
+        },
+        {
+          "refinery": "RIL Jamnagar DTA",
+          "baseline_mbd": 0.506,
+          "current_mbd": 0.47214999999999996,
+          "pct_of_baseline": 0.9331027667984189,
+          "shortfall_mbd": 0.03385000000000005
+        },
+        {
+          "refinery": "HPCL Mumbai",
+          "baseline_mbd": 0.12370353777082044,
+          "current_mbd": 0.09625,
+          "pct_of_baseline": 0.7780699059578856,
+          "shortfall_mbd": 0.027453537770820435
+        },
+        {
+          "refinery": "IOC Paradip",
+          "baseline_mbd": 0.2626470819314433,
+          "current_mbd": 0.24550262773170645,
+          "pct_of_baseline": 0.9347243682524067,
+          "shortfall_mbd": 0.01714445419973687
+        },
+        {
+          "refinery": "IOC Koyali",
+          "baseline_mbd": 0.19214445419973683,
+          "current_mbd": 0.175,
+          "pct_of_baseline": 0.9107730989627474,
+          "shortfall_mbd": 0.01714445419973684
+        },
+        {
+          "refinery": "MRPL Mangaluru",
+          "baseline_mbd": 0.013670741257306508,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.013670741257306508
+        },
+        {
+          "refinery": "BPCL Kochi",
+          "baseline_mbd": 0.012326078182817344,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.012326078182817344
+        },
+        {
+          "refinery": "HPCL Vizag",
+          "baseline_mbd": 0.24127607818281732,
+          "current_mbd": 0.22895,
+          "pct_of_baseline": 0.9489129702552702,
+          "shortfall_mbd": 0.012326078182817335
+        },
+        {
+          "refinery": "IOC Haldia",
+          "baseline_mbd": 0.023499458794787192,
+          "current_mbd": 0.013190375223703595,
+          "pct_of_baseline": 0.5613054895812993,
+          "shortfall_mbd": 0.010309083571083597
+        }
+      ],
+      "affected_count": 10
+    }
+  ]
+}

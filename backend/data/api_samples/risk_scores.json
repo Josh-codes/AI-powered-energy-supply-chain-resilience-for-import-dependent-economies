@@ -1,0 +1,14 @@
+{
+  "name": "risk_scores",
+  "description": "Live risk score per corridor (Corridor.live_risk_score).",
+  "request": {
+    "method": "GET",
+    "url": "/api/risk-scores/"
+  },
+  "status": 200,
+  "response": {
+    "Cape": 0.05,
+    "Hormuz": 0.8879447437925696,
+    "Red Sea": 0.7413651916920864
+  }
+}

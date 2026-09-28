@@ -62,6 +62,70 @@ class ApiTestBase(TestCase):
         return G
 
 
+class CaptureApiSamplesTests(ApiTestBase):
+    """manage.py capture_api_samples: the frontend contract files."""
+
+    def _capture(self, **kwargs):
+        import tempfile
+        from pathlib import Path
+
+        from core.management.commands.capture_api_samples import capture_samples
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        return Path(tmp.name), capture_samples(tmp.name, **kwargs)
+
+    def test_writes_one_file_per_sample_plus_an_index(self):
+        from core.management.commands.capture_api_samples import SAMPLES
+        out, index = self._capture()
+        self.assertEqual(len(index["samples"]), len(SAMPLES))
+        for entry in index["samples"]:
+            self.assertTrue((out / entry["file"]).exists(), entry["file"])
+        self.assertTrue((out / "index.json").exists())
+        self.assertEqual(index["live_risk_scores"], SYNTHETIC_RISK)
+
+    def test_sample_holds_the_real_response(self):
+        out, _ = self._capture()
+        sample = json.loads((out / "risk_scores.json").read_text(encoding="utf-8"))
+        self.assertEqual(sample["status"], 200)
+        self.assertEqual(sample["response"], SYNTHETIC_RISK)
+        self.assertEqual(sample["request"], {"method": "GET", "url": "/api/risk-scores/"})
+
+    def test_error_samples_capture_the_error_contract(self):
+        _, index = self._capture()
+        by_name = {s["name"]: s for s in index["samples"]}
+        self.assertEqual(by_name["error_simulate_suez"]["status"], 400)
+        self.assertEqual(by_name["error_cascade_missing_corridor"]["status"], 400)
+        self.assertEqual(by_name["error_pipeline_run_missing"]["status"], 404)
+
+    def test_a_missing_snapshot_run_is_recorded_not_raised(self):
+        _, index = self._capture(run_id=424242)
+        snap = next(s for s in index["samples"] if s["name"] == "pipeline_run_snapshot")
+        self.assertEqual(snap["status"], 404)
+        self.assertEqual(snap["url"], "/api/pipeline/runs/424242/")
+
+    def test_capturing_writes_nothing_to_the_db(self):
+        before = dict(Corridor.objects.values_list("name", "live_risk_score"))
+        self._capture()
+        self.assertEqual(dict(Corridor.objects.values_list("name", "live_risk_score")), before)
+        self.assertFalse(RiskScore.objects.exists())
+        self.assertFalse(PipelineRun.objects.exists())
+
+
+class AdminIsReadOnlyTests(TestCase):
+    def test_every_registered_model_is_read_only(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+
+        from core.models import AlternativeSupplier
+        request = RequestFactory().get("/admin/")
+        for model in (PipelineRun, Corridor, ExtractedEvent, RiskScore, AlternativeSupplier):
+            model_admin = admin.site._registry[model]
+            self.assertFalse(model_admin.has_add_permission(request), model.__name__)
+            self.assertFalse(model_admin.has_delete_permission(request), model.__name__)
+            self.assertIn("live_risk_score" if model is Corridor else "id",
+                          model_admin.get_readonly_fields(request), model.__name__)
+
+
 class RiskScoreEndpointTests(ApiTestBase):
     def test_risk_scores_is_the_documented_flat_dict(self):
         self.assertEqual(self.get_json("/api/risk-scores/"), SYNTHETIC_RISK)

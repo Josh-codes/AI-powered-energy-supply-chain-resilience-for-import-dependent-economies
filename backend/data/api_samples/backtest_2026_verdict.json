@@ -1,0 +1,99 @@
+{
+  "name": "backtest_2026_verdict",
+  "description": "One backtest report without the daily series.",
+  "request": {
+    "method": "GET",
+    "url": "/api/backtest/?event=2026_hormuz_closure&series=false"
+  },
+  "status": 200,
+  "response": {
+    "event": "2026_hormuz_closure",
+    "name": "2026 Strait of Hormuz closure",
+    "note": "Onset trough 2026-02-25; first >=5% session 2026-03-02 (+8.30%); ends on the first close above $114. Peak $138.21 on 2026-04-07 is outside the window by design. Chart widened from 2026-02-11 to 2026-01-01 after the first run (see runner.py); January itself holds a gradual +18% Brent climb with no single >=5% session.",
+    "generated_at": "2026-09-28T13:07:00+00:00",
+    "method": {
+      "score_time_utc": "16:30:00",
+      "point_in_time": true,
+      "top_k_stories": 3,
+      "lambda_decay": 0.1,
+      "lookback_days": 180,
+      "warmup_days": 7,
+      "signal_threshold": 0.6,
+      "tolerance_days": 2,
+      "spike_session_pct": 5.0,
+      "price_series": "EIA RBRTE (Europe Brent Spot FOB, daily)"
+    },
+    "window": {
+      "pull_start": "2025-12-25",
+      "chart_start": "2026-01-01",
+      "end": "2026-03-18"
+    },
+    "coverage": {
+      "days_expected": 84,
+      "days_ok": 84,
+      "days_missing": [],
+      "slices_read": 8063,
+      "slices_total": 8064,
+      "articles_stored": 16750,
+      "complete": true
+    },
+    "gaps": [],
+    "pending_extraction": 0,
+    "events_in_window": {
+      "Cape": 14,
+      "Hormuz": 14651,
+      "Red Sea": 421
+    },
+    "run_up": {
+      "start": "2026-02-25",
+      "start_usd": 70.69,
+      "peak": "2026-03-18",
+      "peak_usd": 118.09,
+      "days": 21,
+      "pct_change": 67.05333144716367
+    },
+    "corridor": "Hormuz",
+    "signal_threshold": 0.6,
+    "tolerance_days": 2,
+    "spike_session_pct": 5.0,
+    "price_spiked_at": "2026-03-02",
+    "brent_spike_pct": 8.300616937745376,
+    "brent_before_usd": 71.32,
+    "brent_after_usd": 77.24,
+    "signal_elevated_at": "2026-02-15",
+    "lead_time_days": 15,
+    "lead_time_is_lower_bound": false,
+    "score_at_chart_start": 0.4345,
+    "score_at_price_spike": 0.9511,
+    "max_risk_score": 0.9591,
+    "max_risk_at": "2026-03-11",
+    "excursions": [
+      {
+        "start": "2026-01-28",
+        "end": "2026-02-13",
+        "peak": 0.7786,
+        "peak_at": "2026-02-06",
+        "days": 17
+      },
+      {
+        "start": "2026-02-15",
+        "end": "2026-03-18",
+        "peak": 0.9591,
+        "peak_at": "2026-03-11",
+        "days": 32
+      }
+    ],
+    "false_alarms": [
+      {
+        "start": "2026-01-28",
+        "end": "2026-02-13",
+        "peak": 0.7786,
+        "peak_at": "2026-02-06",
+        "days": 17
+      }
+    ],
+    "validation": "PASSED",
+    "reason": "Hormuz risk crossed 0.6 on 2026-02-15, 15 day(s) before Brent's +8.30% session on 2026-03-02",
+    "signal_elevated_days_before": 15
+  }
+}

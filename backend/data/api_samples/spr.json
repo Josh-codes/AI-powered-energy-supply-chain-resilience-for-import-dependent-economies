@@ -1,0 +1,72 @@
+{
+  "name": "spr",
+  "description": "SPR drawdown schedule for a constant gap.",
+  "request": {
+    "method": "GET",
+    "url": "/api/spr/?gap_mbd=2.0&duration_days=14&transit_days=10"
+  },
+  "status": 200,
+  "response": {
+    "daily_schedule": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "total_released_mb": 10.0,
+    "insufficient": true,
+    "gap_covered_pct": 50.0,
+    "daily_gap_mbd": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "unmet_mbd": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "total_unmet_mb": 10.0,
+    "required_mb": 20.0,
+    "available_mb": 29.496,
+    "bridge_days": 10,
+    "uncovered_tail_days": 0,
+    "gap_at_horizon_end_mbd": 0.0,
+    "reserve_exhausted_day": null,
+    "days_of_cover": 29.496,
+    "status": "Optimal",
+    "days_until_threshold": 29.496
+  }
+}

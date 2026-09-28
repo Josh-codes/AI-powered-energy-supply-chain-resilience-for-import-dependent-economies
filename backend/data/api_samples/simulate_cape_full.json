@@ -1,0 +1,1050 @@
+{
+  "name": "simulate_cape_full",
+  "description": "Scenario slider: cascade + gap + reroute + timeline + SPR. degradation is a FRACTION (0-1].",
+  "request": {
+    "method": "POST",
+    "url": "/api/simulate/",
+    "body": {
+      "corridor": "Cape",
+      "degradation": 1.0,
+      "duration_days": 14
+    }
+  },
+  "status": 200,
+  "response": {
+    "input": {
+      "corridor": "Cape",
+      "degradation": 1.0,
+      "duration_days": 14,
+      "crisis": "normal",
+      "include_sanctioned": false
+    },
+    "cascade": [
+      {
+        "degradation_pct": 10,
+        "flow_after_mbd": 2.212307809459704,
+        "capacity_loss_mbd": 0.18724499999999944,
+        "affected_refineries": [
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0.008813135082621965,
+            "pct_of_baseline": 0.1271220561770326,
+            "shortfall_mbd": 0.06051499999999993
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0.014742244057352916,
+            "pct_of_baseline": 0.23794221776078733,
+            "shortfall_mbd": 0.04721500000000001
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0.08997853777082043,
+            "pct_of_baseline": 0.7273723887955357,
+            "shortfall_mbd": 0.033725000000000005
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.2397520819314433,
+            "pct_of_baseline": 0.912829794903352,
+            "shortfall_mbd": 0.022895000000000026
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.21838107818281732,
+            "pct_of_baseline": 0.905108702974473,
+            "shortfall_mbd": 0.022895
+          }
+        ],
+        "affected_count": 5
+      },
+      {
+        "degradation_pct": 20,
+        "flow_after_mbd": 2.025062809459704,
+        "capacity_loss_mbd": 0.37448999999999977,
+        "affected_refineries": [
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.0693281350826219
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0.05625353777082043,
+            "pct_of_baseline": 0.4547447775910713,
+            "shortfall_mbd": 0.06745000000000001
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.06195724405735292
+          },
+          {
+            "refinery": "IOC Mathura",
+            "baseline_mbd": 0.154,
+            "current_mbd": 0.10229813508262198,
+            "pct_of_baseline": 0.6642736044326103,
+            "shortfall_mbd": 0.05170186491737802
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.2168570819314433,
+            "pct_of_baseline": 0.8256595898067041,
+            "shortfall_mbd": 0.045790000000000025
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.19548607818281732,
+            "pct_of_baseline": 0.810217405948946,
+            "shortfall_mbd": 0.04579
+          },
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "baseline_mbd": 0.506,
+            "current_mbd": 0.47352724405735297,
+            "pct_of_baseline": 0.9358245929987212,
+            "shortfall_mbd": 0.032472755942647036
+          }
+        ],
+        "affected_count": 7
+      },
+      {
+        "degradation_pct": 30,
+        "flow_after_mbd": 1.8378178094597037,
+        "capacity_loss_mbd": 0.5617349999999999,
+        "affected_refineries": [
+          {
+            "refinery": "IOC Mathura",
+            "baseline_mbd": 0.154,
+            "current_mbd": 0.04178313508262188,
+            "pct_of_baseline": 0.2713190589780642,
+            "shortfall_mbd": 0.11221686491737812
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0.022528537770820423,
+            "pct_of_baseline": 0.18211716638660694,
+            "shortfall_mbd": 0.10117500000000001
+          },
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "baseline_mbd": 0.506,
+            "current_mbd": 0.4263122440573529,
+            "pct_of_baseline": 0.8425143163188793,
+            "shortfall_mbd": 0.0796877559426471
+          },
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.0693281350826219
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.1939620819314433,
+            "pct_of_baseline": 0.7384893847100562,
+            "shortfall_mbd": 0.06868500000000002
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.17259107818281733,
+            "pct_of_baseline": 0.715326108923419,
+            "shortfall_mbd": 0.068685
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.06195724405735292
+          }
+        ],
+        "affected_count": 7
+      },
+      {
+        "degradation_pct": 40,
+        "flow_after_mbd": 1.6367973855819256,
+        "capacity_loss_mbd": 0.7627554238777781,
+        "affected_refineries": [
+          {
+            "refinery": "IOC Mathura",
+            "baseline_mbd": 0.154,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.154
+          },
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "baseline_mbd": 0.506,
+            "current_mbd": 0.37909724405735296,
+            "pct_of_baseline": 0.7492040396390375,
+            "shortfall_mbd": 0.12690275594264705
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.12370353777082044
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.1710670819314433,
+            "pct_of_baseline": 0.6513191796134083,
+            "shortfall_mbd": 0.09158000000000002
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.14969607818281733,
+            "pct_of_baseline": 0.620434811897892,
+            "shortfall_mbd": 0.09158
+          },
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.0693281350826219
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.06195724405735292
+          },
+          {
+            "refinery": "IOC Panipat",
+            "baseline_mbd": 0.287,
+            "current_mbd": 0.2682681350826219,
+            "pct_of_baseline": 0.9347321779882296,
+            "shortfall_mbd": 0.018731864917378105
+          },
+          {
+            "refinery": "CPCL Manali",
+            "baseline_mbd": 0.211,
+            "current_mbd": 0.19722457612222163,
+            "pct_of_baseline": 0.934713630911003,
+            "shortfall_mbd": 0.013775423877778359
+          }
+        ],
+        "affected_count": 9
+      },
+      {
+        "degradation_pct": 50,
+        "flow_after_mbd": 1.4225723855819254,
+        "capacity_loss_mbd": 0.9769804238777782,
+        "affected_refineries": [
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "baseline_mbd": 0.506,
+            "current_mbd": 0.33188224405735295,
+            "pct_of_baseline": 0.6558937629591955,
+            "shortfall_mbd": 0.17411775594264706
+          },
+          {
+            "refinery": "IOC Mathura",
+            "baseline_mbd": 0.154,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.154
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.12370353777082044
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.1481720819314433,
+            "pct_of_baseline": 0.5641489745167604,
+            "shortfall_mbd": 0.11447500000000002
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.12680107818281733,
+            "pct_of_baseline": 0.5255435148723648,
+            "shortfall_mbd": 0.114475
+          },
+          {
+            "refinery": "IOC Panipat",
+            "baseline_mbd": 0.287,
+            "current_mbd": 0.2077531350826219,
+            "pct_of_baseline": 0.7238785194516443,
+            "shortfall_mbd": 0.07924686491737809
+          },
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.0693281350826219
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.06195724405735292
+          },
+          {
+            "refinery": "BPCL Mumbai",
+            "baseline_mbd": 0.241,
+            "current_mbd": 0.19607853777082043,
+            "pct_of_baseline": 0.81360389116523,
+            "shortfall_mbd": 0.04492146222917956
+          },
+          {
+            "refinery": "CPCL Manali",
+            "baseline_mbd": 0.211,
+            "current_mbd": 0.17024457612222163,
+            "pct_of_baseline": 0.806846332332804,
+            "shortfall_mbd": 0.04075542387777836
+          }
+        ],
+        "affected_count": 10
+      },
+      {
+        "degradation_pct": 60,
+        "flow_after_mbd": 1.2083473855819256,
+        "capacity_loss_mbd": 1.191205423877778,
+        "affected_refineries": [
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "baseline_mbd": 0.506,
+            "current_mbd": 0.284667244057353,
+            "pct_of_baseline": 0.5625834862793537,
+            "shortfall_mbd": 0.221332755942647
+          },
+          {
+            "refinery": "IOC Mathura",
+            "baseline_mbd": 0.154,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.154
+          },
+          {
+            "refinery": "IOC Panipat",
+            "baseline_mbd": 0.287,
+            "current_mbd": 0.1472381350826219,
+            "pct_of_baseline": 0.513024860915059,
+            "shortfall_mbd": 0.13976186491737808
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.12527708193144332,
+            "pct_of_baseline": 0.4769787694201126,
+            "shortfall_mbd": 0.13737
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.10390607818281734,
+            "pct_of_baseline": 0.43065221784683794,
+            "shortfall_mbd": 0.13737
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.12370353777082044
+          },
+          {
+            "refinery": "BPCL Mumbai",
+            "baseline_mbd": 0.241,
+            "current_mbd": 0.16235353777082043,
+            "pct_of_baseline": 0.6736661318291304,
+            "shortfall_mbd": 0.07864646222917956
+          },
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.0693281350826219
+          },
+          {
+            "refinery": "CPCL Manali",
+            "baseline_mbd": 0.211,
+            "current_mbd": 0.14326457612222165,
+            "pct_of_baseline": 0.678979033754605,
+            "shortfall_mbd": 0.06773542387777834
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.06195724405735292
+          }
+        ],
+        "affected_count": 10
+      },
+      {
+        "degradation_pct": 70,
+        "flow_after_mbd": 0.9941223855819257,
+        "capacity_loss_mbd": 1.405430423877778,
+        "affected_refineries": [
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "baseline_mbd": 0.506,
+            "current_mbd": 0.237452244057353,
+            "pct_of_baseline": 0.46927320959951185,
+            "shortfall_mbd": 0.268547755942647
+          },
+          {
+            "refinery": "IOC Panipat",
+            "baseline_mbd": 0.287,
+            "current_mbd": 0.08672313508262192,
+            "pct_of_baseline": 0.3021712023784736,
+            "shortfall_mbd": 0.20027686491737806
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.10238208193144334,
+            "pct_of_baseline": 0.3898085643234648,
+            "shortfall_mbd": 0.160265
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.08101107818281736,
+            "pct_of_baseline": 0.335760920821311,
+            "shortfall_mbd": 0.16026499999999996
+          },
+          {
+            "refinery": "IOC Mathura",
+            "baseline_mbd": 0.154,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.154
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.12370353777082044
+          },
+          {
+            "refinery": "BPCL Mumbai",
+            "baseline_mbd": 0.241,
+            "current_mbd": 0.12862853777082045,
+            "pct_of_baseline": 0.533728372493031,
+            "shortfall_mbd": 0.11237146222917954
+          },
+          {
+            "refinery": "CPCL Manali",
+            "baseline_mbd": 0.211,
+            "current_mbd": 0.11628457612222168,
+            "pct_of_baseline": 0.5511117351764061,
+            "shortfall_mbd": 0.09471542387777832
+          },
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.0693281350826219
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.06195724405735292
+          }
+        ],
+        "affected_count": 10
+      },
+      {
+        "degradation_pct": 80,
+        "flow_after_mbd": 0.7798973855819255,
+        "capacity_loss_mbd": 1.619655423877778,
+        "affected_refineries": [
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "baseline_mbd": 0.506,
+            "current_mbd": 0.19023724405735296,
+            "pct_of_baseline": 0.37596293291966987,
+            "shortfall_mbd": 0.315762755942647
+          },
+          {
+            "refinery": "IOC Panipat",
+            "baseline_mbd": 0.287,
+            "current_mbd": 0.026208135082621903,
+            "pct_of_baseline": 0.09131754384188817,
+            "shortfall_mbd": 0.26079186491737805
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.07948708193144331,
+            "pct_of_baseline": 0.30263835922681676,
+            "shortfall_mbd": 0.18316
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.05811607818281733,
+            "pct_of_baseline": 0.24086962379578383,
+            "shortfall_mbd": 0.18316
+          },
+          {
+            "refinery": "IOC Mathura",
+            "baseline_mbd": 0.154,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.154
+          },
+          {
+            "refinery": "BPCL Mumbai",
+            "baseline_mbd": 0.241,
+            "current_mbd": 0.09490353777082043,
+            "pct_of_baseline": 0.39379061315693126,
+            "shortfall_mbd": 0.14609646222917955
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.12370353777082044
+          },
+          {
+            "refinery": "CPCL Manali",
+            "baseline_mbd": 0.211,
+            "current_mbd": 0.08930457612222165,
+            "pct_of_baseline": 0.4232444365982069,
+            "shortfall_mbd": 0.12169542387777835
+          },
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.0693281350826219
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.06195724405735292
+          }
+        ],
+        "affected_count": 10
+      },
+      {
+        "degradation_pct": 90,
+        "flow_after_mbd": 0.5656723855819256,
+        "capacity_loss_mbd": 1.833880423877778,
+        "affected_refineries": [
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "baseline_mbd": 0.506,
+            "current_mbd": 0.14302224405735298,
+            "pct_of_baseline": 0.282652656239828,
+            "shortfall_mbd": 0.36297775594264703
+          },
+          {
+            "refinery": "IOC Panipat",
+            "baseline_mbd": 0.287,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.287
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.05659208193144333,
+            "pct_of_baseline": 0.2154681541301689,
+            "shortfall_mbd": 0.206055
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.03522107818281734,
+            "pct_of_baseline": 0.14597832677025682,
+            "shortfall_mbd": 0.206055
+          },
+          {
+            "refinery": "BPCL Mumbai",
+            "baseline_mbd": 0.241,
+            "current_mbd": 0.06117853777082044,
+            "pct_of_baseline": 0.2538528538208317,
+            "shortfall_mbd": 0.17982146222917955
+          },
+          {
+            "refinery": "IOC Mathura",
+            "baseline_mbd": 0.154,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.154
+          },
+          {
+            "refinery": "CPCL Manali",
+            "baseline_mbd": 0.211,
+            "current_mbd": 0.06232457612222165,
+            "pct_of_baseline": 0.2953771380200078,
+            "shortfall_mbd": 0.14867542387777835
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.12370353777082044
+          },
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.0693281350826219
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.06195724405735292
+          },
+          {
+            "refinery": "IOC Koyali",
+            "baseline_mbd": 0.19214445419973683,
+            "current_mbd": 0.15783758928235875,
+            "pct_of_baseline": 0.8214527447057326,
+            "shortfall_mbd": 0.03430686491737808
+          }
+        ],
+        "affected_count": 11
+      },
+      {
+        "degradation_pct": 100,
+        "flow_after_mbd": 0.35144738558192556,
+        "capacity_loss_mbd": 2.048105423877778,
+        "affected_refineries": [
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "baseline_mbd": 0.506,
+            "current_mbd": 0.09580724405735298,
+            "pct_of_baseline": 0.18934237955998612,
+            "shortfall_mbd": 0.41019275594264704
+          },
+          {
+            "refinery": "IOC Panipat",
+            "baseline_mbd": 0.287,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.287
+          },
+          {
+            "refinery": "IOC Paradip",
+            "baseline_mbd": 0.2626470819314433,
+            "current_mbd": 0.03369708193144333,
+            "pct_of_baseline": 0.128297949033521,
+            "shortfall_mbd": 0.22895
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "baseline_mbd": 0.24127607818281732,
+            "current_mbd": 0.012326078182817344,
+            "pct_of_baseline": 0.05108702974472981,
+            "shortfall_mbd": 0.22895
+          },
+          {
+            "refinery": "BPCL Mumbai",
+            "baseline_mbd": 0.241,
+            "current_mbd": 0.027453537770820446,
+            "pct_of_baseline": 0.11391509448473214,
+            "shortfall_mbd": 0.21354646222917956
+          },
+          {
+            "refinery": "CPCL Manali",
+            "baseline_mbd": 0.211,
+            "current_mbd": 0.03534457612222166,
+            "pct_of_baseline": 0.1675098394418088,
+            "shortfall_mbd": 0.17565542387777833
+          },
+          {
+            "refinery": "IOC Mathura",
+            "baseline_mbd": 0.154,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.154
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "baseline_mbd": 0.12370353777082044,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.12370353777082044
+          },
+          {
+            "refinery": "IOC Koyali",
+            "baseline_mbd": 0.19214445419973683,
+            "current_mbd": 0.09732258928235878,
+            "pct_of_baseline": 0.5065074070844147,
+            "shortfall_mbd": 0.09482186491737805
+          },
+          {
+            "refinery": "HMEL Bathinda",
+            "baseline_mbd": 0.0693281350826219,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.0693281350826219
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "baseline_mbd": 0.06195724405735292,
+            "current_mbd": 0,
+            "pct_of_baseline": 0.0,
+            "shortfall_mbd": 0.06195724405735292
+          }
+        ],
+        "affected_count": 11
+      }
+    ],
+    "gap": {
+      "corridor": "Cape",
+      "mechanism": "corridor",
+      "scenario": null,
+      "degradation_pct": 100.0,
+      "baseline": "risk_weighted",
+      "baseline_flow_mbd": 2.3995528094597036,
+      "flow_after_mbd": 0.35144738558192556,
+      "gap_mbd": 2.048105423877778,
+      "affected_refineries": [
+        {
+          "refinery": "RIL Jamnagar DTA",
+          "baseline_mbd": 0.506,
+          "current_mbd": 0.09580724405735298,
+          "pct_of_baseline": 0.18934237955998612,
+          "shortfall_mbd": 0.41019275594264704
+        },
+        {
+          "refinery": "IOC Panipat",
+          "baseline_mbd": 0.287,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.287
+        },
+        {
+          "refinery": "IOC Paradip",
+          "baseline_mbd": 0.2626470819314433,
+          "current_mbd": 0.03369708193144333,
+          "pct_of_baseline": 0.128297949033521,
+          "shortfall_mbd": 0.22895
+        },
+        {
+          "refinery": "HPCL Vizag",
+          "baseline_mbd": 0.24127607818281732,
+          "current_mbd": 0.012326078182817344,
+          "pct_of_baseline": 0.05108702974472981,
+          "shortfall_mbd": 0.22895
+        },
+        {
+          "refinery": "BPCL Mumbai",
+          "baseline_mbd": 0.241,
+          "current_mbd": 0.027453537770820446,
+          "pct_of_baseline": 0.11391509448473214,
+          "shortfall_mbd": 0.21354646222917956
+        },
+        {
+          "refinery": "CPCL Manali",
+          "baseline_mbd": 0.211,
+          "current_mbd": 0.03534457612222166,
+          "pct_of_baseline": 0.1675098394418088,
+          "shortfall_mbd": 0.17565542387777833
+        },
+        {
+          "refinery": "IOC Mathura",
+          "baseline_mbd": 0.154,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.154
+        },
+        {
+          "refinery": "HPCL Mumbai",
+          "baseline_mbd": 0.12370353777082044,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.12370353777082044
+        },
+        {
+          "refinery": "IOC Koyali",
+          "baseline_mbd": 0.19214445419973683,
+          "current_mbd": 0.09732258928235878,
+          "pct_of_baseline": 0.5065074070844147,
+          "shortfall_mbd": 0.09482186491737805
+        },
+        {
+          "refinery": "HMEL Bathinda",
+          "baseline_mbd": 0.0693281350826219,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.0693281350826219
+        },
+        {
+          "refinery": "RPL Jamnagar SEZ",
+          "baseline_mbd": 0.06195724405735292,
+          "current_mbd": 0,
+          "pct_of_baseline": 0.0,
+          "shortfall_mbd": 0.06195724405735292
+        }
+      ],
+      "affected_count": 11,
+      "refinery_shortfall_mbd": 2.0481054238777783,
+      "deadband_unattributed_mbd": 0.0,
+      "load_bearing_ports": {
+        "Vadinar": 0.4970000000000002,
+        "Mundra": 0.637,
+        "Mumbai JNPT": 0.187,
+        "Chennai": 0.011999999999999983,
+        "Paradip": 0.08400000000000002,
+        "Vizag": 0.192
+      },
+      "duration_days": 14,
+      "total_shortfall_mb": 28.673475934288888
+    },
+    "reroute": [
+      {
+        "source": "UAE via Fujairah",
+        "score": 1.0,
+        "cost_score": 1.0,
+        "transit_score": 1.0,
+        "compat_score": 1.0,
+        "transit_days": 8,
+        "price_premium": 1.0,
+        "country": "UAE",
+        "route_description": "Fujairah terminal → direct Indian Ocean",
+        "transits_corridors": [],
+        "sanctioned": false,
+        "max_incremental_mbd": 0.3,
+        "crisis": "normal",
+        "cumulative_coverage_mbd": 0.3,
+        "cumulative_coverage_pct": 14.64768348847958,
+        "covers_gap": false
+      },
+      {
+        "source": "Saudi Arabia via Yanbu",
+        "score": 0.778514168530947,
+        "cost_score": 0.6666666666666667,
+        "transit_score": 0.75,
+        "compat_score": 0.9973900074571215,
+        "transit_days": 10,
+        "price_premium": 2.0,
+        "country": "Saudi Arabia",
+        "route_description": "Yanbu port → Suez Canal → Indian Ocean",
+        "transits_corridors": [
+          "Red Sea"
+        ],
+        "sanctioned": false,
+        "max_incremental_mbd": 0.5,
+        "crisis": "normal",
+        "cumulative_coverage_mbd": 0.8,
+        "cumulative_coverage_pct": 39.06048930261222,
+        "covers_gap": false
+      },
+      {
+        "source": "Kuwait via Shuaiba",
+        "score": 0.48296979865771816,
+        "cost_score": 0.33333333333333337,
+        "transit_score": 0.5,
+        "compat_score": 0.6985458612975392,
+        "transit_days": 12,
+        "price_premium": 3.0,
+        "country": "Kuwait",
+        "route_description": "Shuaiba port → Suez Canal → Indian Ocean",
+        "transits_corridors": [
+          "Red Sea"
+        ],
+        "sanctioned": false,
+        "max_incremental_mbd": 0.15,
+        "crisis": "normal",
+        "cumulative_coverage_mbd": 0.9500000000000001,
+        "cumulative_coverage_pct": 46.38433104685201,
+        "covers_gap": false
+      },
+      {
+        "source": "Libya Es Sider",
+        "score": 0.425,
+        "cost_score": 0.0,
+        "transit_score": 0.5,
+        "compat_score": 1.0,
+        "transit_days": 12,
+        "price_premium": 4.0,
+        "country": "Libya",
+        "route_description": "Es Sider terminal → Mediterranean → Suez → Indian Ocean",
+        "transits_corridors": [
+          "Red Sea"
+        ],
+        "sanctioned": false,
+        "max_incremental_mbd": 0.1,
+        "crisis": "normal",
+        "cumulative_coverage_mbd": 1.05,
+        "cumulative_coverage_pct": 51.26689220967854,
+        "covers_gap": false
+      },
+      {
+        "source": "Iraq via Ceyhan",
+        "score": 0.33684750186428036,
+        "cost_score": 0.0,
+        "transit_score": 0.25,
+        "compat_score": 0.9973900074571215,
+        "transit_days": 14,
+        "price_premium": 4.0,
+        "country": "Iraq",
+        "route_description": "Kirkuk-Ceyhan pipeline → Turkey → Mediterranean → Suez",
+        "transits_corridors": [
+          "Red Sea"
+        ],
+        "sanctioned": false,
+        "max_incremental_mbd": 0.15,
+        "crisis": "normal",
+        "cumulative_coverage_mbd": 1.2,
+        "cumulative_coverage_pct": 58.59073395391832,
+        "covers_gap": false
+      },
+      {
+        "source": "Kazakhstan CPC Blend",
+        "score": 0.22994966442953024,
+        "cost_score": 0.33333333333333337,
+        "transit_score": 0.0,
+        "compat_score": 0.3864653243847875,
+        "transit_days": 16,
+        "price_premium": 3.0,
+        "country": "Kazakhstan",
+        "route_description": "CPC pipeline → Black Sea → Bosphorus → Suez → Indian Ocean",
+        "transits_corridors": [
+          "Red Sea"
+        ],
+        "sanctioned": false,
+        "max_incremental_mbd": 0.1,
+        "crisis": "normal",
+        "cumulative_coverage_mbd": 1.3,
+        "cumulative_coverage_pct": 63.47329511674486,
+        "covers_gap": false
+      }
+    ],
+    "timeline": {
+      "transit_days": 16,
+      "alternatives_used": [
+        "UAE via Fujairah",
+        "Saudi Arabia via Yanbu",
+        "Kuwait via Shuaiba",
+        "Libya Es Sider",
+        "Iraq via Ceyhan",
+        "Kazakhstan CPC Blend"
+      ],
+      "covered_mbd": 1.3,
+      "residual_gap_mbd": 0.7481054238777778,
+      "covers_gap": false,
+      "daily_gap_mbd": [
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        1.7481054238777778,
+        1.7481054238777778,
+        1.2481054238777778,
+        1.2481054238777778,
+        0.9981054238777778,
+        0.9981054238777778
+      ]
+    },
+    "spr": {
+      "daily_schedule": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9981054238777778,
+        0.9981054238777778
+      ],
+      "total_released_mb": 13.996210847755556,
+      "insufficient": true,
+      "gap_covered_pct": 57.42394267231094,
+      "daily_gap_mbd": [
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        2.048105423877778,
+        1.7481054238777778,
+        1.7481054238777778,
+        1.2481054238777778,
+        1.2481054238777778,
+        0.9981054238777778,
+        0.9981054238777778
+      ],
+      "unmet_mbd": [
+        1.0481054238777778,
+        1.0481054238777778,
+        1.0481054238777778,
+        1.0481054238777778,
+        1.0481054238777778,
+        1.0481054238777778,
+        1.0481054238777778,
+        1.0481054238777778,
+        0.7481054238777778,
+        0.7481054238777778,
+        0.2481054238777778,
+        0.2481054238777778,
+        0.0,
+        0.0
+      ],
+      "total_unmet_mb": 10.377265086533335,
+      "required_mb": 24.37347593428889,
+      "available_mb": 29.496,
+      "bridge_days": 14,
+      "uncovered_tail_days": null,
+      "gap_at_horizon_end_mbd": 0.9981054238777778,
+      "reserve_exhausted_day": null,
+      "days_of_cover": 29.496,
+      "status": "Optimal",
+      "days_until_threshold": 29.496
+    }
+  }
+}

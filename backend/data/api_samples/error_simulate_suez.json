@@ -1,0 +1,16 @@
+{
+  "name": "error_simulate_suez",
+  "description": "Domain error -> 400 {\"error\": ...}. Suez is folded into Red Sea.",
+  "request": {
+    "method": "POST",
+    "url": "/api/simulate/",
+    "body": {
+      "corridor": "Suez",
+      "degradation": 0.5
+    }
+  },
+  "status": 400,
+  "response": {
+    "error": "unknown corridor 'Suez'"
+  }
+}

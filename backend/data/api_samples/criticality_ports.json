@@ -1,0 +1,121 @@
+{
+  "name": "criticality_ports",
+  "description": "Per-port residual / stranded-crude view.",
+  "request": {
+    "method": "GET",
+    "url": "/api/criticality/ports/"
+  },
+  "status": 200,
+  "response": [
+    {
+      "port": "Chennai",
+      "corridors": {
+        "Hormuz": 0.0,
+        "Red Sea": 0.0,
+        "Cape": 0.011999999999999983
+      },
+      "total_naive_inflow_mbd": 0.483,
+      "downstream_need_mbd": 0.211,
+      "total_residual_need_mbd": 0.011999999999999983,
+      "stranded_mbd": 0.272
+    },
+    {
+      "port": "Mumbai JNPT",
+      "corridors": {
+        "Hormuz": 0.07700000000000001,
+        "Cape": 0.187
+      },
+      "total_naive_inflow_mbd": 0.6,
+      "downstream_need_mbd": 0.432,
+      "total_residual_need_mbd": 0.264,
+      "stranded_mbd": 0.16799999999999998
+    },
+    {
+      "port": "Paradip",
+      "corridors": {
+        "Hormuz": 0.0,
+        "Red Sea": 0.0,
+        "Cape": 0.08400000000000002
+      },
+      "total_naive_inflow_mbd": 0.45799999999999996,
+      "downstream_need_mbd": 0.301,
+      "total_residual_need_mbd": 0.08400000000000002,
+      "stranded_mbd": 0.15699999999999997
+    },
+    {
+      "port": "Sikka",
+      "corridors": {
+        "Hormuz": 0.1
+      },
+      "total_naive_inflow_mbd": 0.153,
+      "downstream_need_mbd": 0.1,
+      "total_residual_need_mbd": 0.1,
+      "stranded_mbd": 0.05299999999999999
+    },
+    {
+      "port": "Vizag",
+      "corridors": {
+        "Hormuz": 0.061,
+        "Cape": 0.192
+      },
+      "total_naive_inflow_mbd": 0.351,
+      "downstream_need_mbd": 0.302,
+      "total_residual_need_mbd": 0.253,
+      "stranded_mbd": 0.04899999999999999
+    },
+    {
+      "port": "Vadinar",
+      "corridors": {
+        "Hormuz": 0.8550000000000002,
+        "Cape": 0.4970000000000002
+      },
+      "total_naive_inflow_mbd": 1.3519999999999999,
+      "downstream_need_mbd": 1.352,
+      "total_residual_need_mbd": 1.3520000000000003,
+      "stranded_mbd": 0.0
+    },
+    {
+      "port": "Mundra",
+      "corridors": {
+        "Hormuz": 0.367,
+        "Red Sea": 0.15100000000000002,
+        "Cape": 0.637
+      },
+      "total_naive_inflow_mbd": 1.155,
+      "downstream_need_mbd": 1.155,
+      "total_residual_need_mbd": 1.155,
+      "stranded_mbd": 0.0
+    },
+    {
+      "port": "Mangaluru",
+      "corridors": {
+        "Hormuz": 0.122
+      },
+      "total_naive_inflow_mbd": 0.122,
+      "downstream_need_mbd": 0.122,
+      "total_residual_need_mbd": 0.122,
+      "stranded_mbd": 0.0
+    },
+    {
+      "port": "Kochi",
+      "corridors": {
+        "Hormuz": 0.11
+      },
+      "total_naive_inflow_mbd": 0.11,
+      "downstream_need_mbd": 0.11,
+      "total_residual_need_mbd": 0.11,
+      "stranded_mbd": 0.0
+    },
+    {
+      "port": "Haldia",
+      "corridors": {
+        "Hormuz": 0.092,
+        "Red Sea": 0.05099999999999999
+      },
+      "total_naive_inflow_mbd": 0.143,
+      "downstream_need_mbd": 0.143,
+      "total_residual_need_mbd": 0.143,
+      "stranded_mbd": 0.0
+    }
+  ]
+}

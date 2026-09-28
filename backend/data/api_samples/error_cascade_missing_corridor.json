@@ -1,0 +1,14 @@
+{
+  "name": "error_cascade_missing_corridor",
+  "description": "Field validation error -> 400 with DRF's per-field messages.",
+  "request": {
+    "method": "GET",
+    "url": "/api/cascade/"
+  },
+  "status": 400,
+  "response": {
+    "corridor": [
+      "This field is required."
+    ]
+  }
+}

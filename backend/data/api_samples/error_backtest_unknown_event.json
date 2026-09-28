@@ -1,0 +1,12 @@
+{
+  "name": "error_backtest_unknown_event",
+  "description": "Unknown backtest key -> 400.",
+  "request": {
+    "method": "GET",
+    "url": "/api/backtest/?event=no_such_event"
+  },
+  "status": 400,
+  "response": {
+    "error": "unknown backtest event 'no_such_event'; known: 2026_hormuz_closure, 2025_iran_standoff"
+  }
+}

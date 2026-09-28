@@ -1,0 +1,481 @@
+{
+  "name": "pipeline_run_snapshot",
+  "description": "The cited Thesis Snapshot run: every thesis figure lives in here.",
+  "request": {
+    "method": "GET",
+    "url": "/api/pipeline/runs/3/"
+  },
+  "status": 200,
+  "response": {
+    "id": 3,
+    "started_at": "2026-09-27T06:19:16.931254Z",
+    "finished_at": "2026-09-27T07:01:10.267301Z",
+    "status": "succeeded",
+    "options": {
+      "score": true,
+      "crisis": "normal",
+      "ingest": [
+        "rss",
+        "gdelt-fallback"
+      ],
+      "extract": true,
+      "persist": true,
+      "max_records": null,
+      "last_minutes": null,
+      "duration_days": 14,
+      "extract_limit": null,
+      "include_sanctioned": false
+    },
+    "stages_run": [
+      "ingest",
+      "extract",
+      "score",
+      "update_graph",
+      "criticality",
+      "check_threshold",
+      "response",
+      "dashboard_update"
+    ],
+    "ingest_report": {
+      "rss": {
+        "stored": 9
+      },
+      "gdelt-fallback": {
+        "Cape": {
+          "path": "gkg",
+          "status": "empty",
+          "stored": 0,
+          "fetched": 0,
+          "sampled": true,
+          "doc_status": "not_attempted"
+        },
+        "Hormuz": {
+          "path": "gkg",
+          "status": "ok",
+          "stored": 662,
+          "fetched": 809,
+          "sampled": true,
+          "doc_status": "error"
+        },
+        "Red Sea": {
+          "path": "gkg",
+          "status": "ok",
+          "stored": 3,
+          "fetched": 12,
+          "sampled": true,
+          "doc_status": "not_attempted"
+        }
+      }
+    },
+    "extraction_report": {
+      "events": 813,
+      "articles": 830,
+      "irrelevant": 17,
+      "call_failed": 0,
+      "unparseable": 0
+    },
+    "risk_scores": {
+      "Cape": 0.05,
+      "Hormuz": 0.8879447437925696,
+      "Red Sea": 0.7413651916920864
+    },
+    "criticality": [
+      {
+        "corridor": "Cape",
+        "risk_rank": 1,
+        "centrality": 0.06547619047619048,
+        "rank_shift": 1,
+        "static_rank": 2,
+        "live_risk_score": 0.05,
+        "capacity_loss_mbd": 2.048105423877778,
+        "static_centrality": 0.053209346160010995,
+        "static_capacity_loss_mbd": 1.6089999999999995,
+        "residual_load_bearing_mbd": 1.6090000000000002
+      },
+      {
+        "corridor": "Hormuz",
+        "risk_rank": 2,
+        "centrality": 0.06505102040816327,
+        "rank_shift": -1,
+        "static_rank": 1,
+        "live_risk_score": 0.8879447437925696,
+        "capacity_loss_mbd": 0.2473059504497992,
+        "static_centrality": 0.07558522137100279,
+        "static_capacity_loss_mbd": 1.7839999999999998,
+        "residual_load_bearing_mbd": 1.7840000000000003
+      },
+      {
+        "corridor": "Red Sea",
+        "risk_rank": 3,
+        "centrality": 0.022108843537414966,
+        "rank_shift": 0,
+        "static_rank": 3,
+        "live_risk_score": 0.7413651916920864,
+        "capacity_loss_mbd": 0.06879685900990484,
+        "static_centrality": 0.02384148689075492,
+        "static_capacity_loss_mbd": 0.20200000000000085,
+        "residual_load_bearing_mbd": 0.202
+      }
+    ],
+    "threshold": {
+      "reason": "capacity loss 85.4% of baseline flow > 15%",
+      "evaluated": [
+        {
+          "crossed": true,
+          "corridor": "Cape",
+          "loss_crossed": true,
+          "risk_crossed": false,
+          "loss_fraction": 0.8535362988485093,
+          "live_risk_score": 0.05,
+          "capacity_loss_mbd": 2.048105423877778
+        },
+        {
+          "crossed": true,
+          "corridor": "Hormuz",
+          "loss_crossed": false,
+          "risk_crossed": true,
+          "loss_fraction": 0.10306334975202482,
+          "live_risk_score": 0.8879447437925696,
+          "capacity_loss_mbd": 0.2473059504497992
+        },
+        {
+          "crossed": false,
+          "corridor": "Red Sea",
+          "loss_crossed": false,
+          "risk_crossed": false,
+          "loss_fraction": 0.028670700114908295,
+          "live_risk_score": 0.7413651916920864,
+          "capacity_loss_mbd": 0.06879685900990484
+        }
+      ],
+      "triggered": [
+        "Cape",
+        "Hormuz"
+      ],
+      "baseline_flow_mbd": 2.3995528094597036,
+      "threshold_crossed": true,
+      "triggered_corridor": "Cape",
+      "risk_alone_threshold": 0.75,
+      "loss_fraction_threshold": 0.15
+    },
+    "triggered_corridor": "Cape",
+    "capacity_loss_mbd": 2.048105423877778,
+    "response": {
+      "gap": {
+        "gap_mbd": 2.048105423877778,
+        "baseline": "risk_weighted",
+        "corridor": "Cape",
+        "scenario": null,
+        "mechanism": "corridor",
+        "duration_days": 14,
+        "affected_count": 11,
+        "flow_after_mbd": 0.35144738558192556,
+        "degradation_pct": 100,
+        "baseline_flow_mbd": 2.3995528094597036,
+        "load_bearing_ports": {
+          "Vizag": 0.192,
+          "Mundra": 0.637,
+          "Chennai": 0.011999999999999983,
+          "Paradip": 0.08400000000000002,
+          "Vadinar": 0.4970000000000002,
+          "Mumbai JNPT": 0.187
+        },
+        "total_shortfall_mb": 28.673475934288888,
+        "affected_refineries": [
+          {
+            "refinery": "RIL Jamnagar DTA",
+            "current_mbd": 0.09580724405735298,
+            "baseline_mbd": 0.506,
+            "shortfall_mbd": 0.41019275594264704,
+            "pct_of_baseline": 0.18934237955998612
+          },
+          {
+            "refinery": "IOC Panipat",
+            "current_mbd": 0,
+            "baseline_mbd": 0.287,
+            "shortfall_mbd": 0.287,
+            "pct_of_baseline": 0.0
+          },
+          {
+            "refinery": "IOC Paradip",
+            "current_mbd": 0.03369708193144333,
+            "baseline_mbd": 0.2626470819314433,
+            "shortfall_mbd": 0.22895,
+            "pct_of_baseline": 0.128297949033521
+          },
+          {
+            "refinery": "HPCL Vizag",
+            "current_mbd": 0.012326078182817344,
+            "baseline_mbd": 0.24127607818281732,
+            "shortfall_mbd": 0.22895,
+            "pct_of_baseline": 0.05108702974472981
+          },
+          {
+            "refinery": "BPCL Mumbai",
+            "current_mbd": 0.027453537770820446,
+            "baseline_mbd": 0.241,
+            "shortfall_mbd": 0.21354646222917956,
+            "pct_of_baseline": 0.11391509448473214
+          },
+          {
+            "refinery": "CPCL Manali",
+            "current_mbd": 0.03534457612222166,
+            "baseline_mbd": 0.211,
+            "shortfall_mbd": 0.17565542387777833,
+            "pct_of_baseline": 0.1675098394418088
+          },
+          {
+            "refinery": "IOC Mathura",
+            "current_mbd": 0,
+            "baseline_mbd": 0.154,
+            "shortfall_mbd": 0.154,
+            "pct_of_baseline": 0.0
+          },
+          {
+            "refinery": "HPCL Mumbai",
+            "current_mbd": 0,
+            "baseline_mbd": 0.12370353777082044,
+            "shortfall_mbd": 0.12370353777082044,
+            "pct_of_baseline": 0.0
+          },
+          {
+            "refinery": "IOC Koyali",
+            "current_mbd": 0.09732258928235878,
+            "baseline_mbd": 0.19214445419973683,
+            "shortfall_mbd": 0.09482186491737805,
+            "pct_of_baseline": 0.5065074070844147
+          },
+          {
+            "refinery": "HMEL Bathinda",
+            "current_mbd": 0,
+            "baseline_mbd": 0.0693281350826219,
+            "shortfall_mbd": 0.0693281350826219,
+            "pct_of_baseline": 0.0
+          },
+          {
+            "refinery": "RPL Jamnagar SEZ",
+            "current_mbd": 0,
+            "baseline_mbd": 0.06195724405735292,
+            "shortfall_mbd": 0.06195724405735292,
+            "pct_of_baseline": 0.0
+          }
+        ],
+        "refinery_shortfall_mbd": 2.0481054238777783,
+        "deadband_unattributed_mbd": 0.0
+      },
+      "spr": {
+        "status": "Optimal",
+        "unmet_mbd": [
+          1.0481054238777778,
+          1.0481054238777778,
+          1.0481054238777778,
+          1.0481054238777778,
+          1.0481054238777778,
+          1.0481054238777778,
+          1.0481054238777778,
+          1.0481054238777778,
+          0.7481054238777778,
+          0.7481054238777778,
+          0.2481054238777778,
+          0.2481054238777778,
+          0.0,
+          0.0
+        ],
+        "bridge_days": 14,
+        "required_mb": 24.37347593428889,
+        "available_mb": 29.496,
+        "insufficient": true,
+        "daily_gap_mbd": [
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          1.7481054238777778,
+          1.7481054238777778,
+          1.2481054238777778,
+          1.2481054238777778,
+          0.9981054238777778,
+          0.9981054238777778
+        ],
+        "days_of_cover": 29.496,
+        "daily_schedule": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.9981054238777778,
+          0.9981054238777778
+        ],
+        "total_unmet_mb": 10.377265086533335,
+        "gap_covered_pct": 57.42394267231094,
+        "total_released_mb": 13.996210847755556,
+        "uncovered_tail_days": null,
+        "reserve_exhausted_day": null,
+        "gap_at_horizon_end_mbd": 0.9981054238777778
+      },
+      "reroute": [
+        {
+          "score": 1.0,
+          "crisis": "normal",
+          "source": "UAE via Fujairah",
+          "country": "UAE",
+          "cost_score": 1.0,
+          "covers_gap": false,
+          "sanctioned": false,
+          "compat_score": 1.0,
+          "transit_days": 8,
+          "price_premium": 1.0,
+          "transit_score": 1.0,
+          "route_description": "Fujairah terminal → direct Indian Ocean",
+          "transits_corridors": [],
+          "max_incremental_mbd": 0.3,
+          "cumulative_coverage_mbd": 0.3,
+          "cumulative_coverage_pct": 14.64768348847958
+        },
+        {
+          "score": 0.778514168530947,
+          "crisis": "normal",
+          "source": "Saudi Arabia via Yanbu",
+          "country": "Saudi Arabia",
+          "cost_score": 0.6666666666666667,
+          "covers_gap": false,
+          "sanctioned": false,
+          "compat_score": 0.9973900074571215,
+          "transit_days": 10,
+          "price_premium": 2.0,
+          "transit_score": 0.75,
+          "route_description": "Yanbu port → Suez Canal → Indian Ocean",
+          "transits_corridors": [
+            "Red Sea"
+          ],
+          "max_incremental_mbd": 0.5,
+          "cumulative_coverage_mbd": 0.8,
+          "cumulative_coverage_pct": 39.06048930261222
+        },
+        {
+          "score": 0.48296979865771816,
+          "crisis": "normal",
+          "source": "Kuwait via Shuaiba",
+          "country": "Kuwait",
+          "cost_score": 0.33333333333333337,
+          "covers_gap": false,
+          "sanctioned": false,
+          "compat_score": 0.6985458612975392,
+          "transit_days": 12,
+          "price_premium": 3.0,
+          "transit_score": 0.5,
+          "route_description": "Shuaiba port → Suez Canal → Indian Ocean",
+          "transits_corridors": [
+            "Red Sea"
+          ],
+          "max_incremental_mbd": 0.15,
+          "cumulative_coverage_mbd": 0.9500000000000001,
+          "cumulative_coverage_pct": 46.38433104685201
+        },
+        {
+          "score": 0.425,
+          "crisis": "normal",
+          "source": "Libya Es Sider",
+          "country": "Libya",
+          "cost_score": 0.0,
+          "covers_gap": false,
+          "sanctioned": false,
+          "compat_score": 1.0,
+          "transit_days": 12,
+          "price_premium": 4.0,
+          "transit_score": 0.5,
+          "route_description": "Es Sider terminal → Mediterranean → Suez → Indian Ocean",
+          "transits_corridors": [
+            "Red Sea"
+          ],
+          "max_incremental_mbd": 0.1,
+          "cumulative_coverage_mbd": 1.05,
+          "cumulative_coverage_pct": 51.26689220967854
+        },
+        {
+          "score": 0.33684750186428036,
+          "crisis": "normal",
+          "source": "Iraq via Ceyhan",
+          "country": "Iraq",
+          "cost_score": 0.0,
+          "covers_gap": false,
+          "sanctioned": false,
+          "compat_score": 0.9973900074571215,
+          "transit_days": 14,
+          "price_premium": 4.0,
+          "transit_score": 0.25,
+          "route_description": "Kirkuk-Ceyhan pipeline → Turkey → Mediterranean → Suez",
+          "transits_corridors": [
+            "Red Sea"
+          ],
+          "max_incremental_mbd": 0.15,
+          "cumulative_coverage_mbd": 1.2,
+          "cumulative_coverage_pct": 58.59073395391832
+        },
+        {
+          "score": 0.22994966442953024,
+          "crisis": "normal",
+          "source": "Kazakhstan CPC Blend",
+          "country": "Kazakhstan",
+          "cost_score": 0.33333333333333337,
+          "covers_gap": false,
+          "sanctioned": false,
+          "compat_score": 0.3864653243847875,
+          "transit_days": 16,
+          "price_premium": 3.0,
+          "transit_score": 0.0,
+          "route_description": "CPC pipeline → Black Sea → Bosphorus → Suez → Indian Ocean",
+          "transits_corridors": [
+            "Red Sea"
+          ],
+          "max_incremental_mbd": 0.1,
+          "cumulative_coverage_mbd": 1.3,
+          "cumulative_coverage_pct": 63.47329511674486
+        }
+      ],
+      "timeline": {
+        "covers_gap": false,
+        "covered_mbd": 1.3,
+        "transit_days": 16,
+        "daily_gap_mbd": [
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          2.048105423877778,
+          1.7481054238777778,
+          1.7481054238777778,
+          1.2481054238777778,
+          1.2481054238777778,
+          0.9981054238777778,
+          0.9981054238777778
+        ],
+        "residual_gap_mbd": 0.7481054238777778,
+        "alternatives_used": [
+          "UAE via Fujairah",
+          "Saudi Arabia via Yanbu",
+          "Kuwait via Shuaiba",
+          "Libya Es Sider",
+          "Iraq via Ceyhan",
+          "Kazakhstan CPC Blend"
+        ]
+      }
+    },
+    "errors": []
+  }
+}

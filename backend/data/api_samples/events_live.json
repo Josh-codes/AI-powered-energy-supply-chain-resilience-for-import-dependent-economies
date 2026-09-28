@@ -1,0 +1,66 @@
+{
+  "name": "events_live",
+  "description": "Latest extracted events (default limit 50; 5 here to keep it short).",
+  "request": {
+    "method": "GET",
+    "url": "/api/events/live/?limit=5"
+  },
+  "status": 200,
+  "response": [
+    {
+      "id": 1635,
+      "corridor": "Hormuz",
+      "actor": "Iran",
+      "event_type": "policy",
+      "severity": 3,
+      "confidence": 0.8,
+      "timestamp": "2026-09-27T04:45:00Z",
+      "title": "Trump Rejects Iran's Proposal To Open Strait Of Hormuz",
+      "article_url": "https://whnz.iheart.com/content/2026-09-27-trump-rejects-irans-proposal-to-open-strait-of-hormuz/"
+    },
+    {
+      "id": 1636,
+      "corridor": "Hormuz",
+      "actor": "Iran",
+      "event_type": "policy",
+      "severity": 3,
+      "confidence": 0.8,
+      "timestamp": "2026-09-27T04:45:00Z",
+      "title": "Trump Rejects Iran's Proposal To Open Strait Of Hormuz",
+      "article_url": "https://klvi.iheart.com/content/2026-09-27-trump-rejects-irans-proposal-to-open-strait-of-hormuz/"
+    },
+    {
+      "id": 1632,
+      "corridor": "Hormuz",
+      "actor": "Iran",
+      "event_type": "policy",
+      "severity": 3,
+      "confidence": 0.85,
+      "timestamp": "2026-09-27T04:45:00Z",
+      "title": "Trump Rejects Iran's Proposal To Open Strait Of Hormuz",
+      "article_url": "https://talk1200boston.iheart.com/content/2026-09-27-trump-rejects-irans-proposal-to-open-strait-of-hormuz/"
+    },
+    {
+      "id": 1634,
+      "corridor": "Hormuz",
+      "actor": "Iran",
+      "event_type": "policy",
+      "severity": 3,
+      "confidence": 0.8,
+      "timestamp": "2026-09-27T04:45:00Z",
+      "title": "Trump Rejects Iran's Proposal To Open Strait Of Hormuz | News Radio 103.1 and 810 WGY",
+      "article_url": "https://wgy.iheart.com/content/2026-09-27-trump-rejects-irans-proposal-to-open-strait-of-hormuz/"
+    },
+    {
+      "id": 1637,
+      "corridor": "Hormuz",
+      "actor": "Iran",
+      "event_type": "policy",
+      "severity": 3,
+      "confidence": 0.8,
+      "timestamp": "2026-09-27T04:45:00Z",
+      "title": "Trump Rejects Iran's Proposal To Open Strait Of Hormuz",
+      "article_url": "https://whyn.iheart.com/content/2026-09-27-trump-rejects-irans-proposal-to-open-strait-of-hormuz/"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "backtest_list",
+  "description": "Defined backtest events with their verdicts.",
+  "request": {
+    "method": "GET",
+    "url": "/api/backtest/"
+  },
+  "status": 200,
+  "response": [
+    {
+      "event": "2026_hormuz_closure",
+      "name": "2026 Strait of Hormuz closure",
+      "corridor": "Hormuz",
+      "chart_start": "2026-01-01",
+      "end": "2026-03-18",
+      "validation": "PASSED"
+    },
+    {
+      "event": "2025_iran_standoff",
+      "name": "2025 US-Iran standoff",
+      "corridor": "Hormuz",
+      "chart_start": "2025-05-30",
+      "end": "2025-07-11",
+      "validation": "INCOMPLETE"
+    }
+  ]
+}

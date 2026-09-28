@@ -1,0 +1,47 @@
+{
+  "name": "criticality_by_centrality",
+  "description": "Same rows, ranks recomputed off centrality (diagnostic only).",
+  "request": {
+    "method": "GET",
+    "url": "/api/criticality/?rank_by=centrality"
+  },
+  "status": 200,
+  "response": [
+    {
+      "corridor": "Cape",
+      "centrality": 0.06547619047619048,
+      "static_centrality": 0.053209346160010995,
+      "capacity_loss_mbd": 2.048105423877778,
+      "static_capacity_loss_mbd": 1.609,
+      "live_risk_score": 0.05,
+      "residual_load_bearing_mbd": 1.6090000000000002,
+      "static_rank": 2,
+      "risk_rank": 1,
+      "rank_shift": 1
+    },
+    {
+      "corridor": "Hormuz",
+      "centrality": 0.06505102040816327,
+      "static_centrality": 0.07558522137100279,
+      "capacity_loss_mbd": 0.24730595044979875,
+      "static_capacity_loss_mbd": 1.7839999999999998,
+      "live_risk_score": 0.8879447437925696,
+      "residual_load_bearing_mbd": 1.7840000000000003,
+      "static_rank": 1,
+      "risk_rank": 2,
+      "rank_shift": -1
+    },
+    {
+      "corridor": "Red Sea",
+      "centrality": 0.022108843537414966,
+      "static_centrality": 0.02384148689075492,
+      "capacity_loss_mbd": 0.06879685900990484,
+      "static_capacity_loss_mbd": 0.20199999999999996,
+      "live_risk_score": 0.7413651916920864,
+      "residual_load_bearing_mbd": 0.202,
+      "static_rank": 3,
+      "risk_rank": 3,
+      "rank_shift": 0
+    }
+  ]
+}
