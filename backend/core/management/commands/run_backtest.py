@@ -49,6 +49,10 @@ class Command(BaseCommand):
                             help="With --pull: concurrent slice downloads (default 4).")
         parser.add_argument("--no-write", action="store_true",
                             help="Score and print, but do not write the report file.")
+        parser.add_argument("--top-k", type=int, default=runner.TOP_K_STORIES,
+                            help=f"Sensitivity check: average the k strongest stories instead "
+                                 f"of {runner.TOP_K_STORIES}. Writes <event>.top<k>.json, "
+                                 f"never the cited report.")
 
     def handle(self, *args, **options):
         if options["list"]:
@@ -67,7 +71,9 @@ class Command(BaseCommand):
             return self._pull(key, event, options)
         if options["day"] or options["force"]:
             raise CommandError("--day / --force only apply with --pull")
-        return self._score(key, event, write=not options["no_write"])
+        if options["top_k"] < 1:
+            raise CommandError("--top-k must be at least 1")
+        return self._score(key, event, write=not options["no_write"], top_k=options["top_k"])
 
     # ------------------------------------------------------------------ list
 
@@ -161,17 +167,20 @@ class Command(BaseCommand):
 
     # ----------------------------------------------------------------- score
 
-    def _score(self, key, event, write):
+    def _score(self, key, event, write, top_k=runner.TOP_K_STORIES):
         w = self.stdout.write
         ok, warn, err = self.style.SUCCESS, self.style.WARNING, self.style.ERROR
         focus = event["corridor"]
         w(self.style.MIGRATE_HEADING(
             f"{event['name']}: point-in-time scores at {runner.SCORE_TIME_UTC:%H:%M} UTC"
         ))
+        if top_k != runner.TOP_K_STORIES:
+            w(warn(f"  SENSITIVITY RUN: top-{top_k} stories (production is top-"
+                   f"{runner.TOP_K_STORIES}). Not the cited report."))
         w(f"  {'date':<10}  {'Brent':>7}  {'Cape':>6}  {'Hormuz':>6}  {'RedSea':>6}"
           f"  {focus + ' stories':>15}")
 
-        report = runner.run_backtest(key, write=write)
+        report = runner.run_backtest(key, write=write, top_k=top_k)
         for row in report["series"]:
             brent = f"{row['brent_usd']:7.2f}" if row.get("brent_usd") is not None else f"{'-':>7}"
             s = row["scores"]
@@ -213,4 +222,4 @@ class Command(BaseCommand):
         if verdict == runner.VERDICT_INCOMPLETE:
             w(warn(f"  run `python manage.py run_backtest --event {key} --status` for what is missing"))
         if write:
-            w(f"  report        {runner.report_path(key)}")
+            w(f"  report        {runner.report_path(key, top_k)}")

@@ -31,7 +31,13 @@ from backtest import runner, validator
 from core.models import Corridor, ExtractedEvent, RawArticle, RiskScore
 from pipeline.ingest import gdelt_gkg
 from pipeline.ingest.gdelt import FETCH_EMPTY, FETCH_ERROR, FETCH_OK, CorridorFetch
-from pipeline.score.risk_scorer import compute_corridor_severity, normalize_severity
+from pipeline.score.risk_scorer import (
+    cluster_stories,
+    compute_corridor_severity,
+    corridor_events,
+    normalize_severity,
+    top_k_severity,
+)
 
 UTC = timezone.utc
 BASELINES = {"Hormuz": 0.20, "Red Sea": 0.15, "Cape": 0.05}
@@ -523,6 +529,28 @@ class ScoreDayTests(TestCase):
             self.assertEqual(cell["stories"], ref["stories"]["Hormuz"], day)
             self.assertEqual(cell["top_stories"], ref["top_stories"], day)
 
+    def test_top_k_matches_the_production_statistic_at_that_k(self):
+        for i in range(6):
+            _event("Hormuz", self._at(days=-i), severity=5 - (i % 3), seed=i)
+        as_of = runner._as_of(self.DAY)
+        for k in (1, 3, 5):
+            row = runner.score_day(self.DAY, self._corridors(), focus="Hormuz", top_k=k)
+            events = corridor_events("Hormuz", now=as_of, exclude_future=True)
+            stories = cluster_stories(events, now=as_of)
+            raw = top_k_severity(stories, k=k)
+            self.assertAlmostEqual(row["scores"]["Hormuz"],
+                                   round(normalize_severity(raw, BASELINES["Hormuz"]), 4), msg=k)
+            self.assertEqual(len(row["top_stories"]), min(k, len(stories)))
+
+    def test_incremental_series_equals_from_scratch_at_another_k(self):
+        for d in range(-3, 4):
+            _event("Hormuz", self._at(days=d), severity=2 + (d % 4), seed=50 + d)
+        days = [self.DAY + timedelta(days=i) for i in range(4)]
+        series = runner.corridor_series("Hormuz", BASELINES["Hormuz"], days, top_k=5)
+        for k, day in enumerate(days):
+            ref = runner.score_day(day, [("Hormuz", BASELINES["Hormuz"])], top_k=5)
+            self.assertEqual(series[k]["score"], ref["scores"]["Hormuz"], day)
+
     def test_scored_at_the_brent_assessment_not_end_of_day(self):
         _event("Hormuz", self._at(hh=16, mm=0), seed=1)     # before 16:30 -> in
         _event("Hormuz", self._at(hh=17, mm=0), seed=2)     # after 16:30  -> out
@@ -626,6 +654,27 @@ class RunBacktestTests(_TempBacktestDir, TestCase):
             {"start": date(2026, 2, 20), "end": date(2026, 2, 21), "days": 2},
         ])
 
+    def test_top_k_run_writes_its_own_file_and_never_the_cited_report(self):
+        self._complete_ledger()
+        with patch.object(runner.eia, "fetch_brent_prices", return_value=self._prices()):
+            cited = runner.run_backtest(self.KEY)
+            sens = runner.run_backtest(self.KEY, top_k=5)
+        self.assertNotEqual(runner.report_path(self.KEY, 5), runner.report_path(self.KEY))
+        self.assertTrue(runner.report_path(self.KEY, 5).exists())
+        loaded = runner.load_report(self.KEY)          # what /api/backtest/ serves
+        self.assertEqual(loaded["method"]["top_k_stories"], runner.TOP_K_STORIES)
+        self.assertTrue(loaded["method"]["top_k_is_production"])
+        self.assertEqual(sens["method"]["top_k_stories"], 5)
+        self.assertFalse(sens["method"]["top_k_is_production"])
+        # three severity-5 stories on 02-27: diluted over 5, so lower than over 3
+        day = {r["date"]: r for r in sens["series"]}[date(2026, 2, 27)]
+        base = {r["date"]: r for r in cited["series"]}[date(2026, 2, 27)]
+        self.assertLess(day["scores"]["Hormuz"], base["scores"]["Hormuz"])
+
+    def test_top_k_below_one_is_rejected(self):
+        with self.assertRaises(ValueError):
+            runner.run_backtest(self.KEY, write=False, top_k=0)
+
     def test_pending_extraction_downgrades_to_incomplete(self):
         self._complete_ledger()
         RawArticle.objects.create(url="https://x.com/p", source="gdelt_gkg", title="t",
@@ -683,6 +732,18 @@ class CommandTests(_TempBacktestDir, TestCase):
     def test_bad_day_format(self):
         with self.assertRaises(CommandError):
             self._call("--event", "2026_hormuz_closure", "--pull", "--day", "11/02/2026")
+
+    def test_top_k_below_one_is_rejected_by_the_command(self):
+        with self.assertRaises(CommandError):
+            self._call("--event", "2026_hormuz_closure", "--top-k", "0")
+
+    def test_top_k_run_is_labelled_and_written_beside_the_cited_report(self):
+        _make_corridors()
+        with patch.object(runner.eia, "fetch_brent_prices", return_value=[]):
+            out = self._call("--event", "2026_hormuz_closure", "--top-k", "5")
+        self.assertIn("SENSITIVITY RUN: top-5", out)
+        self.assertIn("2026_hormuz_closure.top5.json", out)
+        self.assertFalse(runner.report_path("2026_hormuz_closure").exists())
 
     def test_status_on_a_fresh_window_points_at_pull(self):
         out = self._call("--event", "2026_hormuz_closure", "--status")

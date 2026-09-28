@@ -51,12 +51,12 @@ price moves for the 2026 Hormuz closure and the 2025 Iran-Israel standoff.
 
 ## Current status (2026-09-28)
 
-- **Phases 1–6 complete.** Phase 7 in progress: both backtests done and read (see below).
-- **In progress, uncommitted:** frontend handoff. `API_DOCS.md` is drafted at the repo
-  root; `capture_api_samples` command written; `core/admin.py` now registers 5 models
-  read-only. **Not done yet:** `backend/data/api_samples/` not captured; fixture
-  `backend/data/fixtures/snapshot.json` not dumped.
-- Test suite: **568 tests** at last count (`python manage.py test`, from `backend/`).
+- **Phases 1–6 complete. Phase 7's required work is complete:** both backtests done and
+  read (see below); frontend handoff built: `API_DOCS.md` (checked against real
+  payloads), `backend/data/api_samples/` captured at the snapshot scores,
+  `backend/data/fixtures/snapshot.json.gz` dumped, `core/admin.py` registers 5 models
+  read-only, `.env.example` no longer hardcodes this machine's paths.
+- Test suite: **580 tests**, all passing (`python manage.py test`, from `backend/`).
 - Open items: see [Open items](#open-items--known-limitations) at the bottom.
 
 ---
@@ -236,6 +236,11 @@ Price event = first Brent session ≥ 5% (from EIA prices alone).
   but Brent had already moved +4.21% on Jun 11. It did **not** fall back after the ceasefire
   (retrospective stories rated like live threats). **Never cite the Jun 15 → Jul 1 decline
   as a fall-back** (it is decay over missing data).
+- **Sensitivity to `TOP_K_STORIES` (3 vs 5): robust.** Both verdicts and readings unchanged
+  (`<event>.top5.json`). Leads move one day each: 2025 is **1 day at k = 3, 0 days at k = 5**
+  (cite both); 2026 validator 15 → 14 (still not cited). k lowers thin-base days (2025 Jun 12
+  0.615 → 0.449) but not crisis levels (peak 0.959 → 0.958): it trades early sensitivity for
+  caution, it does not change what is detected. Production stays k = 3.
 
 ---
 
@@ -263,6 +268,7 @@ python manage.py compare_scoring                      # read-only formula compar
 
 # Backtest
 python manage.py run_backtest --list | --event KEY --status | --event KEY --pull | --event KEY
+python manage.py run_backtest --event KEY --top-k 5   # sensitivity run -> <event>.top5.json, never the cited report
 
 # Frontend handoff
 python manage.py capture_api_samples [--run-id 3]     # read-only; writes data/api_samples/
@@ -276,7 +282,9 @@ Full reference with every flag: [docs/claude/operations.md](docs/claude/operatio
 
 - **`seed_db` alone yields a silently wrong world**: `live_risk_score` stays 0.0, every
   corridor reads green and `rank_shift` is 0 everywhere, with no warning. A fresh DB needs
-  the committed fixture (`seed_db` → `loaddata`) once it exists.
+  the committed fixture: **`migrate` → `python -X utf8 manage.py loaddata
+  data/fixtures/snapshot.json.gz`, with NO `seed_db`** (seed_db's pks need not match the
+  fixture's, so running it first collides on the unique corridor names).
 - **Risk-weighted == static (all `rank_shift` 0)** usually means risk never reached the
   edges. `engine.py` warns; `run_criticality` applies stored risk itself.
 - `graph.updater.load_live_graph()` detects cross-process staleness by comparing stored
@@ -306,11 +314,15 @@ Full reference with every flag: [docs/claude/operations.md](docs/claude/operatio
 
 - **Phase 7:** gpt-4o-mini hindsight control on February articles; optional signal-vs-Brent
   co-movement analysis; plot the live risk time series (from 2026-09-26 only) as a deliverable;
-  `TOP_K_STORIES` 3 vs 5 sensitivity; semantic story clustering; the Red Sea maritime-gate
+  semantic story clustering; the Red Sea maritime-gate
   question (does Houthi land escalation count as corridor risk?).
-- **Frontend handoff:** capture samples, dump fixture
-  (`dumpdata core --exclude core.RawArticle --natural-foreign --indent 2 -o data/fixtures/snapshot.json`),
-  finalise `API_DOCS.md`. `.env.example` hardcodes this machine's DLL paths.
+- **Fixture restore not yet verified on a clean DB** (scratch-DB check in
+  `docs/claude/phase-7-backtest.md`). Re-dump with `python -X utf8 manage.py dumpdata core
+  --exclude core.RawArticle --indent 2 -o data/fixtures/snapshot.json.gz` whenever the
+  thesis is re-based.
+- `README.md` is stale (Django 4.2, gpt-4o-mini, Celery/Redis 4-terminal setup, `seed_db`
+  setup, top-level `management/`). `requirements.txt` is unpinned and lists unused
+  packages (PuLP, celery, redis, django-celery-beat, langchain).
 - `AlternativeSupplier.route_geometry` is NULL everywhere (map cannot draw reroutes); no
   ports/refineries GeoJSON endpoints.
 - `max_incremental_mbd` is estimated, not reconciled: coverage figures are indicative.

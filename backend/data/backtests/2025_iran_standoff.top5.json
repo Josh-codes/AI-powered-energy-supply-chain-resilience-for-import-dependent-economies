@@ -1,0 +1,2513 @@
+{
+  "event": "2025_iran_standoff",
+  "name": "2025 US-Iran standoff",
+  "note": "Largest 2025 session: 2025-06-13, +7.28% (CLAUDE.md's '+8%' was approximate). The move faded with the Jun 24 ceasefire, so this window also tests whether the signal falls back; the end was extended to 2025-07-11 before the pull to leave room for that. GDELT publishes NO GKG files for 2025-06-15..07-01 (Jun 14 and Jul 2 are partial), which covers the US strikes, the Hormuz closure vote and the ceasefire, so the verdict stays INCOMPLETE and scores in and after the gap are decay-only / lower bounds (see each row's flags).",
+  "generated_at": "2026-09-28T13:34:06+00:00",
+  "method": {
+    "score_time_utc": "16:30:00",
+    "point_in_time": true,
+    "top_k_stories": 5,
+    "top_k_is_production": false,
+    "lambda_decay": 0.1,
+    "lookback_days": 180,
+    "warmup_days": 7,
+    "signal_threshold": 0.6,
+    "tolerance_days": 2,
+    "spike_session_pct": 5.0,
+    "price_series": "EIA RBRTE (Europe Brent Spot FOB, daily)"
+  },
+  "window": {
+    "pull_start": "2025-05-23",
+    "chart_start": "2025-05-30",
+    "end": "2025-07-11"
+  },
+  "coverage": {
+    "days_expected": 50,
+    "days_ok": 33,
+    "days_missing": [
+      "2025-06-15",
+      "2025-06-16",
+      "2025-06-17",
+      "2025-06-18",
+      "2025-06-19",
+      "2025-06-20",
+      "2025-06-21",
+      "2025-06-22",
+      "2025-06-23",
+      "2025-06-24",
+      "2025-06-25",
+      "2025-06-26",
+      "2025-06-27",
+      "2025-06-28",
+      "2025-06-29",
+      "2025-06-30",
+      "2025-07-01"
+    ],
+    "slices_read": 3126,
+    "slices_total": 3168,
+    "articles_stored": 2463,
+    "complete": false
+  },
+  "gaps": [
+    {
+      "start": "2025-06-15",
+      "end": "2025-07-01",
+      "days": 17
+    }
+  ],
+  "pending_extraction": 0,
+  "events_in_window": {
+    "Cape": 0,
+    "Hormuz": 123,
+    "Red Sea": 2066
+  },
+  "run_up": null,
+  "corridor": "Hormuz",
+  "signal_threshold": 0.6,
+  "tolerance_days": 2,
+  "spike_session_pct": 5.0,
+  "price_spiked_at": "2025-06-13",
+  "brent_spike_pct": 7.284020327498583,
+  "brent_before_usd": 70.84,
+  "brent_after_usd": 76.0,
+  "signal_elevated_at": "2025-06-13",
+  "lead_time_days": 0,
+  "lead_time_is_lower_bound": false,
+  "score_at_chart_start": 0.2,
+  "score_at_price_spike": 0.7774,
+  "max_risk_score": 0.8338,
+  "max_risk_at": "2025-07-02",
+  "excursions": [
+    {
+      "start": "2025-06-13",
+      "end": "2025-06-18",
+      "peak": 0.8109,
+      "peak_at": "2025-06-14",
+      "days": 6
+    },
+    {
+      "start": "2025-07-02",
+      "end": "2025-07-11",
+      "peak": 0.8338,
+      "peak_at": "2025-07-02",
+      "days": 10
+    }
+  ],
+  "false_alarms": [],
+  "validation": "INCOMPLETE",
+  "reason": "17 pull day(s) not sampled (series alone says PASSED)",
+  "validation_if_complete": "PASSED",
+  "signal_elevated_days_before": 0,
+  "series": [
+    {
+      "date": "2025-05-30",
+      "as_of": "2025-05-30T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.5389
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.2874
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 16
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 23
+      },
+      "top_stories": [],
+      "brent_usd": 64.32,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-05-31",
+      "as_of": "2025-05-31T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.5551
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.3831
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 18
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 28
+      },
+      "top_stories": [],
+      "brent_usd": null,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-01",
+      "as_of": "2025-06-01T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.5166
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.1563
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 19
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 29
+      },
+      "top_stories": [],
+      "brent_usd": null,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-02",
+      "as_of": "2025-06-02T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.5068
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.0988
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 21
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 32
+      },
+      "top_stories": [],
+      "brent_usd": 66.55,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-03",
+      "as_of": "2025-06-03T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.5205
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.1791
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 23
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 34
+      },
+      "top_stories": [],
+      "brent_usd": 67.48,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-04",
+      "as_of": "2025-06-04T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.4852
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 1.9718
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 24
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 35
+      },
+      "top_stories": [],
+      "brent_usd": 66.69,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-05",
+      "as_of": "2025-06-05T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.6446
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.9093
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 31
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 52
+      },
+      "top_stories": [],
+      "brent_usd": 67.14,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-06",
+      "as_of": "2025-06-06T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.6032
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.6661
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 34
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 59
+      },
+      "top_stories": [],
+      "brent_usd": 68.02,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-07",
+      "as_of": "2025-06-07T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.6513
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.9491
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 40
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 71
+      },
+      "top_stories": [],
+      "brent_usd": null,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-08",
+      "as_of": "2025-06-08T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.6098
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.705
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 40
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 72
+      },
+      "top_stories": [],
+      "brent_usd": null,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-09",
+      "as_of": "2025-06-09T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.5661
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 2.4475
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 41
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 73
+      },
+      "top_stories": [],
+      "brent_usd": 68.73,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-10",
+      "as_of": "2025-06-10T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.7609
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 3.5933
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 67
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 164
+      },
+      "top_stories": [],
+      "brent_usd": 68.41,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-11",
+      "as_of": "2025-06-11T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.2,
+        "Red Sea": 0.7192
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.0,
+        "Red Sea": 3.3485
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 74
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 0,
+        "Red Sea": 182
+      },
+      "top_stories": [],
+      "brent_usd": 71.29,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-12",
+      "as_of": "2025-06-12T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.4489,
+        "Red Sea": 0.6825
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 1.5558,
+        "Red Sea": 3.1322
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 2,
+        "Red Sea": 76
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 2,
+        "Red Sea": 192
+      },
+      "top_stories": [
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 4.477,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "UK Raises Maritime Threat Level in Hormuz as Israel-Iran Conflict Looms",
+          "weight": 3.302,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-06-12T09:30:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 70.84,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-13",
+      "as_of": "2025-06-13T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7774,
+        "Red Sea": 0.6943
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.6089,
+        "Red Sea": 3.2017
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 15,
+        "Red Sea": 80
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 21,
+        "Red Sea": 201
+      },
+      "top_stories": [
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 4.051,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Shippers on Edge Around Strait of Hormuz After Israel-Iran Escalation",
+          "weight": 3.574,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-13T14:45:00+00:00",
+          "members": 2
+        },
+        {
+          "title": "India concerned about crude oil supply disruptions in Strait of Hormuz as prices surge after Israel's attacks on Iran",
+          "weight": 3.565,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-13T14:11:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran escalation sparks oil prices surge over 7%, markets brace for supply shock; Hormuz chokepoint back in spotlight",
+          "weight": 3.504,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-13T10:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel strike puts all eyes on Hormuz and $100 oil: Bousso",
+          "weight": 3.351,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-06-13T13:00:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 76.0,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-14",
+      "as_of": "2025-06-14T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.8109,
+        "Red Sea": 0.6698
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.8178,
+        "Red Sea": 3.0576
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 34,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 55,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 4.444,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 3.992,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 3.665,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 3.578,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Oil Prices Surge 7% Amid Israel-Iran Air Strikes and Strait of Hormuz Fears",
+          "weight": 3.41,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T03:30:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 0
+    },
+    {
+      "date": "2025-06-15",
+      "as_of": "2025-06-15T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7528,
+        "Red Sea": 0.6203
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.4552,
+        "Red Sea": 2.7666
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 34,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 56,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 4.021,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 3.612,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 3.316,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 3.238,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran mulls blocking Strait of Hormuz after Israeli attacks, says lawmaker",
+          "weight": 3.089,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-06-14T17:30:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": null,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 1
+    },
+    {
+      "date": "2025-06-16",
+      "as_of": "2025-06-16T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7002,
+        "Red Sea": 0.5756
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.1264,
+        "Red Sea": 2.5034
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 34,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 56,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 3.639,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 3.268,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 3.001,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 2.929,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran mulls blocking Strait of Hormuz after Israeli attacks, says lawmaker",
+          "weight": 2.795,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-06-14T17:30:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": 75.05,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 2
+    },
+    {
+      "date": "2025-06-17",
+      "as_of": "2025-06-17T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6526,
+        "Red Sea": 0.5351
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.8289,
+        "Red Sea": 2.2651
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 34,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 56,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 3.292,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 2.957,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 2.715,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 2.651,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran mulls blocking Strait of Hormuz after Israeli attacks, says lawmaker",
+          "weight": 2.529,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-06-14T17:30:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": 78.7,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 3
+    },
+    {
+      "date": "2025-06-18",
+      "as_of": "2025-06-18T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6096,
+        "Red Sea": 0.4984
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.5597,
+        "Red Sea": 2.0496
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 34,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 56,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 2.979,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 2.676,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 2.457,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 2.398,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran mulls blocking Strait of Hormuz after Israeli attacks, says lawmaker",
+          "weight": 2.289,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-06-14T17:30:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": 78.38,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 4
+    },
+    {
+      "date": "2025-06-19",
+      "as_of": "2025-06-19T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.5706,
+        "Red Sea": 0.4653
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.3161,
+        "Red Sea": 1.8545
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 34,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 56,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 2.695,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 2.421,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 2.223,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 2.17,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran mulls blocking Strait of Hormuz after Israeli attacks, says lawmaker",
+          "weight": 2.071,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-06-14T17:30:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": 80.37,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 5
+    },
+    {
+      "date": "2025-06-20",
+      "as_of": "2025-06-20T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.5353,
+        "Red Sea": 0.4353
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.0957,
+        "Red Sea": 1.6781
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 34,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 56,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 2.439,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 2.191,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 2.011,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 1.964,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran mulls blocking Strait of Hormuz after Israeli attacks, says lawmaker",
+          "weight": 1.874,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-06-14T17:30:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": 78.73,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 6
+    },
+    {
+      "date": "2025-06-21",
+      "as_of": "2025-06-21T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.5034,
+        "Red Sea": 0.4081
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 1.8963,
+        "Red Sea": 1.5184
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 34,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 56,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 2.207,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 1.982,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 1.82,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 1.777,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran mulls blocking Strait of Hormuz after Israeli attacks, says lawmaker",
+          "weight": 1.695,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-06-14T17:30:00+00:00",
+          "members": 3
+        }
+      ],
+      "brent_usd": null,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 7
+    },
+    {
+      "date": "2025-06-22",
+      "as_of": "2025-06-22T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.5014,
+        "Red Sea": 0.3836
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 1.8834,
+        "Red Sea": 1.3739
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 58,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 2.372,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 1.997,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 1.794,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 1.647,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 1.608,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 8
+    },
+    {
+      "date": "2025-06-23",
+      "as_of": "2025-06-23T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.4727,
+        "Red Sea": 0.3613
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 1.7042,
+        "Red Sea": 1.2431
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 2.146,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 1.807,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 1.623,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 1.49,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 1.455,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 74.34,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 9
+    },
+    {
+      "date": "2025-06-24",
+      "as_of": "2025-06-24T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.4467,
+        "Red Sea": 0.3412
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 1.542,
+        "Red Sea": 1.1248
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 1.942,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 1.635,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 1.468,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 1.348,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 1.316,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 69.13,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 10
+    },
+    {
+      "date": "2025-06-25",
+      "as_of": "2025-06-25T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.4232,
+        "Red Sea": 0.323
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 1.3953,
+        "Red Sea": 1.0178
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 1.757,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 1.479,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 1.329,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 1.22,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 1.191,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 68.4,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 11
+    },
+    {
+      "date": "2025-06-26",
+      "as_of": "2025-06-26T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.402,
+        "Red Sea": 0.3066
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 1.2625,
+        "Red Sea": 0.9209
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 1.59,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 1.339,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 1.202,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 1.104,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 1.078,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 68.57,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 12
+    },
+    {
+      "date": "2025-06-27",
+      "as_of": "2025-06-27T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.3828,
+        "Red Sea": 0.2917
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 1.1424,
+        "Red Sea": 0.8333
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 1.439,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 1.211,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 1.088,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 0.999,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 0.975,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 69.37,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 13
+    },
+    {
+      "date": "2025-06-28",
+      "as_of": "2025-06-28T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.3654,
+        "Red Sea": 0.2782
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 1.0337,
+        "Red Sea": 0.754
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 1.302,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 1.096,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 0.984,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 0.904,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 0.882,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 14
+    },
+    {
+      "date": "2025-06-29",
+      "as_of": "2025-06-29T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.3496,
+        "Red Sea": 0.266
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.9353,
+        "Red Sea": 0.6822
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 1.178,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 0.992,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 0.891,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 0.818,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 0.798,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 15
+    },
+    {
+      "date": "2025-06-30",
+      "as_of": "2025-06-30T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.3354,
+        "Red Sea": 0.2549
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.8463,
+        "Red Sea": 0.6173
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 1.066,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 0.897,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 0.806,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 0.74,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 0.722,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 68.15,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 16
+    },
+    {
+      "date": "2025-07-01",
+      "as_of": "2025-07-01T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.3225,
+        "Red Sea": 0.245
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 0.7657,
+        "Red Sea": 0.5586
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 36,
+        "Red Sea": 83
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 208
+      },
+      "top_stories": [
+        {
+          "title": "Iran shutting Hormuz Strait will impact Indian economy: Experts",
+          "weight": 0.964,
+          "severity": 3,
+          "confidence": 0.8,
+          "timestamp": "2025-06-22T13:42:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Media: Iran seriously considering closing Strait of Hormuz",
+          "weight": 0.812,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T13:30:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "What's at stake for Europe if the Strait of Hormuz is blocked?",
+          "weight": 0.729,
+          "severity": 5,
+          "confidence": 0.8,
+          "timestamp": "2025-06-14T16:00:00+00:00",
+          "members": 3
+        },
+        {
+          "title": "Conflict between Israel and Iran would 'most certainly' close the Strait of Hormuz :: Lloyd's List",
+          "weight": 0.67,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-06-12T15:15:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Israel-Iran Conflict Sparks Oil Price Surge As Strait Of Hormuz Faces Closure Risk",
+          "weight": 0.654,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-06-14T15:02:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 67.63,
+      "day_sampled": false,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-02",
+      "as_of": "2025-07-02T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.8338,
+        "Red Sea": 0.4491
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.9612,
+        "Red Sea": 1.7595
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 44,
+        "Red Sea": 89
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 99,
+        "Red Sea": 216
+      },
+      "top_stories": [
+        {
+          "title": "Iran Made Preparations To Mine Strait Of Hormuz After Israel Strikes, US Sources - Foreign Affairs",
+          "weight": 4.477,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T15:15:00+00:00",
+          "members": 29
+        },
+        {
+          "title": "Iran loaded mines into vessels to block the Strait of Hormuz during 12-day war: Report",
+          "weight": 4.389,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T10:30:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Iran Planned To Mine Strait Of Hormuz In Conflict With Israel - Report",
+          "weight": 4.056,
+          "severity": 5,
+          "confidence": 0.85,
+          "timestamp": "2025-07-02T05:16:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran's Mine Deployment in Strait of Hormuz Raises Global Oil Trade Concerns",
+          "weight": 3.446,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T06:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "US intelligence: Iran prepped mines for Strait of Hormuz",
+          "weight": 3.439,
+          "severity": 4,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T05:30:00+00:00",
+          "members": 2
+        }
+      ],
+      "brent_usd": 70.8,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-03",
+      "as_of": "2025-07-03T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.8201,
+        "Red Sea": 0.4634
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.8756,
+        "Red Sea": 1.8433
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 49,
+        "Red Sea": 91
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 106,
+        "Red Sea": 218
+      },
+      "top_stories": [
+        {
+          "title": "Iran ready to mine the Strait of Hormuz which will cause a global 'economic shock' - London Business News",
+          "weight": 4.33,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-03T07:14:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran Reportedly Made Plans To Litter Strait Of Hormuz With Naval Mines",
+          "weight": 4.092,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T17:40:00+00:00",
+          "members": 31
+        },
+        {
+          "title": "Iran loaded mines into vessels to block the Strait of Hormuz during 12-day war: Report",
+          "weight": 3.971,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T10:30:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Iran Planned To Mine Strait Of Hormuz In Conflict With Israel - Report",
+          "weight": 3.67,
+          "severity": 5,
+          "confidence": 0.85,
+          "timestamp": "2025-07-02T05:16:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "From Hormuz To Suez, Iran\u7ab6\u7684srael Tensions Put Global Shipping Routes In The Spotlight | Page 1",
+          "weight": 3.316,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-03T10:30:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 70.42,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-04",
+      "as_of": "2025-07-04T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7611,
+        "Red Sea": 0.5012
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.5068,
+        "Red Sea": 2.0656
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 49,
+        "Red Sea": 94
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 106,
+        "Red Sea": 221
+      },
+      "top_stories": [
+        {
+          "title": "Iran ready to mine the Strait of Hormuz which will cause a global 'economic shock' - London Business News",
+          "weight": 3.918,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-03T07:14:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran Reportedly Made Plans To Litter Strait Of Hormuz With Naval Mines",
+          "weight": 3.702,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T17:40:00+00:00",
+          "members": 31
+        },
+        {
+          "title": "Iran loaded mines into vessels to block the Strait of Hormuz during 12-day war: Report",
+          "weight": 3.593,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T10:30:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Iran Planned To Mine Strait Of Hormuz In Conflict With Israel - Report",
+          "weight": 3.32,
+          "severity": 5,
+          "confidence": 0.85,
+          "timestamp": "2025-07-02T05:16:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "From Hormuz To Suez, Iran\u7ab6\u7684srael Tensions Put Global Shipping Routes In The Spotlight | Page 1",
+          "weight": 3.0,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-03T10:30:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 71.03,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-05",
+      "as_of": "2025-07-05T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7077,
+        "Red Sea": 0.5326
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.1731,
+        "Red Sea": 2.2509
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 49,
+        "Red Sea": 97
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 106,
+        "Red Sea": 224
+      },
+      "top_stories": [
+        {
+          "title": "Iran ready to mine the Strait of Hormuz which will cause a global 'economic shock' - London Business News",
+          "weight": 3.545,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-03T07:14:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran Reportedly Made Plans To Litter Strait Of Hormuz With Naval Mines",
+          "weight": 3.35,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T17:40:00+00:00",
+          "members": 31
+        },
+        {
+          "title": "Iran loaded mines into vessels to block the Strait of Hormuz during 12-day war: Report",
+          "weight": 3.251,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T10:30:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Iran Planned To Mine Strait Of Hormuz In Conflict With Israel - Report",
+          "weight": 3.005,
+          "severity": 5,
+          "confidence": 0.85,
+          "timestamp": "2025-07-02T05:16:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "From Hormuz To Suez, Iran\u7ab6\u7684srael Tensions Put Global Shipping Routes In The Spotlight | Page 1",
+          "weight": 2.715,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-03T10:30:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-06",
+      "as_of": "2025-07-06T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.682,
+        "Red Sea": 0.6784
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.0123,
+        "Red Sea": 3.1082
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 50,
+        "Red Sea": 114
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 107,
+        "Red Sea": 303
+      },
+      "top_stories": [
+        {
+          "title": "Iran ready to mine the Strait of Hormuz which will cause a global 'economic shock' - London Business News",
+          "weight": 3.207,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-03T07:14:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Lessons from the Dardanelles for a Strait of Hormuz Closure",
+          "weight": 3.162,
+          "severity": 4,
+          "confidence": 0.8,
+          "timestamp": "2025-07-06T13:40:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran Reportedly Made Plans To Litter Strait Of Hormuz With Naval Mines",
+          "weight": 3.031,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T17:40:00+00:00",
+          "members": 31
+        },
+        {
+          "title": "Iran loaded mines into vessels to block the Strait of Hormuz during 12-day war: Report",
+          "weight": 2.942,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T10:30:00+00:00",
+          "members": 4
+        },
+        {
+          "title": "Iran Planned To Mine Strait Of Hormuz In Conflict With Israel - Report",
+          "weight": 2.719,
+          "severity": 5,
+          "confidence": 0.85,
+          "timestamp": "2025-07-02T05:16:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": null,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-07",
+      "as_of": "2025-07-07T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.7149,
+        "Red Sea": 0.783
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.2183,
+        "Red Sea": 3.7235
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 55,
+        "Red Sea": 185
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 112,
+        "Red Sea": 760
+      },
+      "top_stories": [
+        {
+          "title": "Iran made preparations to mine the Strait of Hormuz, US sources say | Hellenic Shipping News Worldwide",
+          "weight": 4.398,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-07T11:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Chokepoint Checkers: Iran's Strait Of Hormuz Gambit \u2013 Analysis \u2013 Eurasia Review",
+          "weight": 3.187,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-07T00:58:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran ready to mine the Strait of Hormuz which will cause a global 'economic shock' - London Business News",
+          "weight": 2.902,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-03T07:14:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Lessons from the Dardanelles for a Strait of Hormuz Closure",
+          "weight": 2.861,
+          "severity": 4,
+          "confidence": 0.8,
+          "timestamp": "2025-07-06T13:40:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran Reportedly Made Plans To Litter Strait Of Hormuz With Naval Mines",
+          "weight": 2.743,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-02T17:40:00+00:00",
+          "members": 31
+        }
+      ],
+      "brent_usd": 71.95,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-08",
+      "as_of": "2025-07-08T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6937,
+        "Red Sea": 0.8281
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 3.0858,
+        "Red Sea": 3.9889
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 59,
+        "Red Sea": 256
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 116,
+        "Red Sea": 1234
+      },
+      "top_stories": [
+        {
+          "title": "Iran made preparations to mine the Strait of Hormuz, US sources say | Hellenic Shipping News Worldwide",
+          "weight": 3.98,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-07T11:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "How Close Did Iran Come to Shutting Strait of Hormuz?",
+          "weight": 3.351,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-08T13:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Chokepoint Checkers: Iran's Strait Of Hormuz Gambit \u2013 Analysis \u2013 Eurasia Review",
+          "weight": 2.884,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-07T00:58:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran ready to mine the Strait of Hormuz which will cause a global 'economic shock' - London Business News",
+          "weight": 2.626,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-03T07:14:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Lessons from the Dardanelles for a Strait of Hormuz Closure",
+          "weight": 2.589,
+          "severity": 4,
+          "confidence": 0.8,
+          "timestamp": "2025-07-06T13:40:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 72.5,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-09",
+      "as_of": "2025-07-09T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6665,
+        "Red Sea": 0.8635
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.9158,
+        "Red Sea": 4.1969
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 63,
+        "Red Sea": 318
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 122,
+        "Red Sea": 1504
+      },
+      "top_stories": [
+        {
+          "title": "Iran made preparations to mine the Strait of Hormuz, US sources say | Hellenic Shipping News Worldwide",
+          "weight": 3.601,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-07T11:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "How Close Did Iran Come to Shutting Strait of Hormuz?",
+          "weight": 3.032,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-08T13:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Closure of Strait of Hormuz: A Looming Threat to Already High Fertilizer Costs",
+          "weight": 2.961,
+          "severity": 4,
+          "confidence": 0.8,
+          "timestamp": "2025-07-08T21:52:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Chokepoint Checkers: Iran's Strait Of Hormuz Gambit \u2013 Analysis \u2013 Eurasia Review",
+          "weight": 2.609,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-07T00:58:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran ready to mine the Strait of Hormuz which will cause a global 'economic shock' - London Business News",
+          "weight": 2.376,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-03T07:14:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 71.98,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-10",
+      "as_of": "2025-07-10T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6221,
+        "Red Sea": 0.8767
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.6383,
+        "Red Sea": 4.2744
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 63,
+        "Red Sea": 383
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 122,
+        "Red Sea": 1914
+      },
+      "top_stories": [
+        {
+          "title": "Iran made preparations to mine the Strait of Hormuz, US sources say | Hellenic Shipping News Worldwide",
+          "weight": 3.258,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-07T11:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "How Close Did Iran Come to Shutting Strait of Hormuz?",
+          "weight": 2.743,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-08T13:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Closure of Strait of Hormuz: A Looming Threat to Already High Fertilizer Costs",
+          "weight": 2.679,
+          "severity": 4,
+          "confidence": 0.8,
+          "timestamp": "2025-07-08T21:52:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Chokepoint Checkers: Iran's Strait Of Hormuz Gambit \u2013 Analysis \u2013 Eurasia Review",
+          "weight": 2.361,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-07T00:58:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran ready to mine the Strait of Hormuz which will cause a global 'economic shock' - London Business News",
+          "weight": 2.15,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-03T07:14:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 70.38,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    },
+    {
+      "date": "2025-07-11",
+      "as_of": "2025-07-11T16:30:00+00:00",
+      "scores": {
+        "Cape": 0.05,
+        "Hormuz": 0.6152,
+        "Red Sea": 0.8249
+      },
+      "raw": {
+        "Cape": 0.0,
+        "Hormuz": 2.595,
+        "Red Sea": 3.97
+      },
+      "stories": {
+        "Cape": 0,
+        "Hormuz": 64,
+        "Red Sea": 419
+      },
+      "events": {
+        "Cape": 0,
+        "Hormuz": 123,
+        "Red Sea": 2066
+      },
+      "top_stories": [
+        {
+          "title": "Middle East tensions stir fears of $150 oil spike amid Straits of Hormuz crisis   \u2013 NaturalNews.com",
+          "weight": 2.984,
+          "severity": 4,
+          "confidence": 0.8,
+          "timestamp": "2025-07-10T23:45:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Iran made preparations to mine the Strait of Hormuz, US sources say | Hellenic Shipping News Worldwide",
+          "weight": 2.948,
+          "severity": 5,
+          "confidence": 0.9,
+          "timestamp": "2025-07-07T11:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "How Close Did Iran Come to Shutting Strait of Hormuz?",
+          "weight": 2.482,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-08T13:00:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Closure of Strait of Hormuz: A Looming Threat to Already High Fertilizer Costs",
+          "weight": 2.424,
+          "severity": 4,
+          "confidence": 0.8,
+          "timestamp": "2025-07-08T21:52:00+00:00",
+          "members": 1
+        },
+        {
+          "title": "Chokepoint Checkers: Iran's Strait Of Hormuz Gambit \u2013 Analysis \u2013 Eurasia Review",
+          "weight": 2.136,
+          "severity": 4,
+          "confidence": 0.85,
+          "timestamp": "2025-07-07T00:58:00+00:00",
+          "members": 1
+        }
+      ],
+      "brent_usd": 72.06,
+      "day_sampled": true,
+      "unsampled_days_in_lookback": 17
+    }
+  ]
+}

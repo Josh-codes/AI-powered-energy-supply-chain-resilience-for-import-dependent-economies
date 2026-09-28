@@ -52,7 +52,7 @@ cd backend          # all commands run from here; venv is ../venv
 python manage.py runserver
 python manage.py seed_db                  # load data/*.json into the DB
 python manage.py build_graph              # build graph + print cut summary
-python manage.py test                     # full suite (574 tests)
+python manage.py test                     # full suite (580 tests)
 python manage.py capture_api_samples      # refresh data/api_samples/ (read-only)
 
 # ---- the orchestrated pipeline (Phase 6) ----
@@ -137,6 +137,9 @@ python manage.py run_backtest --event 2026_hormuz_closure --pull   # ~12 GB, ~1 
 python manage.py extract_events                                     # PAID
 python manage.py run_backtest --event 2026_hormuz_closure           # score + verdict
 #    Writes data/backtests/<event>.json (commit it). No RiskScore rows.
+python manage.py run_backtest --event 2026_hormuz_closure --top-k 5  # sensitivity
+#    Averages the 5 strongest stories instead of 3. Writes <event>.top5.json,
+#    never the cited report. Free, ~1 min.
 
 # ---- NOT IMPLEMENTED ----
 # celery -A config worker / beat, redis-server   # out of scope, see above

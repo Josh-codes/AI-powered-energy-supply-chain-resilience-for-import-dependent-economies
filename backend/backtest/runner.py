@@ -168,8 +168,13 @@ def ledger_path(key):
     return BACKTEST_DIR / f"{key}_pull.json"
 
 
-def report_path(key):
-    return BACKTEST_DIR / f"{key}.json"
+def report_path(key, top_k=TOP_K_STORIES):
+    """The cited report is ``<key>.json``. A sensitivity run with any other
+    ``top_k`` goes to ``<key>.top<k>.json`` so it can never overwrite it, and
+    ``/api/backtest/`` (which reads only the default path) never serves it."""
+    if top_k == TOP_K_STORIES:
+        return BACKTEST_DIR / f"{key}.json"
+    return BACKTEST_DIR / f"{key}.top{top_k}.json"
 
 
 def load_ledger(key):
@@ -343,14 +348,19 @@ def _story_row(story):
     }
 
 
-def _summarize(stories, as_of, baseline, n_events, with_top):
-    """One corridor-day from its stories, weighted as of *as_of*."""
+def _summarize(stories, as_of, baseline, n_events, with_top, top_k=TOP_K_STORIES):
+    """One corridor-day from its stories, weighted as of *as_of*.
+
+    ``top_k`` exists for the sensitivity check only; production is
+    ``TOP_K_STORIES``. Normalization stays ``raw / MAX_EVENT_WEIGHT`` for any
+    k, so 1.0 still means k severity-5 stories today.
+    """
     weighted = [
         s._replace(weight=event_weight(s.severity, s.confidence, s.timestamp, as_of,
                                        LAMBDA_DECAY))
         for s in stories
     ]
-    raw = top_k_severity(weighted, k=TOP_K_STORIES)
+    raw = top_k_severity(weighted, k=top_k)
     out = {
         "raw": round(raw, 4),
         "score": round(normalize_severity(raw, baseline_risk=baseline), 4),
@@ -358,7 +368,7 @@ def _summarize(stories, as_of, baseline, n_events, with_top):
         "stories": len(weighted),
     }
     if with_top:
-        top = sorted(weighted, key=lambda s: s.weight, reverse=True)[:TOP_K_STORIES]
+        top = sorted(weighted, key=lambda s: s.weight, reverse=True)[:top_k]
         out["top_stories"] = [_story_row(s) for s in top]
     return out
 
@@ -376,7 +386,7 @@ def _row(day, per_corridor, focus):
     return row
 
 
-def score_day(day, corridors, focus=None):
+def score_day(day, corridors, focus=None, top_k=TOP_K_STORIES):
     """Point-in-time scores for every corridor on *day*, computed from scratch.
 
     Composes exactly what ``compute_corridor_severity`` does (a test pins
@@ -390,11 +400,12 @@ def score_day(day, corridors, focus=None):
     for name, baseline in corridors:
         events = corridor_events(name, now=as_of, exclude_future=True)
         stories = cluster_stories(events, now=as_of, lambda_decay=LAMBDA_DECAY)
-        cells[name] = _summarize(stories, as_of, baseline, len(events), name == focus)
+        cells[name] = _summarize(stories, as_of, baseline, len(events), name == focus,
+                                 top_k=top_k)
     return _row(day, cells, focus)
 
 
-def corridor_series(name, baseline, days, with_top=False):
+def corridor_series(name, baseline, days, with_top=False, top_k=TOP_K_STORIES):
     """Point-in-time scores for one corridor on every one of *days*, in one
     incremental pass instead of one clustering per day.
 
@@ -438,11 +449,11 @@ def corridor_series(name, baseline, days, with_top=False):
                 clusterer.add(*events[i])
                 i += 1
             cells[k] = _summarize(clusterer.stories(), as_ofs[k], baseline,
-                                  ends[k] - start, with_top)
+                                  ends[k] - start, with_top, top_k=top_k)
     return cells
 
 
-def score_series(key, on_day=None):
+def score_series(key, on_day=None, top_k=TOP_K_STORIES):
     event = get_event(key)
     corridors = list(Corridor.objects.order_by("name").values_list("name", "baseline_risk"))
     if not corridors:
@@ -450,7 +461,7 @@ def score_series(key, on_day=None):
     days = chart_days(event)
     focus = event["corridor"]
     by_corridor = {
-        name: corridor_series(name, baseline, days, with_top=(name == focus))
+        name: corridor_series(name, baseline, days, with_top=(name == focus), top_k=top_k)
         for name, baseline in corridors
     }
     series = []
@@ -501,16 +512,23 @@ def _price_window(event):
     return pull_start(event) - timedelta(days=7), event["end"]
 
 
-def run_backtest(key, write=True, on_day=None):
+def run_backtest(key, write=True, on_day=None, top_k=TOP_K_STORIES):
     """Score the window, validate it, and (by default) write the report.
 
     The verdict is downgraded to INCOMPLETE — whatever the series says — if
     any pull day is missing or any in-scope article is still unextracted:
     a missing day scores as quiet, and quiet days are exactly what would
     fake a clean "calm, then rise" shape.
+
+    ``top_k`` other than production's ``TOP_K_STORIES`` is a SENSITIVITY run:
+    same events, same clustering, same validator, only the number of stories
+    averaged changes. It writes to its own file (see :func:`report_path`) and
+    touches nothing live.
     """
+    if top_k < 1:
+        raise ValueError("top_k must be at least 1")
     event = get_event(key)
-    series = score_series(key, on_day=on_day)
+    series = score_series(key, on_day=on_day, top_k=top_k)
 
     first, last = _price_window(event)
     try:
@@ -561,7 +579,8 @@ def run_backtest(key, write=True, on_day=None):
         "method": {
             "score_time_utc": SCORE_TIME_UTC.isoformat(),
             "point_in_time": True,
-            "top_k_stories": TOP_K_STORIES,
+            "top_k_stories": top_k,
+            "top_k_is_production": top_k == TOP_K_STORIES,
             "lambda_decay": LAMBDA_DECAY,
             "lookback_days": DECAY_LOOKBACK_DAYS,
             "warmup_days": WARMUP_DAYS,
@@ -585,7 +604,7 @@ def run_backtest(key, write=True, on_day=None):
         "series": series,
     }
     if write:
-        _write_json(report_path(key), report)
+        _write_json(report_path(key, top_k), report)
     return report
 
 
