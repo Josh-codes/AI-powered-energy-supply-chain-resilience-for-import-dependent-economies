@@ -114,7 +114,7 @@ Prerequisites: Python 3.12, PostgreSQL 16 with PostGIS, and the GDAL/GEOS/PROJ l
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 cd backend
-pip install -r requirements.txt
+pip install -r requirements.lock.txt   # exact tested versions (incl. GDAL wheels on Win/Py3.12)
 copy .env.example .env          # fill in DB_*, SECRET_KEY and the GDAL paths
 
 createdb -U postgres energy_resilience

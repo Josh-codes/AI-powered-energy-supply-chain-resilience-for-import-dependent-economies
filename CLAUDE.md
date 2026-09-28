@@ -318,13 +318,17 @@ Human-facing version (PowerShell, tagged by cost/effect, for Joshua and the team
   co-movement analysis; plot the live risk time series (from 2026-09-26 only) as a deliverable;
   semantic story clustering; the Red Sea maritime-gate
   question (does Houthi land escalation count as corridor risk?).
-- **Fixture restore not yet verified on a clean DB** (scratch-DB check in
-  `docs/claude/phase-7-backtest.md`). Re-dump with `python -X utf8 manage.py dumpdata core
+- ~~Fixture restore not yet verified~~ **Fixture restore VERIFIED 2026-09-28** on a scratch
+  PostGIS DB (`migrate` → `loaddata`): Hormuz 0.8879 / Red Sea 0.7414 / Cape 0.05, Run 3
+  `succeeded`. Postgres CLI tools are not on PATH on this machine: use
+  `C:\Program Files\PostgreSQL\16\bin\`. Re-dump with `python -X utf8 manage.py dumpdata core
   --exclude core.RawArticle --indent 2 -o data/fixtures/snapshot.json.gz` whenever the
   thesis is re-based.
-- `requirements.txt` is unpinned and lists unused packages (PuLP, redis,
-  django-celery-beat, langchain). Keep `celery`: `config/celery.py` imports it at startup.
-  Suggested: `pip freeze > requirements.lock.txt`. (`README.md` was rewritten 2026-09-28 to
+- **Dependencies pinned 2026-09-28:** `backend/requirements.lock.txt` (86 packages, UTF-8,
+  includes the cgohlke GDAL/pyproj/shapely wheel URLs for Win/Py3.12). `requirements.txt`
+  stays the short unpinned list (still names unused PuLP, redis, django-celery-beat,
+  langchain; keep `celery`, `config/celery.py` imports it). In PowerShell 5, `pip freeze >`
+  writes UTF-16: regenerate with `pip freeze | Out-File -Encoding utf8 requirements.lock.txt`. (`README.md` was rewritten 2026-09-28 to
   the as-built system; the research paper docx is git-ignored, so README does not link it.)
 - `AlternativeSupplier.route_geometry` is NULL everywhere (map cannot draw reroutes); no
   ports/refineries GeoJSON endpoints.
